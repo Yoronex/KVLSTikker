@@ -29,3 +29,10 @@ def register():
         return redirect('/index')
     return render_template('register.html', title='Registreren', form=form)
 
+@app.route('/balance')
+def balance():
+    return render_template('balance.html', title='Saldo', Usergroup=Usergroup)
+
+@app.route('/users')
+def users():
+    return render_template('users.html', title='Gebruikers', User=User)

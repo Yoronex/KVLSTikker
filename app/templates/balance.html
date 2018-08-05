@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Saldo's</h1>
+    <table>
+        {% for g in Usergroup.query.all() %}
+        <tr>
+            <th>{{ g.name }}</th>
+            {% for u in g.users.all() %}
+            <td>{{ u.name }} {{ '%.2f' % u.balance }}</td>
+            {% endfor %}
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

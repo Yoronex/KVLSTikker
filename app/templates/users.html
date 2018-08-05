@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Gebruikers</h1>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Naam</th>
+            <th>Groep</th>
+            <th>Saldo</th>
+        </tr>
+        {% for u in User.query.all() %}
+        <tr>
+            <td>{{ u.id }}</td>
+            <td>{{ u.name }}</td>
+            <td>{{ u.usergroup_id }}</td>
+            <td>{{ u.balance }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
