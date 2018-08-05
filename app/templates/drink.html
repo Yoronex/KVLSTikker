@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Saldo's</h1>
+    <h1>Drink: {{ name }}</h1>
     <table>
         <tr>
             {% for g in Usergroup.query.all() %}
@@ -13,16 +13,13 @@
             <td valign="top"><table>
                 {% for u in g.users.all() %}
                 <tr>
-                    <td>{{ u.name }}</td>
-                    {% if u.balance < 0 %}
-                    <td><span style="color: red;font-weight:bold;">{{ '%.2f' % u.balance }}</span></td>
-                    {% else %}
-                    <td><span style="color: green;font-weight:bold;">{{ '%.2f' % u.balance }}</span></td>
-                    {% endif %}
+                    <td>{{ form.nestedDict[g.id][u.id]() }}</td>
+                    <td>{{ form.nestedDict[g.id][u.id].label }}</td>
                 </tr>
                 {% endfor %}
             </table></td>
             {% endfor %}
         </tr>
     </table>
+    <p>{{ form.submit() }}</p>
 {% endblock %}

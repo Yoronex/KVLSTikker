@@ -1,6 +1,6 @@
 from flask import render_template, flash, redirect
 from app import app, db
-from app.forms import LoginForm, UserRegistrationForm
+from app.forms import LoginForm, UserRegistrationForm, DrinkRegistrationForm
 from app.models import User, Usergroup
 
 @app.route('/')
@@ -36,3 +36,11 @@ def balance():
 @app.route('/users')
 def users():
     return render_template('users.html', title='Gebruikers', User=User)
+
+@app.route('/drink/<name>', methods=['GET', 'POST'])
+def drink(name):
+    form = DrinkRegistrationForm()
+    if form.validate_on_submit():
+        flash('Drinken gekocht!')
+        return redirect('/index')
+    return render_template('drink.html', title=name, name=name, form=form, User=User, Usergroup=Usergroup)

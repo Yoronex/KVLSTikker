@@ -15,3 +15,12 @@ class UserRegistrationForm(FlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
     group = SelectField('Groep', choices=groups)
     submit = SubmitField('Registreer')
+
+class DrinkRegistrationForm(FlaskForm):
+    nestedDict = {}
+    for g in Usergroup.query.all():
+        dict = {}
+        for u in g.users.all():
+            dict[u.id] = BooleanField(label=u.name)
+        nestedDict[g.id] = dict
+    submit = SubmitField('Verstuur')
