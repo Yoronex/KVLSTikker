@@ -1,6 +1,7 @@
 from flask import render_template, flash, redirect
-from app import app
-from app.forms import LoginForm
+from app import app, db
+from app.forms import LoginForm, UserRegistrationForm
+from app.models import User, Usergroup
 
 @app.route('/')
 @app.route('/index')
@@ -13,4 +14,18 @@ def login():
     if form.validate_on_submit():
         flash('Login requested for user {}'.format(form.username.data))
         return redirect('/index')
-    return render_template('login.html', title='Log in', form=form)
+    return render_template('login.html', title='Sign In', form=form)
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    form = UserRegistrationForm()
+    if form.validate_on_submit():
+        #print("User wants to register!")
+        user = User(name=form.name.data, usergroup_id=form.group.data)
+        #print(user.name, user.usergroup_id)
+        db.session.add(user)
+        db.session.commit()
+        flash("Gebruiker {} succesvol geregistreerd".format(user.name))
+        return redirect('/index')
+    return render_template('register.html', title='Registreren', form=form)
+
