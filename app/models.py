@@ -38,9 +38,10 @@ class Product(db.Model):
     name = db.Column(db.String(64), index=True)
     purchaseable = db.Column(db.Boolean)
     purchases = db.relationship('Purchase', backref='product', lazy='dynamic')
+    price = db.Column(db.Float)
 
     def __repr__(self):
-        return '<Product {}>'.format(self.name)
+        return '<Product {} voor {}>'.format(self.name, self.price)
 
 
 class Purchase(db.Model):

@@ -1,7 +1,7 @@
-from flask import render_template, flash, redirect
+from flask import render_template, flash, redirect, url_for
 from app import app, db
-from app.forms import LoginForm, UserRegistrationForm, DrinkRegistrationForm
-from app.models import User, Usergroup
+from app.forms import LoginForm, UserRegistrationForm, DrinkRegistrationForm, ContactForm
+from app.models import User, Usergroup, Product, Purchase
 
 @app.route('/')
 @app.route('/index')
@@ -13,7 +13,7 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         flash('Login requested for user {}'.format(form.username.data))
-        return redirect('/index')
+        return redirect(url_for('index'))
     return render_template('login.html', title='Sign In', form=form)
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -26,7 +26,7 @@ def register():
         db.session.add(user)
         db.session.commit()
         flash("Gebruiker {} succesvol geregistreerd".format(user.name))
-        return redirect('/index')
+        return redirect(url_for('index'))
     return render_template('register.html', title='Registreren', form=form)
 
 @app.route('/balance')
@@ -37,10 +37,23 @@ def balance():
 def users():
     return render_template('users.html', title='Gebruikers', User=User)
 
-@app.route('/drink/<name>', methods=['GET', 'POST'])
-def drink(name):
-    form = DrinkRegistrationForm()
-    if form.validate_on_submit():
-        flash('Drinken gekocht!')
-        return redirect('/index')
-    return render_template('drink.html', title=name, name=name, form=form, User=User, Usergroup=Usergroup)
+@app.route('/drink/<int:drinkid>', methods=['GET', 'POST'])
+def drink(drinkid):
+    drink = Product.query.get(drinkid)
+    return render_template('drink.html', title=drink.name, drink=drink, User=User, Usergroup=Usergroup)
+
+@app.route('/drink/<int:drinkid>/<int:userid>')
+def purchase(drinkid, userid):
+    drink = Product.query.get(drinkid)
+    user = User.query.get(userid)
+    purchase = Purchase(user_id=user.id, product_id=drink.id, price=drink.price)
+    db.session.add(purchase)
+    db.session.commit()
+    flash("{} voor {} verwerkt".format(drink.name, user.name))
+    return redirect(url_for('drink', drinkid=drinkid))
+
+@app.route('/testforms')
+def test():
+    form = ContactForm()
+
+    return render_template('testforms.html', form=form)

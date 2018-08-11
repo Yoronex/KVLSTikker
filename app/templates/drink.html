@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Drink: {{ name }}</h1>
+    <h1>Drink: {{ drink.name }}</h1>
     <table>
         <tr>
             {% for g in Usergroup.query.all() %}
@@ -13,13 +13,11 @@
             <td valign="top"><table>
                 {% for u in g.users.all() %}
                 <tr>
-                    <td>{{ form.nestedDict[g.id][u.id]() }}</td>
-                    <td>{{ form.nestedDict[g.id][u.id].label }}</td>
+                    <td><a href="/drink/{{ drink.id }}/{{ u.id }}">{{ u.name }}</a></td>
                 </tr>
                 {% endfor %}
             </table></td>
             {% endfor %}
         </tr>
     </table>
-    <p>{{ form.submit() }}</p>
 {% endblock %}
