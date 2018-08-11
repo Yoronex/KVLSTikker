@@ -1,5 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Hi, {{ username }}!</h1>
+    <h1>Kies iets uit!</h1>
+    {% for p in Product.query.all() %}
+    <p><a href="/drink/{{ p.id }}">{{ p.name }}</a></p>
+    {% endfor %}
 {% endblock %}

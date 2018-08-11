@@ -47,11 +47,10 @@
     </head>
     <body>
         <div class="sidenav">
-            <a href="/">Home</a>
-            <a href="/login">Log in</a>
-            <a href="/register">Registreer</a>
-            <a href="/users">Gebruikers</a>
-            <a href="/balance">Saldo's</a>
+            <a href="{{ url_for('index') }}">Home</a>
+            <a href="{{ url_for('register') }}">Registreer</a>
+            <a href="{{ url_for('balance') }}">Saldo's</a>
+            <a href="{{ url_for('upgrade') }}">Opwaarderen</a>
         </div>
         <div class="main">
         {% with messages = get_flashed_messages() %}

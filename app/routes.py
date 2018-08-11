@@ -6,7 +6,7 @@ from app.models import User, Usergroup, Product, Purchase, Upgrade
 @app.route('/')
 @app.route('/index')
 def index():
-    return render_template('index.html', title='Home', username='Roy')
+    return render_template('index.html', title='Home', Product=Product)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -34,9 +34,11 @@ def upgrade():
     form = UpgradeBalanceForm()
     if form.validate_on_submit():
         upgrade = Upgrade(user_id=form.user.data, amount=form.amount.data)
+        user = User.query.get(upgrade.user_id)
         db.session.add(upgrade)
+        user.balance = user.balance + form.amount.data
         db.session.commit()
-        flash("Gebruiker {} heeft succesvol opgewaardeerd met {} euro".format(User.query.get(upgrade.user_id), upgrade.amount))
+        flash("Gebruiker {} heeft succesvol opgewaardeerd met {} euro".format(user.name, upgrade.amount))
         return redirect(url_for('index'))
     return render_template('upgrade.html', title='Opwaarderen', form=form)
 
@@ -63,6 +65,7 @@ def purchase(drinkid, userid):
     user = User.query.get(userid)
     purchase = Purchase(user_id=user.id, product_id=drink.id, price=drink.price)
     db.session.add(purchase)
+    user.balance = user.balance - drink.price
     db.session.commit()
     flash("{} voor {} verwerkt".format(drink.name, user.name))
     return redirect(url_for('drink', drinkid=drinkid))
