@@ -1,10 +1,14 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, SelectMultipleField, widgets, FormField, FieldList, Form
+from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, SelectMultipleField, widgets, FormField, FieldList, Form, IntegerField
 from wtforms.validators import ValidationError, DataRequired, EqualTo
 from app.models import User, Usergroup
 from app import db
 
 groups = [(str(g.id), g.name) for g in Usergroup.query.all()]
+
+users = []
+for u in User.query.order_by(User.usergroup_id.asc()).all():
+    users.append((str(u.id), u.name + " (" + Usergroup.query.get(u.usergroup_id).name + ")"))
 
 class LoginForm(FlaskForm):
     username = StringField('Gebruikersnaam', validators=[DataRequired()])
@@ -19,6 +23,11 @@ class UserRegistrationForm(FlaskForm):
 class MultiCheckboxField(SelectMultipleField):
     widget = widgets.ListWidget(prefix_label=False)
     option_widget = widgets.CheckboxInput()
+
+class UpgradeBalanceForm(FlaskForm):
+    user = SelectField('Naam', choices=users, validators=[DataRequired()])
+    amount = IntegerField('Bedrag', validators=[DataRequired()])
+    submit = SubmitField('Versturen')
 
 class DrinkRegistrationForm(FlaskForm):
     nestedDict = {}

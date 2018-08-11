@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Aankoophistorie</h1>
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Datum / Tijd</th>
+            <th>Naam</th>
+            <th>Product</th>
+            <th>Prijs</th>
+        </tr>
+        {% for p in Purchase.query.all() %}
+        <tr>
+            <td>{{ p.id }}</td>
+            <td>{{ p.timestamp }}</td>
+            <td>{{ User.query.get(p.user_id).name }}</td>
+            <td>{{ Product.query.get(p.product_id).name }}</td>
+            <td>{{ p.price }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

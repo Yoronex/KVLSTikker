@@ -1,7 +1,7 @@
 from flask import render_template, flash, redirect, url_for
 from app import app, db
-from app.forms import LoginForm, UserRegistrationForm, DrinkRegistrationForm, ContactForm
-from app.models import User, Usergroup, Product, Purchase
+from app.forms import LoginForm, UserRegistrationForm, DrinkRegistrationForm, ContactForm, UpgradeBalanceForm
+from app.models import User, Usergroup, Product, Purchase, Upgrade
 
 @app.route('/')
 @app.route('/index')
@@ -29,6 +29,17 @@ def register():
         return redirect(url_for('index'))
     return render_template('register.html', title='Registreren', form=form)
 
+@app.route('/upgrade', methods=['GET', 'POST'])
+def upgrade():
+    form = UpgradeBalanceForm()
+    if form.validate_on_submit():
+        upgrade = Upgrade(user_id=form.user.data, amount=form.amount.data)
+        db.session.add(upgrade)
+        db.session.commit()
+        flash("Gebruiker {} heeft succesvol opgewaardeerd met {} euro".format(User.query.get(upgrade.user_id), upgrade.amount))
+        return redirect(url_for('index'))
+    return render_template('upgrade.html', title='Opwaarderen', form=form)
+
 @app.route('/balance')
 def balance():
     return render_template('balance.html', title='Saldo', Usergroup=Usergroup)
@@ -36,6 +47,10 @@ def balance():
 @app.route('/users')
 def users():
     return render_template('users.html', title='Gebruikers', User=User)
+
+@app.route('/purchasehistory')
+def purchasehistory():
+    return render_template('purchasehistory.html', title='Aankoophistorie', User=User, Product=Product, Purchase=Purchase)
 
 @app.route('/drink/<int:drinkid>', methods=['GET', 'POST'])
 def drink(drinkid):
@@ -55,5 +70,4 @@ def purchase(drinkid, userid):
 @app.route('/testforms')
 def test():
     form = ContactForm()
-
     return render_template('testforms.html', form=form)
