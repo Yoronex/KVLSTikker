@@ -4,8 +4,6 @@ from wtforms.validators import ValidationError, DataRequired, EqualTo
 from app.models import User, Usergroup
 from app import db
 
-groups = [(str(g.id), g.name) for g in Usergroup.query.all()]
-
 users = []
 for u in User.query.order_by(User.usergroup_id.asc()).all():
     users.append((str(u.id), u.name + " (" + Usergroup.query.get(u.usergroup_id).name + ")"))
@@ -16,6 +14,8 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Log in')
 
 class UserRegistrationForm(FlaskForm):
+    groups = [(str(g.id), g.name) for g in Usergroup.query.all()]
+
     name = StringField('Naam', validators=[DataRequired()])
     group = SelectField('Groep', choices=groups)
     submit = SubmitField('Registreer')
@@ -39,10 +39,6 @@ class DrinkRegistrationForm(FlaskForm):
 
     nestedDict2 = {}
     nestedDict2[0] = BooleanField(label="Ja/Nee")
-
-    list = [MultiCheckboxField("Groep", choices=groups)]
-
-    example = MultiCheckboxField("Groep", choices=groups)
 
     submit = SubmitField('Verstuur')
 

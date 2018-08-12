@@ -13,7 +13,7 @@
             <td valign="top" width="{{ 100 / amount_usergroups }}%"><table width="100%">
                 {% for u in g.users.all() %}
                 <tr>
-                    <td>{{ u.name }}</td>
+                    <td><a href="/user/{{ u.id }}">{{ u.name }}</a></td>
                     {% if u.balance < 0 %}
                     <td><span style="color: red;font-weight:bold;">{{ '%.2f' % u.balance }}</span></td>
                     {% else %}

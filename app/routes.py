@@ -51,6 +51,13 @@ def balance():
 def users():
     return render_template('users.html', title='Gebruikers', User=User)
 
+@app.route('/user/<int:userid>')
+def user(userid):
+    user = User.query.get(userid)
+    purchases = user.purchases.all()
+    upgrades = user.upgrades.all()
+    return render_template('user.html', user=user, purchases=purchases, upgrades=upgrades, Product=Product)
+
 @app.route('/purchasehistory')
 def purchasehistory():
     return render_template('purchasehistory.html', title='Aankoophistorie', User=User, Product=Product, Purchase=Purchase)

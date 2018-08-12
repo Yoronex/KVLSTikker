@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <h1>Informatie over {{ user.name }}</h1>
+
+    <h2>Aankopen</h2>
+    <table width="50%">
+        <tr>
+            <th>ID</th>
+            <th>Datum</th>
+            <th>Tijd</th>
+            <th>Wat</th>
+            <th>Prijs</th>
+        </tr>
+        {% for p in purchases %}
+        <tr>
+            <td>{{ p.id }}</td>
+            <td>{{ p.timestamp.strftime("%Y-%m-%d") }}</td>
+            <td>{{ p.timestamp.strftime("%H:%M:%S") }}</td>
+            <td>{{ Product.query.get(p.product_id).name }}</td>
+            <td>-{{ p.price }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <h2>Opwaarderingen</h2>
+    <table width="50%">
+        <tr>
+            <th>ID</th>
+            <th>Datum</th>
+            <th>Tijd</th>
+            <th>Saldo</th>
+        </tr>
+        {% for u in upgrades %}
+        <tr>
+            <td>{{ u.id }}</td>
+            <td>{{ u.timestamp.strftime("%Y-%m-%d") }}</td>
+            <td>{{ u.timestamp.strftime("%H:%M:%S") }}</td>
+            <td>{{ u.amount }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

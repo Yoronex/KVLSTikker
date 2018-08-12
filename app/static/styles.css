@@ -136,3 +136,17 @@ body {
     font-family: title;
     src: url(Blanka-Regular.otf);
 }
+
+.btn-yellow {
+    background-color: #ffd94a;
+    color: #000000;
+}
+
+.btn-green {
+    background-color: #0b8337;
+    color: #000000;
+}
+
+td {padding: 10px;}
+
+th {text-align: center;}
