@@ -15,16 +15,13 @@
         <div class="profile-sidebar">
             <!-- SIDEBAR USERPIC -->
             <div class="profile-userpic">
-                <img src="http://keenthemes.com/preview/metronic/theme/assets/admin/pages/media/profile/profile_user.jpg" class="img-responsive" alt="">
+                <img src="{{ url_for('.static', filename='logo.png') }}" class="img-responsive" alt="">
             </div>
             <!-- END SIDEBAR USERPIC -->
             <!-- SIDEBAR USER TITLE -->
             <div class="profile-usertitle">
                 <div class="profile-usertitle-name">
-                    Marcus Doe
-                </div>
-                <div class="profile-usertitle-job">
-                    Developer
+                    Tikker
                 </div>
             </div>
             <!-- END SIDEBAR USER TITLE -->
@@ -37,25 +34,21 @@
             <!-- SIDEBAR MENU -->
             <div class="profile-usermenu">
                 <ul class="nav">
-                    <li class="active">
-                        <a href="#">
-                        <i class="glyphicon glyphicon-home"></i>
-                        Overview </a>
+                    <li>
+                        <a href="{{ url_for('index') }}">
+                        Home </a>
                     </li>
                     <li>
-                        <a href="#">
-                        <i class="glyphicon glyphicon-user"></i>
-                        Account Settings </a>
+                        <a href="{{ url_for('balance') }}">
+                        Saldo's </a>
                     </li>
                     <li>
-                        <a href="#" target="_blank">
-                        <i class="glyphicon glyphicon-ok"></i>
-                        Tasks </a>
+                        <a href="{{ url_for('register') }}">
+                        Registreren</a>
                     </li>
                     <li>
-                        <a href="#">
-                        <i class="glyphicon glyphicon-flag"></i>
-                        Help </a>
+                        <a href="{{ url_for('upgrade') }}">
+                        Opwaarderen</a>
                     </li>
                 </ul>
             </div>

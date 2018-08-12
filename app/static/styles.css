@@ -18,7 +18,7 @@ body {
   padding: 20px 0 10px 0;
   background: #fff;
   height: 100%;
-  width: 300px;
+  width: 280px;
   position: fixed;
   z-index: 1;
   top: 0;
@@ -28,23 +28,22 @@ body {
 .profile-userpic img {
   float: none;
   margin: 0 auto;
-  width: 50%;
-  height: 50%;
-  -webkit-border-radius: 50% !important;
-  -moz-border-radius: 50% !important;
-  border-radius: 50% !important;
+  width: 80%;
+  height: 80%;
 }
 
 .profile-usertitle {
   text-align: center;
-  margin-top: 20px;
+  margin-top: 0px;
 }
 
 .profile-usertitle-name {
-  color: #5a7391;
-  font-size: 16px;
+  /*color: #5a7391;*/
+  color: #000000;
+  font-size: 50px;
   font-weight: 600;
   margin-bottom: 7px;
+  font-family: title;
 }
 
 .profile-usertitle-job {
@@ -88,11 +87,13 @@ body {
   color: #93a3b5;
   font-size: 14px;
   font-weight: 400;
+  font-family: standardtext;
 }
 
 .profile-usermenu ul li a i {
   margin-right: 8px;
   font-size: 14px;
+  font-family: standardtext;
 }
 
 .profile-usermenu ul li a:hover {
@@ -116,10 +117,22 @@ body {
   padding: 20px;
   background: #fff;
   min-height: 460px;
+  font-family: standardtext;
 }
 
 .main {
     margin-left: 300px; /* Same as the width of the sidenav */
     font-size: 28px; /* Increased text to enable scrolling */
     padding: 0px 10px;
+    font-family: standardtext;
+}
+
+@font-face {
+    font-family: standardtext;
+    src: url(body_breeserif.ttf);
+}
+
+@font-face {
+    font-family: title;
+    src: url(Blanka-Regular.otf);
 }

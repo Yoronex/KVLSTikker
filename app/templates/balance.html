@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% block app_content %}
     <h1>Saldo's</h1>
-    <table>
+    <table width="100%">
         <tr>
-            {% for g in Usergroup.query.all() %}
+            {% for g in usergroups %}
             <th>{{ g.name }}</th>
             {% endfor %}
         </tr>
         <tr>
-            {% for g in Usergroup.query.all() %}
-            <td valign="top"><table>
+            {% for g in usergroups %}
+            <td valign="top" width="{{ 100 / amount_usergroups }}%"><table width="100%">
                 {% for u in g.users.all() %}
                 <tr>
                     <td>{{ u.name }}</td>

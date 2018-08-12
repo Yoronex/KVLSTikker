@@ -44,7 +44,8 @@ def upgrade():
 
 @app.route('/balance')
 def balance():
-    return render_template('balance.html', title='Saldo', Usergroup=Usergroup)
+    usergroups = Usergroup.query.all()
+    return render_template('balance.html', title='Saldo', usergroups=usergroups, amount_usergroups=len(usergroups))
 
 @app.route('/users')
 def users():
@@ -57,7 +58,8 @@ def purchasehistory():
 @app.route('/drink/<int:drinkid>', methods=['GET', 'POST'])
 def drink(drinkid):
     drink = Product.query.get(drinkid)
-    return render_template('drink.html', title=drink.name, drink=drink, User=User, Usergroup=Usergroup)
+    usergroups = Usergroup.query.all()
+    return render_template('drink.html', title=drink.name, drink=drink, User=User, usergroups=usergroups, amount_usergroups=len(usergroups))
 
 @app.route('/drink/<int:drinkid>/<int:userid>')
 def purchase(drinkid, userid):

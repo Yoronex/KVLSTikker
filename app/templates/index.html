@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block content %}
+{% block app_content %}
     <h1>Kies iets uit!</h1>
     {% for p in Product.query.all() %}
     <p><a href="/drink/{{ p.id }}">{{ p.name }}</a></p>
