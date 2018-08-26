@@ -34,7 +34,6 @@ body {
 
 .profile-usertitle {
   text-align: center;
-  margin-top: 0px;
 }
 
 .profile-usertitle-name {
@@ -122,7 +121,7 @@ body {
 
 .main {
     margin-left: 300px; /* Same as the width of the sidenav */
-    font-size: 28px; /* Increased text to enable scrolling */
+    font-size: 20px; /* Increased text to enable scrolling */
     padding: 0px 10px;
     font-family: standardtext;
 }
@@ -145,6 +144,15 @@ body {
 .btn-green {
     background-color: #0b8337;
     color: #000000;
+}
+
+.footer {
+    margin-left: 280px; /* Same as the width of the sidenav */
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
 }
 
 td {padding: 10px;}

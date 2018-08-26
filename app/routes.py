@@ -1,7 +1,7 @@
 from flask import render_template, flash, redirect, url_for
 from app import app, db
-from app.forms import LoginForm, UserRegistrationForm, DrinkRegistrationForm, ContactForm, UpgradeBalanceForm
-from app.models import User, Usergroup, Product, Purchase, Upgrade
+from app.forms import LoginForm, UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm
+from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction
 
 @app.route('/')
 @app.route('/index')
@@ -79,7 +79,42 @@ def purchase(drinkid, userid):
     flash("{} voor {} verwerkt".format(drink.name, user.name))
     return redirect(url_for('drink', drinkid=drinkid))
 
-@app.route('/testforms')
+@app.route('/testforms', methods=['GET', 'POST'])
 def test():
-    form = ContactForm()
+    form = DrinkForm()
+    if form.validate_on_submit():
+        product = Product(name=form.name.data, price=form.price.data, purchaseable=True)
+        db.session.add(product)
+        db.session.commit()
+        flash("Product {} succesvol aangemaakt".format(product.name))
+        return redirect(url_for('admin'))
     return render_template('testforms.html', form=form)
+
+@app.route('/admin', methods=['GET', 'POST'])
+def admin():
+    form1 = UserGroupRegistrationForm()
+    name1 = "Groep aanmaken"
+    form2 = UserRegistrationForm()
+    name2 = "Gebruiker aanmaken"
+    form3 = DrinkForm()
+    name3 = "Product aanmaken"
+    if form1.submit_usergroup.data and form1.validate_on_submit():
+        usergroup = Usergroup(name=form1.name.data)
+        db.session.add(usergroup)
+        db.session.commit()
+        flash("Groep {} succesvol aangemaakt".format(usergroup.name))
+        #form2.updategroups()
+        return redirect(url_for('admin'))
+    if form2.submit_user.data and form2.validate_on_submit():
+        user = User(name=form2.name.data, usergroup_id=form2.group.data)
+        db.session.add(user)
+        db.session.commit()
+        flash("Gebruiker {} succesvol geregistreerd".format(user.name))
+        return redirect(url_for('admin'))
+    if form3.submit_drink.data and form3.validate_on_submit():
+        product = Product(name=form3.name.data, price=form3.price.data, purchaseable=True)
+        db.session.add(product)
+        db.session.commit()
+        flash("Product {} succesvol aangemaakt".format(product.name))
+        return redirect(url_for('admin'))
+    return render_template('admin.html', title='Admin paneel', form1=form1, form2=form2, form3=form3, name1=name1, name2=name2, name3=name3)

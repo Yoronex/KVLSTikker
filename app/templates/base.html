@@ -27,7 +27,7 @@
             <!-- END SIDEBAR USER TITLE -->
             <!-- SIDEBAR BUTTONS -->
             <div class="profile-userbuttons">
-                <button type="button" class="btn btn-success btn-sm">Follow</button>
+                <a href="/admin" class="btn btn-sm btn-green">Admin</a>
                 <button type="button" class="btn btn-danger btn-sm">Message</button>
             </div>
             <!-- END SIDEBAR BUTTONS -->
@@ -57,6 +57,7 @@
 {% endblock %}
 
 {% block content %}
+    <div class="footer">Roy Kakkenberg 2018</div>
     <div class="main">
         <div class="container">
             {% with messages = get_flashed_messages() %}
