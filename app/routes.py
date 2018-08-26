@@ -33,10 +33,14 @@ def register():
 def upgrade():
     form = UpgradeBalanceForm()
     if form.validate_on_submit():
+
         upgrade = Upgrade(user_id=form.user.data, amount=form.amount.data)
-        user = User.query.get(upgrade.user_id)
         db.session.add(upgrade)
-        user.balance = user.balance + form.amount.data
+        db.session.commit()
+        user = User.query.get(upgrade.user_id)
+        user.balance = user.balance + float(form.amount.data)
+        transaction = Transaction(user_id=form.user.data, upgrade_id=upgrade.id, balchange=upgrade.amount, newbal=user.balance)
+        db.session.add(transaction)
         db.session.commit()
         flash("Gebruiker {} heeft succesvol opgewaardeerd met {} euro".format(user.name, upgrade.amount))
         return redirect(url_for('index'))
@@ -72,9 +76,14 @@ def drink(drinkid):
 def purchase(drinkid, userid):
     drink = Product.query.get(drinkid)
     user = User.query.get(userid)
-    purchase = Purchase(user_id=user.id, product_id=drink.id, price=drink.price)
+    amount = 1
+    user.balance = user.balance - float(drink.price) * amount
+    purchase = Purchase(user_id=user.id, product_id=drink.id, price=drink.price, amount=amount)
     db.session.add(purchase)
-    user.balance = user.balance - drink.price
+    db.session.commit()
+    balchange = -drink.price*amount
+    transaction = Transaction(user_id=user.id, purchase_id=purchase.id, balchange=balchange, newbal=user.balance)
+    db.session.add(transaction)
     db.session.commit()
     flash("{} voor {} verwerkt".format(drink.name, user.name))
     return redirect(url_for('drink', drinkid=drinkid))
