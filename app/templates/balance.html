@@ -15,9 +15,9 @@
                 <tr>
                     <td><a href="/user/{{ u.id }}">{{ u.name }}</a></td>
                     {% if u.balance < 0 %}
-                    <td><span style="color: red;font-weight:bold;">{{ '%.2f' % u.balance }}</span></td>
+                    <td><span style="color: red;font-weight:bold;">€ {{ '%.2f' % u.balance }}</span></td>
                     {% else %}
-                    <td><span style="color: green;font-weight:bold;">{{ '%.2f' % u.balance }}</span></td>
+                    <td><span style="color: green;font-weight:bold;">€ {{ '%.2f' % u.balance }}</span></td>
                     {% endif %}
                 </tr>
                 {% endfor %}

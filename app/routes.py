@@ -58,9 +58,10 @@ def users():
 @app.route('/user/<int:userid>')
 def user(userid):
     user = User.query.get(userid)
+    transactions = user.transactions.order_by(Transaction.id.desc()).all()
     purchases = user.purchases.all()
     upgrades = user.upgrades.all()
-    return render_template('user.html', user=user, purchases=purchases, upgrades=upgrades, Product=Product)
+    return render_template('user.html', user=user, transactions=transactions, Purchase=Purchase, upgrades=upgrades, Product=Product)
 
 @app.route('/purchasehistory')
 def purchasehistory():
