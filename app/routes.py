@@ -128,3 +128,64 @@ def admin():
         flash("Product {} succesvol aangemaakt".format(product.name))
         return redirect(url_for('admin'))
     return render_template('admin.html', title='Admin paneel', form1=form1, form2=form2, form3=form3, name1=name1, name2=name2, name3=name3)
+
+@app.route('/admin/users')
+def admin_users():
+    return render_template("manusers.html", title="Gebruikers", User=User, Usergroup=Usergroup)
+
+@app.route('/admin/users/delete/<int:userid>')
+def admin_users_delete(userid):
+    user = User.query.get(userid)
+    if user.balance == 0.0:
+        message = "gebruiker " + user.name + " wilt verwijderen? Alle historie gaat hierbij verloren!"
+        agree_url = url_for("admin_users_delete_exec", userid=userid)
+        return_url = url_for("admin_users")
+        return render_template("verify.html", title="Bevestigen", message=message, user=user, agree_url=agree_url, return_url=return_url)
+    else:
+        flash("Deze gebruiker heeft nog geen saldo van € 0!")
+        return redirect(url_for('admin_users'))
+
+@app.route('/admin/users/delete/<int:userid>/exec')
+def admin_users_delete_exec(userid):
+    user = User.query.get(userid)
+    for t in user.transactions.all():
+        db.session.delete(t)
+    for u in user.upgrades.all():
+        db.session.delete(u)
+    for p in user.purchases.all():
+        db.session.delete(p)
+    db.session.delete(user)
+    db.session.commit()
+    flash("Gebruiker {} verwijderd".format(user.name))
+    return redirect(url_for('admin_users'))
+
+@app.route('/admin/transactions')
+def admin_transactions():
+    transactions = Transaction.query.all()
+    return render_template('mantransactions.html', User=User, transactions=transactions, Purchase=Purchase, Product=Product)
+
+@app.route('/admin/transactions/delete/<int:tranid>')
+def admin_transactions_delete(tranid):
+    transaction = Transaction.query.get(tranid)
+    message = "transactie met ID " + str(transaction.id) + " wilt verwijderen?"
+    agree_url = url_for("admin_transactions_delete_exec", tranid=tranid)
+    return_url = url_for("admin_transactions")
+    return render_template("verify.html", title="Bevestigen", message=message, transaction=transaction, agree_url=agree_url, return_url=return_url)
+
+@app.route('/admin/transactions/delete/<int:tranid>/exec')
+def admin_transactions_delete_exec(tranid):
+    transaction = Transaction.query.get(tranid)
+    if transaction.purchase_id is None:
+        upgrade = Upgrade.query.get(transaction.upgrade_id)
+        db.session.delete(upgrade)
+    else:
+        purchase = Purchase.query.get(transaction.purchase_id)
+        db.session.delete(purchase)
+    for t in Transaction.query.filter(Transaction.user_id == transaction.user_id, Transaction.timestamp > transaction.timestamp).all():
+        t.newbal = t.newbal - transaction.balchange
+    user = User.query.get(transaction.user_id)
+    user.balance = user.balance - transaction.balchange
+    db.session.delete(transaction)
+    db.session.commit()
+    flash("Transactie met ID {} succesvol verwijderd!".format(transaction.id))
+    return redirect(url_for('admin_transactions'))
