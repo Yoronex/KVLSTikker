@@ -1,6 +1,6 @@
 from flask import render_template, flash, redirect, url_for
 from app import app, db
-from app.forms import LoginForm, UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm
+from app.forms import LoginForm, UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm, ChangeDrinkForm
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction
 
 @app.route('/')
@@ -189,3 +189,29 @@ def admin_transactions_delete_exec(tranid):
     db.session.commit()
     flash("Transactie met ID {} succesvol verwijderd!".format(transaction.id))
     return redirect(url_for('admin_transactions'))
+
+@app.route('/admin/drinks')
+def admin_drinks():
+    drinks = Product.query.all()
+    return render_template('mandrinks.html', drinks=drinks)
+
+@app.route('/admin/drinks/edit/<int:drinkid>', methods=['GET', 'POST'])
+def admin_drinks_edit(drinkid):
+    product = Product.query.get(drinkid)
+    form = ChangeDrinkForm()
+    if form.validate_on_submit():
+        product.name = form.name.data
+        product.price = form.price.data
+        product.purchaseable = form.purchaseable.data
+        db.session.commit()
+        flash("Product {} (ID: {}) succesvol aangepast!".format(product.name, product.id))
+        return redirect(url_for('admin_drinks'))
+    return render_template('editdrink.html', product=product, form=form)
+
+@app.route('/admin/drinks/delete/<int:drinkid>')
+def admin_drinks_delete(drinkid):
+    product = Product.query.get(drinkid)
+    product.purchaseable = False
+    db.session.commit()
+    flash('Product {} is niet meer beschikbaar'.format(product.name))
+    return redirect(url_for('admin_drinks'))

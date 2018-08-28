@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+    <h1>Pas {{ product.name }} (ID: {{ product.id }}) aan</h1>
+    <form class="form form-horizontal" method="post" role="form">
+        {{ form.hidden_tag() }}
+        {{ wtf.form_errors(form, hiddens="only") }}
+
+        {{ wtf.form_field(form.name, value=product.name) }}
+        {{ wtf.form_field(form.price, value=product.price) }}
+        {{ wtf.form_field(form.purchaseable, value=('%.2f' % product.purchaseable)) }}
+        {{ wtf.form_field(form.submit) }}
+    </form>
+{% endblock %}

@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField, SelectMultipleField, widgets, IntegerField, DecimalField
+from wtforms import StringField, PasswordField, SubmitField, SelectField, SelectMultipleField, widgets, IntegerField, DecimalField, BooleanField
 from wtforms.validators import ValidationError, DataRequired, EqualTo
 from app.models import User, Usergroup
 from app import db
@@ -62,3 +62,9 @@ class UpgradeBalanceForm(FlaskForm):
         for u in User.query.order_by(User.usergroup_id.asc()).all():
             users.append((str(u.id), u.name + " (" + Usergroup.query.get(u.usergroup_id).name + ")"))
         self.user.choices = users
+
+class ChangeDrinkForm(FlaskForm):
+    name = StringField('Naam', validators=[DataRequired()])
+    price = DecimalField('Prijs', validators=[DataRequired()])
+    purchaseable = BooleanField('Beschikbaar')
+    submit = SubmitField('Versturen')
