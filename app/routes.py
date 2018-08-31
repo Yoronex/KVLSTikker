@@ -110,7 +110,7 @@ def test():
 def admin():
     return render_template('admin.html', title='Admin paneel')
 
-@app.route('/admin/users')
+@app.route('/admin/users', methods=['GET', 'POST'])
 def admin_users():
     form = UserRegistrationForm()
     if form.validate_on_submit():
@@ -178,7 +178,7 @@ def admin_transactions_delete_exec(tranid):
     flash("Transactie met ID {} succesvol verwijderd!".format(transaction.id))
     return redirect(url_for('admin_transactions'))
 
-@app.route('/admin/drinks')
+@app.route('/admin/drinks', methods=['GET', 'POST'])
 def admin_drinks():
     drinks = Product.query.all()
     form = DrinkForm()
@@ -211,7 +211,7 @@ def admin_drinks_delete(drinkid):
     flash('Product {} is niet meer beschikbaar'.format(product.name))
     return redirect(url_for('admin_drinks'))
 
-@app.route('/admin/usergroups')
+@app.route('/admin/usergroups', methods=['GET', 'POST'])
 def admin_usergroups():
     form = UserGroupRegistrationForm()
     if form.validate_on_submit():
