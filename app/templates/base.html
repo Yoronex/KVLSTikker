@@ -27,8 +27,8 @@
             <!-- END SIDEBAR USER TITLE -->
             <!-- SIDEBAR BUTTONS -->
             <div class="profile-userbuttons">
-                <a href="/admin" class="btn btn-sm btn-green">Admin</a>
-                <button type="button" class="btn btn-danger btn-sm">Message</button>
+                <a href="/admin" class="btn btn-green">Admin</a>
+                <a href="/about" class="btn btn-yellow">Over</a>
             </div>
             <!-- END SIDEBAR BUTTONS -->
             <!-- SIDEBAR MENU -->
@@ -59,16 +59,26 @@
 {% block content %}
     <div class="footer">Roy Kakkenberg 2018</div>
     <div class="main">
-        <div class="container">
-            {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                {% for message in messages %}
-                <div class="alert alert-info" role="alert">{{ message }}</div>
-                {% endfor %}
-            {% endif %}
-            {% endwith %}
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-info" role="alert">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        {% endwith %}
 
-            {% block app_content %}{% endblock %}
-        </div>
+        <table>
+            <tr>
+                <td valign="center">
+        {% if backurl %}<a href="{{ backurl }}"><img src="{{ url_for('.static', filename='backarrow.png') }}" height="20" width="20" title="Ga terug"></a>
+                    {% endif %} </td>
+                <td valign="center">
+        {% if breadcrumbs %}{{ breadcrumbs }}
+        {% else %}Somewhere
+        {% endif %}
+                </td>
+            </tr>
+        </table>
+        {% block app_content %}{% endblock %}
     </div>
 {% endblock %}

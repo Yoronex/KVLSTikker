@@ -100,38 +100,26 @@ def test():
         return redirect(url_for('admin'))
     return render_template('testforms.html', form=form)
 
+##
+#
+# Admin Panel
+#
+##
+
 @app.route('/admin', methods=['GET', 'POST'])
 def admin():
-    form1 = UserGroupRegistrationForm()
-    name1 = "Groep aanmaken"
-    form2 = UserRegistrationForm()
-    name2 = "Gebruiker aanmaken"
-    form3 = DrinkForm()
-    name3 = "Product aanmaken"
-    if form1.submit_usergroup.data and form1.validate_on_submit():
-        usergroup = Usergroup(name=form1.name.data)
-        db.session.add(usergroup)
-        db.session.commit()
-        flash("Groep {} succesvol aangemaakt".format(usergroup.name))
-        #form2.updategroups()
-        return redirect(url_for('admin'))
-    if form2.submit_user.data and form2.validate_on_submit():
-        user = User(name=form2.name.data, usergroup_id=form2.group.data)
-        db.session.add(user)
-        db.session.commit()
-        flash("Gebruiker {} succesvol geregistreerd".format(user.name))
-        return redirect(url_for('admin'))
-    if form3.submit_drink.data and form3.validate_on_submit():
-        product = Product(name=form3.name.data, price=form3.price.data, purchaseable=True)
-        db.session.add(product)
-        db.session.commit()
-        flash("Product {} succesvol aangemaakt".format(product.name))
-        return redirect(url_for('admin'))
-    return render_template('admin.html', title='Admin paneel', form1=form1, form2=form2, form3=form3, name1=name1, name2=name2, name3=name3)
+    return render_template('admin.html', title='Admin paneel')
 
 @app.route('/admin/users')
 def admin_users():
-    return render_template("manusers.html", title="Gebruikers", User=User, Usergroup=Usergroup)
+    form = UserRegistrationForm()
+    if form.validate_on_submit():
+        user = User(name=form.name.data, usergroup_id=form.group.data)
+        db.session.add(user)
+        db.session.commit()
+        flash("Gebruiker {} succesvol geregistreerd".format(user.name))
+        return redirect(url_for('admin_users'))
+    return render_template("manusers.html", title="Gebruikersbeheer", backurl=url_for('index'), User=User, Usergroup=Usergroup, form=form)
 
 @app.route('/admin/users/delete/<int:userid>')
 def admin_users_delete(userid):
@@ -193,7 +181,14 @@ def admin_transactions_delete_exec(tranid):
 @app.route('/admin/drinks')
 def admin_drinks():
     drinks = Product.query.all()
-    return render_template('mandrinks.html', drinks=drinks)
+    form = DrinkForm()
+    if form.validate_on_submit():
+        product = Product(name=form.name.data, price=form.price.data, purchaseable=True)
+        db.session.add(product)
+        db.session.commit()
+        flash("Product {} succesvol aangemaakt".format(product.name))
+        return redirect(url_for('admin_drinks'))
+    return render_template('mandrinks.html', drinks=drinks, form=form)
 
 @app.route('/admin/drinks/edit/<int:drinkid>', methods=['GET', 'POST'])
 def admin_drinks_edit(drinkid):
@@ -215,3 +210,35 @@ def admin_drinks_delete(drinkid):
     db.session.commit()
     flash('Product {} is niet meer beschikbaar'.format(product.name))
     return redirect(url_for('admin_drinks'))
+
+@app.route('/admin/usergroups')
+def admin_usergroups():
+    form = UserGroupRegistrationForm()
+    if form.validate_on_submit():
+        usergroup = Usergroup(name=form.name.data)
+        db.session.add(usergroup)
+        db.session.commit()
+        flash("Groep {} succesvol aangemaakt".format(usergroup.name))
+        return redirect(url_for('admin_usergroups'))
+    return render_template("manusergroups.html", title="Groepen", form=form, Usergroup=Usergroup)
+
+@app.route('/admin/usergroups/delete/<int:usergroupid>')
+def admin_usergroups_delete(usergroupid):
+    usergroup = Usergroup.query.get(usergroupid)
+    users = usergroup.users.all()
+    if len(users) == 0:
+        message = "groep " + usergroup.name + " wilt verwijderen?"
+        agree_url = url_for("admin_usergroups_delete_exec", usergroupid=usergroupid)
+        return_url = url_for("admin_usergroups")
+        return render_template("verify.html", title="Bevestigen", message=message, user=user, agree_url=agree_url, return_url=return_url)
+    else:
+        flash("Deze groep heeft nog gebruikers! Verwijder deze eerst.")
+        return redirect(url_for('admin_usergroups'))
+
+@app.route('/admin/usergroups/delete/<int:usergroupid>/exec')
+def admin_usergroups_delete_exec(usergroupid):
+    usergroup = Usergroup.query.get(usergroupid)
+    db.session.delete(usergroup)
+    db.session.commit()
+    flash("Groep {} verwijderd".format(usergroup.name))
+    return redirect(url_for('admin_usergroups'))

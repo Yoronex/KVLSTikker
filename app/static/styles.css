@@ -121,6 +121,9 @@ body {
 
 .main {
     margin-left: 300px; /* Same as the width of the sidenav */
+    margin-top: 8px;
+    margin-right: 10px;
+    margin-bottom: 20px;
     font-size: 20px; /* Increased text to enable scrolling */
     padding: 0px 10px;
     font-family: standardtext;
@@ -139,11 +142,13 @@ body {
 .btn-yellow {
     background-color: #ffd94a;
     color: #000000;
+    margin: 5px;
 }
 
 .btn-green {
     background-color: #0b8337;
     color: #000000;
+    margin: 5px;
 }
 
 .footer {
