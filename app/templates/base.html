@@ -43,10 +43,6 @@
                         Saldo's </a>
                     </li>
                     <li>
-                        <a href="{{ url_for('register') }}">
-                        Registreren</a>
-                    </li>
-                    <li>
                         <a href="{{ url_for('upgrade') }}">
                         Opwaarderen</a>
                     </li>
@@ -67,18 +63,13 @@
         {% endif %}
         {% endwith %}
 
-        <table>
-            <tr>
-                <td valign="center">
-        {% if backurl %}<a href="{{ backurl }}"><img src="{{ url_for('.static', filename='backarrow.png') }}" height="20" width="20" title="Ga terug"></a>
-                    {% endif %} </td>
-                <td valign="center">
-        {% if breadcrumbs %}{{ breadcrumbs }}
-        {% else %}Somewhere
-        {% endif %}
-                </td>
-            </tr>
-        </table>
+        <div>
+        {%- for breadcrumb in breadcrumbs -%}
+            <a href="{{ breadcrumb.url }}">{{ breadcrumb.text }}</a>
+            {{ '/' if not loop.last }}
+        {%- endfor -%}
+        </div>
+
         {% block app_content %}{% endblock %}
     </div>
 {% endblock %}

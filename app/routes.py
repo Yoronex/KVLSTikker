@@ -1,10 +1,48 @@
-from flask import render_template, flash, redirect, url_for
+from typing import Dict, Any
+
+from threading import Thread
+from flask import render_template, flash, redirect, url_for, request
 from app import app, db
 from app.forms import LoginForm, UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm, ChangeDrinkForm
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction
+from flask_breadcrumbs import Breadcrumbs, register_breadcrumb
+import pandas as pd
+import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import math
+
+def view_user_dlc(*args, **kwargs):
+    user_id = request.view_args['userid']
+    user = User.query.get(user_id)
+    return [{'text': user.name, 'url': url_for('user', userid=user_id)}]
+
+def view_drink_dlc(*args, **kwargs):
+    drink_id = request.view_args['drinkid']
+    product = Product.query.get(drink_id)
+    return [{'text': product.name, 'url': url_for('drink', drinkid=drink_id)}]
+
+def query_to_dataframe(query, columns):
+    nestedDict = {}
+    for q in query:
+        nestedDict[q.id] = q.__dict__
+    return pd.DataFrame.from_dict(nestedDict, orient="index", columns=columns)
+
+def make_autopct(values):
+    def my_autopct(pct):
+        total = sum(values)
+        val = int(round(pct*total/100.0))
+        return '{p:.2f}%  ({v:d})'.format(p=pct,v=val)
+    return my_autopct
+
+plotcolours = ["#0b8337", "#ffd94a", "#707070"]
 
 @app.route('/')
 @app.route('/index')
+@app.route('/drink')
+@register_breadcrumb(app, '.', 'Home', order=0)
+@register_breadcrumb(app, '.drink', 'Product', order=1)
 def index():
     return render_template('index.html', title='Home', Product=Product)
 
@@ -16,20 +54,8 @@ def login():
         return redirect(url_for('index'))
     return render_template('login.html', title='Sign In', form=form)
 
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    form = UserRegistrationForm()
-    if form.validate_on_submit():
-        #print("User wants to register!")
-        user = User(name=form.name.data, usergroup_id=form.group.data)
-        #print(user.name, user.usergroup_id)
-        db.session.add(user)
-        db.session.commit()
-        flash("Gebruiker {} succesvol geregistreerd".format(user.name))
-        return redirect(url_for('index'))
-    return render_template('register.html', title='Registreren', form=form)
-
 @app.route('/upgrade', methods=['GET', 'POST'])
+@register_breadcrumb(app, '.upgrade', 'Opwaarderen', order=1)
 def upgrade():
     form = UpgradeBalanceForm()
     if form.validate_on_submit():
@@ -47,15 +73,18 @@ def upgrade():
     return render_template('upgrade.html', title='Opwaarderen', form=form)
 
 @app.route('/balance')
+@register_breadcrumb(app, '.balance', "Saldo's", order=1)
 def balance():
     usergroups = Usergroup.query.all()
     return render_template('balance.html', title='Saldo', usergroups=usergroups, amount_usergroups=len(usergroups))
 
-@app.route('/users')
+@app.route('/user')
+@register_breadcrumb(app, '.user', 'Gebruiker', order=1)
 def users():
-    return render_template('users.html', title='Gebruikers', User=User)
+    return redirect(url_for('balance'))
 
 @app.route('/user/<int:userid>')
+@register_breadcrumb(app, '.user.id', '', dynamic_list_constructor=view_user_dlc, order=2)
 def user(userid):
     user = User.query.get(userid)
     transactions = user.transactions.order_by(Transaction.id.desc()).all()
@@ -68,6 +97,7 @@ def purchasehistory():
     return render_template('purchasehistory.html', title='Aankoophistorie', User=User, Product=Product, Purchase=Purchase)
 
 @app.route('/drink/<int:drinkid>', methods=['GET', 'POST'])
+@register_breadcrumb(app, '.drink.id', '', dynamic_list_constructor=view_drink_dlc, order=2)
 def drink(drinkid):
     drink = Product.query.get(drinkid)
     usergroups = Usergroup.query.all()
@@ -107,10 +137,12 @@ def test():
 ##
 
 @app.route('/admin', methods=['GET', 'POST'])
+@register_breadcrumb(app, '.admin', 'Beheerderspaneel', order=1)
 def admin():
     return render_template('admin.html', title='Admin paneel')
 
 @app.route('/admin/users', methods=['GET', 'POST'])
+@register_breadcrumb(app, '.admin.users', 'Gebruikersbeheer', order=2)
 def admin_users():
     form = UserRegistrationForm()
     if form.validate_on_submit():
@@ -148,6 +180,7 @@ def admin_users_delete_exec(userid):
     return redirect(url_for('admin_users'))
 
 @app.route('/admin/transactions')
+@register_breadcrumb(app, '.admin.transactions', 'Transactiebeheer', order=2)
 def admin_transactions():
     transactions = Transaction.query.all()
     return render_template('mantransactions.html', User=User, transactions=transactions, Purchase=Purchase, Product=Product)
@@ -179,6 +212,7 @@ def admin_transactions_delete_exec(tranid):
     return redirect(url_for('admin_transactions'))
 
 @app.route('/admin/drinks', methods=['GET', 'POST'])
+@register_breadcrumb(app, '.admin.drinks', 'Productbeheer', order=2)
 def admin_drinks():
     drinks = Product.query.all()
     form = DrinkForm()
@@ -212,6 +246,7 @@ def admin_drinks_delete(drinkid):
     return redirect(url_for('admin_drinks'))
 
 @app.route('/admin/usergroups', methods=['GET', 'POST'])
+@register_breadcrumb(app, '.admin.usergroups', 'Groepenbeheer', order=2)
 def admin_usergroups():
     form = UserGroupRegistrationForm()
     if form.validate_on_submit():
@@ -242,3 +277,74 @@ def admin_usergroups_delete_exec(usergroupid):
     db.session.commit()
     flash("Groep {} verwijderd".format(usergroup.name))
     return redirect(url_for('admin_usergroups'))
+
+##
+#
+# Statistieken
+#
+##
+
+@app.route('/stats')
+def stats():
+    return None
+
+@app.route('/stats/user/<int:userid>')
+def stats_user(userid):
+    user = User.query.get(userid)
+    df = query_to_dataframe(user.purchases.all(), ["product_id", "amount", "price"])
+    filenames = []
+
+    def count_plot(df):
+        products = []
+        for p in Product.query.all():
+            products.append(p.id)
+
+        countDrinks = dict.fromkeys(products)
+        for d in countDrinks:
+            countDrinks[d] = 0
+
+        for index, row in df.iterrows():
+            countDrinks[int(row["product_id"])] = countDrinks[int(row["product_id"])] + row["amount"]
+
+        return countDrinks
+
+    def barplot(df):
+        D = count_plot(df)
+
+        fig1 = plt.figure()
+        ax1 = plt.gca()
+        bars = ax1.bar(range(len(D)), list(D.values()), align='center', color=plotcolours)
+        ax1.set_xticks(range(len(D.values())))
+        #ax.set_xticklabels(("A", "B"))
+        ax1.set_xticklabels([Product.query.get(x).name for x in D.keys()])
+        yint = range(int(min(D.values())), int(max(D.values())+1))
+        ax1.set_yticks(yint)
+        ax1.set_title("Aantal bestelde producten")
+        fig1.savefig('app/static/graphs/plot-bar-user-{}.png'.format(userid), transparent=True)
+
+    def piechart(df):
+        D = count_plot(df)
+
+        fig = plt.figure()
+        ax = plt.gca()
+        pies = ax.pie(list(D.values()), colors=plotcolours, explode=[0.02]*len(D.values()), labels=[Product.query.get(x).name for x in D.keys()], autopct=make_autopct(list(D.values())))
+        ax.set_title("Aantal bestelde producten")
+        fig.savefig('app/static/graphs/plot-pie-user-{}.png'.format(userid), transparent=True)
+
+    def linechart(df)
+    thread1 = Thread(target=barplot, args=(df, ))
+    thread2 = Thread(target=piechart, args=(df, ))
+    thread1.start()
+    thread2.start()
+    thread1.join()
+    #barplot(df)
+    filenames.append("graphs/plot-bar-user-{}.png".format(userid))
+    thread2.join()
+    #piechart(df)
+    filenames.append("graphs/plot-pie-user-{}.png".format(userid))
+
+    return render_template('statsuser.html', title="Statistieken voor {}".format(user.name), user=user, filenames=filenames)
+
+@app.route('/stats/drink/<int:drinkid>')
+def stats_drink(drinkid):
+    return None

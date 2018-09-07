@@ -24,14 +24,14 @@
             <td>Opwaardering</td>
             {% endif %}
             {% if t.balchange < 0 %}
-            <td><span style="color: red;font-weight:bold;">€ {{ '%.2f' % t.balchange }}</span></td>
+            <td><span style="color: red;font-weight:bold;">€{{ '%.2f' % t.balchange }}</span></td>
             {% else %}
-            <td><span style="color: green;font-weight:bold;">€ {{ '%.2f' % t.balchange }}</span></td>
+            <td><span style="color: green;font-weight:bold;">€{{ '%.2f' % t.balchange }}</span></td>
             {% endif %}
             {% if t.newbal < 0 %}
-            <td><span style="color: red;font-weight:bold;">€ {{ '%.2f' % t.newbal }}</span></td>
+            <td><span style="color: red;font-weight:bold;">€{{ '%.2f' % t.newbal }}</span></td>
             {% else %}
-            <td><span style="color: green;font-weight:bold;">€ {{ '%.2f' % t.newbal }}</span></td>
+            <td><span style="color: green;font-weight:bold;">€{{ '%.2f' % t.newbal }}</span></td>
             {% endif %}
         </tr>
         {% endfor %}

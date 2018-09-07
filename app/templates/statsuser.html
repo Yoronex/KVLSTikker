@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+    <h1>Gebruikersstatistieken voor {{ user.name }}</h1>
+    <div class="row">
+        <div class="col-md-6">
+            <img src="{{ url_for('.static', filename=filenames[0]) }}"><br>
+            <img src="{{ url_for('.static', filename=filenames[1]) }}">
+        </div>
+    </div>
+{% endblock %}
