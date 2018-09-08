@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+    <h1>Pas {{ product.name }} (ID: {{ product.id }}) aan</h1>
+    <div class="row">
+        <div class="col-md-6">
+            <h2>Pas huidige data aan</h2>
+            <form class="form form-horizontal" method="post" role="form">
+                {{ form.hidden_tag() }}
+                {{ wtf.form_errors(form, hiddens="only") }}
+
+                {{ wtf.form_field(form.name, value=product.name) }}
+                {{ wtf.form_field(form.price, value=('%.2f' % product.price)) }}
+                {{ wtf.form_field(form.purchaseable, value=product.purchaseable) }}
+                {{ wtf.form_field(form.submit1) }}
+            </form>
+        </div>
+        <div class="col-md-6">
+            <h2>Pas afbeelding aan</h2>
+            {{ wtf.quick_form(form2) }}
+            <p>* Alleen .jpg afbeelingen werken</p>
+            <br>
+            <img src="{{ url_for('.static', filename='products/{}.jpg'.format(product.id) ) }}" width="250" height="250">
+        </div>
+    </div>
+{% endblock %}

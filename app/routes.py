@@ -2,16 +2,31 @@ from typing import Dict, Any
 
 from threading import Thread
 from flask import render_template, flash, redirect, url_for, request
+from werkzeug.utils import secure_filename
 from app import app, db
-from app.forms import LoginForm, UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm, ChangeDrinkForm
+from app.forms import LoginForm, UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm, ChangeDrinkForm, ChangeDrinkImageForm
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction
 from flask_breadcrumbs import Breadcrumbs, register_breadcrumb
+import os
 import pandas as pd
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import math
+
+def is_filled(data):
+   if data == None:
+      return False
+   if data == '':
+      return False
+   if data == []:
+      return False
+   return True
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in app.Config["ALLOWED_EXTENSIONS"]
 
 def view_user_dlc(*args, **kwargs):
     user_id = request.view_args['userid']
@@ -126,6 +141,11 @@ def test():
         product = Product(name=form.name.data, price=form.price.data, purchaseable=True)
         db.session.add(product)
         db.session.commit()
+        image = form.image.data
+        filename = secure_filename(image.filename)
+        flash("filename: {}".format(str(filename)))
+        print(str(filename))
+        filename.save(os.path.join(app.instance_path,'products', filename))
         flash("Product {} succesvol aangemaakt".format(product.name))
         return redirect(url_for('admin'))
     return render_template('testforms.html', form=form)
@@ -139,7 +159,7 @@ def test():
 @app.route('/admin', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.admin', 'Beheerderspaneel', order=1)
 def admin():
-    return render_template('admin.html', title='Admin paneel')
+    return render_template('admin/admin.html', title='Admin paneel')
 
 @app.route('/admin/users', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.admin.users', 'Gebruikersbeheer', order=2)
@@ -151,7 +171,7 @@ def admin_users():
         db.session.commit()
         flash("Gebruiker {} succesvol geregistreerd".format(user.name))
         return redirect(url_for('admin_users'))
-    return render_template("manusers.html", title="Gebruikersbeheer", backurl=url_for('index'), User=User, Usergroup=Usergroup, form=form)
+    return render_template("admin/manusers.html", title="Gebruikersbeheer", backurl=url_for('index'), User=User, Usergroup=Usergroup, form=form)
 
 @app.route('/admin/users/delete/<int:userid>')
 def admin_users_delete(userid):
@@ -183,7 +203,7 @@ def admin_users_delete_exec(userid):
 @register_breadcrumb(app, '.admin.transactions', 'Transactiebeheer', order=2)
 def admin_transactions():
     transactions = Transaction.query.all()
-    return render_template('mantransactions.html', User=User, transactions=transactions, Purchase=Purchase, Product=Product)
+    return render_template('admin/mantransactions.html', User=User, transactions=transactions, Purchase=Purchase, Product=Product)
 
 @app.route('/admin/transactions/delete/<int:tranid>')
 def admin_transactions_delete(tranid):
@@ -220,22 +240,34 @@ def admin_drinks():
         product = Product(name=form.name.data, price=form.price.data, purchaseable=True)
         db.session.add(product)
         db.session.commit()
+        image = form.image.data
+        filename, file_extension = os.path.splitext(secure_filename(image.filename))
+        filename = str(product.id) + file_extension
+        image.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
         flash("Product {} succesvol aangemaakt".format(product.name))
         return redirect(url_for('admin_drinks'))
-    return render_template('mandrinks.html', drinks=drinks, form=form)
+    return render_template('admin/mandrinks.html', drinks=drinks, form=form)
 
 @app.route('/admin/drinks/edit/<int:drinkid>', methods=['GET', 'POST'])
 def admin_drinks_edit(drinkid):
     product = Product.query.get(drinkid)
     form = ChangeDrinkForm()
-    if form.validate_on_submit():
+    form2 = ChangeDrinkImageForm()
+    if form.submit1.data and form.validate_on_submit():
         product.name = form.name.data
         product.price = form.price.data
         product.purchaseable = form.purchaseable.data
         db.session.commit()
         flash("Product {} (ID: {}) succesvol aangepast!".format(product.name, product.id))
         return redirect(url_for('admin_drinks'))
-    return render_template('editdrink.html', product=product, form=form)
+    if form2.submit2.data and form2.validate_on_submit():
+        image = form2.image.data
+        filename, file_extension = os.path.splitext(secure_filename(image.filename))
+        filename = str(product.id) + file_extension
+        image.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+        flash("Afbeelding van product {} (ID: {}) succesvol aangepast!".format(product.name, product.id))
+        return redirect(url_for('admin_drinks'))
+    return render_template('admin/editdrink.html', product=product, form=form, form2=form2)
 
 @app.route('/admin/drinks/delete/<int:drinkid>')
 def admin_drinks_delete(drinkid):
@@ -255,7 +287,7 @@ def admin_usergroups():
         db.session.commit()
         flash("Groep {} succesvol aangemaakt".format(usergroup.name))
         return redirect(url_for('admin_usergroups'))
-    return render_template("manusergroups.html", title="Groepen", form=form, Usergroup=Usergroup)
+    return render_template("admin/manusergroups.html", title="Groepen", form=form, Usergroup=Usergroup)
 
 @app.route('/admin/usergroups/delete/<int:usergroupid>')
 def admin_usergroups_delete(usergroupid):
@@ -291,7 +323,6 @@ def stats():
 @app.route('/stats/user/<int:userid>')
 def stats_user(userid):
     user = User.query.get(userid)
-    df = query_to_dataframe(user.purchases.all(), ["product_id", "amount", "price"])
     filenames = []
 
     def count_plot(df):
@@ -308,21 +339,20 @@ def stats_user(userid):
 
         return countDrinks
 
-    def barplot(df):
+    def barplot_drinks(df):
         D = count_plot(df)
 
         fig1 = plt.figure()
         ax1 = plt.gca()
         bars = ax1.bar(range(len(D)), list(D.values()), align='center', color=plotcolours)
         ax1.set_xticks(range(len(D.values())))
-        #ax.set_xticklabels(("A", "B"))
         ax1.set_xticklabels([Product.query.get(x).name for x in D.keys()])
         yint = range(int(min(D.values())), int(max(D.values())+1))
         ax1.set_yticks(yint)
         ax1.set_title("Aantal bestelde producten")
         fig1.savefig('app/static/graphs/plot-bar-user-{}.png'.format(userid), transparent=True)
 
-    def piechart(df):
+    def piechart_drinks(df):
         D = count_plot(df)
 
         fig = plt.figure()
@@ -331,19 +361,33 @@ def stats_user(userid):
         ax.set_title("Aantal bestelde producten")
         fig.savefig('app/static/graphs/plot-pie-user-{}.png'.format(userid), transparent=True)
 
-    def linechart(df)
-    thread1 = Thread(target=barplot, args=(df, ))
-    thread2 = Thread(target=piechart, args=(df, ))
+    def barchart_drinkspermonth():
+        df1 = query_to_dataframe(user.transactions.filter(Transaction.upgrade_id == None).all(), ["timestamp", "balchange"])
+        df1_1 = df1.groupby(pd.Grouper(key="timestamp", freq="M")).sum()
+        df2 = query_to_dataframe(user.transactions.filter(Transaction.purchase_id == None).all(), ["timestamp", "balchange"])
+        df2_1 = df2.groupby(pd.Grouper(key='timestamp', freq='M')).sum()
+
+        fig = plt.figure()
+        ax = plt.gca()
+        bars1 = ax.bar(range(len(df1_1)), abs(df1_1['balchange']), align='center', color=plotcolours[0])
+        bars2 = ax.bar(range(len(df2_1)))
+
+        fig.savefig('app/static/graphs/plot-barmonth-user-{}.png'.format(userid), transparent=True)
+
+    def linechart_money(df):
+        df = query_to_dataframe(user.transactions.all(), ["timestamp", "newbal", "balchange"])
+
+    thread1 = Thread(target=barplot_drinks, args=(query_to_dataframe(user.purchases.all(), ["product_id", "amount", "price"]), ))
+    thread2 = Thread(target=piechart_drinks, args=(query_to_dataframe(user.purchases.all(), ["product_id", "amount", "price"]), ))
     thread1.start()
     thread2.start()
     thread1.join()
-    #barplot(df)
     filenames.append("graphs/plot-bar-user-{}.png".format(userid))
     thread2.join()
-    #piechart(df)
     filenames.append("graphs/plot-pie-user-{}.png".format(userid))
 
-    return render_template('statsuser.html', title="Statistieken voor {}".format(user.name), user=user, filenames=filenames)
+
+    return render_template('stats/statsuser.html', title="Statistieken voor {}".format(user.name), user=user, filenames=filenames)
 
 @app.route('/stats/drink/<int:drinkid>')
 def stats_drink(drinkid):

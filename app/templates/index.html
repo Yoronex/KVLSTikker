@@ -2,7 +2,25 @@
 
 {% block app_content %}
     <h1>Kies iets uit!</h1>
-    {% for p in Product.query.filter(Product.purchaseable == True).all() %}
+    <!--{% for p in Product.query.filter(Product.purchaseable == True).all() %}
     <p><a href="/drink/{{ p.id }}">{{ p.name }}</a></p>
-    {% endfor %}
+    {% endfor %}-->
+    <div class="row">
+        <div class="col-md-12">
+            <center>
+            {% for p in Product.query.filter(Product.purchaseable == True).all() %}
+            <!--<table>
+                <tr>
+                    <td><a href="/drink/{{ p.id }}>"><img src="{{ url_for('.static', filename='products/{}.jpg'.format(p.id) ) }}" height='200' width='200'></a></td>
+                </tr>
+                <tr>
+                    <td><center>€{{ p.price }}</center></td>
+                </tr>
+
+            </table>-->
+                <a href="/drink/{{ p.id }}"><img src="{{ url_for('.static', filename='products/{}.jpg'.format(p.id) ) }}" title="{{ p.name }} voor €{{ '%.2f' % p.price }}" class="front-image" height='230' width='230'></a>
+            {% endfor %}
+            </center>
+        </div>
+    </div>
 {% endblock %}

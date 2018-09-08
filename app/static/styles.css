@@ -163,3 +163,8 @@ body {
 td {padding: 10px;}
 
 th {text-align: center;}
+
+.front-image {
+    border: 2px solid red;
+    margin: 2px;
+}

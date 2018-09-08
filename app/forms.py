@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField, SelectMultipleField, widgets, IntegerField, DecimalField, BooleanField
+from wtforms import StringField, PasswordField, SubmitField, SelectField, SelectMultipleField, widgets, IntegerField, DecimalField, BooleanField, FileField
 from wtforms.validators import ValidationError, DataRequired, EqualTo
 from app.models import User, Usergroup
 from app import db
@@ -45,6 +45,7 @@ class UserGroupRegistrationForm(FlaskForm):
 class DrinkForm(FlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
     price = DecimalField('Prijs', validators=[DataRequired()])
+    image = FileField('Afbeelding', validators=[DataRequired()])
     submit_drink = SubmitField('Verstuur')
 
 class MultiCheckboxField(SelectMultipleField):
@@ -67,4 +68,8 @@ class ChangeDrinkForm(FlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
     price = DecimalField('Prijs', validators=[DataRequired()])
     purchaseable = BooleanField('Beschikbaar')
-    submit = SubmitField('Versturen')
+    submit1 = SubmitField('Versturen')
+
+class ChangeDrinkImageForm(FlaskForm):
+    image = FileField('Afbeelding', validators=[DataRequired()])
+    submit2 = SubmitField('Uploaden')
