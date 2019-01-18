@@ -27,8 +27,8 @@
             <!-- END SIDEBAR USER TITLE -->
             <!-- SIDEBAR BUTTONS -->
             <div class="profile-userbuttons">
-                <a href="/admin" class="btn btn-green">Admin</a>
-                <a href="/about" class="btn btn-yellow">Over</a>
+                <a href="{{ url_for('admin') }}" class="btn btn-green">Admin</a>
+                <a href="{{ url_for('about') }}" class="btn btn-yellow">Over</a>
             </div>
             <!-- END SIDEBAR BUTTONS -->
             <!-- SIDEBAR MENU -->
@@ -53,12 +53,24 @@
 {% endblock %}
 
 {% block content %}
-    <div class="footer">Roy Kakkenberg 2018</div>
+    <!--<div class="footer">Roy Kakkenberg 2018</div>-->
+
+    <script>
+        window.setTimeout(function() {
+            $(".alert").fadeTo(500, 0).slideUp(500, function(){
+                $(this).remove();
+            });
+        }, 4000);
+    </script>
+
     <div class="main">
-        {% with messages = get_flashed_messages() %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            {% for message in messages %}
-            <div class="alert alert-info" role="alert">{{ message }}</div>
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade in" role="alert">
+                <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                {{ message }}
+            </div>
             {% endfor %}
         {% endif %}
         {% endwith %}

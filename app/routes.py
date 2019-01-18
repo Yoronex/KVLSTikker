@@ -174,13 +174,13 @@ def admin_users_delete(userid):
         return_url = url_for("admin_users")
         return render_template("verify.html", title="Bevestigen", message=message, user=user, agree_url=agree_url, return_url=return_url)
     else:
-        flash("Deze gebruiker heeft nog geen saldo van € 0!")
+        flash("Deze gebruiker heeft nog geen saldo van € 0!", "danger")
         return redirect(url_for('admin_users'))
 
 @app.route('/admin/users/delete/<int:userid>/exec')
 def admin_users_delete_exec(userid):
     if (User.query.get(userid).balance != 0.0):
-        flash("Deze gebruiker heeft nog geen saldo van € 0!")
+        flash("Deze gebruiker heeft nog geen saldo van € 0!", "danger")
         return redirect(url_for('admin_users'))
     db_handler.deluser(userid)
     return redirect(url_for('admin_users'))
@@ -250,13 +250,13 @@ def admin_usergroups_delete(usergroupid):
         return_url = url_for("admin_usergroups")
         return render_template("verify.html", title="Bevestigen", message=message, user=user, agree_url=agree_url, return_url=return_url)
     else:
-        flash("Deze groep heeft nog gebruikers! Verwijder deze eerst.")
+        flash("Deze groep heeft nog gebruikers! Verwijder deze eerst.", "danger")
         return redirect(url_for('admin_usergroups'))
 
 @app.route('/admin/usergroups/delete/<int:usergroupid>/exec')
 def admin_usergroups_delete_exec(usergroupid):
     if len(Usergroup.query.get(usergroupid).users.all()) != 0:
-        flash("Deze groep heeft nog gebruikers! Verwijder deze eerst.")
+        flash("Deze groep heeft nog gebruikers! Verwijder deze eerst.", "danger")
         return redirect(url_for('admin_usergroups'))
     db_handler.delusergroup(usergroupid)
     return redirect(url_for('admin_usergroups'))
