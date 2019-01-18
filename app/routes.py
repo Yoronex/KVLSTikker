@@ -2,18 +2,19 @@ from typing import Dict, Any
 
 from threading import Thread
 from flask import render_template, flash, redirect, url_for, request
-from werkzeug.utils import secure_filename
-from app import app, db
+from app import app
+from app.dbhandler import dbhandler
 from app.forms import LoginForm, UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm, ChangeDrinkForm, ChangeDrinkImageForm
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction
 from flask_breadcrumbs import Breadcrumbs, register_breadcrumb
-import os
 import pandas as pd
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import math
+
+db_handler = dbhandler()
 
 def is_filled(data):
    if data == None:
@@ -74,16 +75,7 @@ def login():
 def upgrade():
     form = UpgradeBalanceForm()
     if form.validate_on_submit():
-
-        upgrade = Upgrade(user_id=form.user.data, amount=form.amount.data)
-        db.session.add(upgrade)
-        db.session.commit()
-        user = User.query.get(upgrade.user_id)
-        user.balance = user.balance + float(form.amount.data)
-        transaction = Transaction(user_id=form.user.data, upgrade_id=upgrade.id, balchange=upgrade.amount, newbal=user.balance)
-        db.session.add(transaction)
-        db.session.commit()
-        flash("Gebruiker {} heeft succesvol opgewaardeerd met {} euro".format(user.name, upgrade.amount))
+        db_handler.addbalance(form.user.data, form.amount.data)
         return redirect(url_for('index'))
     return render_template('upgrade.html', title='Opwaarderen', form=form)
 
@@ -120,21 +112,19 @@ def drink(drinkid):
 
 @app.route('/drink/<int:drinkid>/<int:userid>')
 def purchase(drinkid, userid):
-    drink = Product.query.get(drinkid)
-    user = User.query.get(userid)
-    amount = 1
-    user.balance = user.balance - float(drink.price) * amount
-    purchase = Purchase(user_id=user.id, product_id=drink.id, price=drink.price, amount=amount)
-    db.session.add(purchase)
-    db.session.commit()
-    balchange = -drink.price*amount
-    transaction = Transaction(user_id=user.id, purchase_id=purchase.id, balchange=balchange, newbal=user.balance)
-    db.session.add(transaction)
-    db.session.commit()
-    flash("{} voor {} verwerkt".format(drink.name, user.name))
-    return redirect(url_for('drink', drinkid=drinkid))
+    quantity = 1
+    db_handler.addpurchase(drinkid, userid, quantity)
+    return redirect(url_for('index'))
 
-@app.route('/testforms', methods=['GET', 'POST'])
+# Input in format of <userid>a<amount>&...
+@app.route('/drink/<int:drink_id>/<string:cart>')
+def purchase_from_cart(drink_id, cart):
+    for order in cart.split('&'):
+        data = order.split('a')
+        db_handler.addpurchase(drink_id, int(data[0]), int(data[1]))
+    return redirect(url_for('index'))
+
+'''@app.route('/testforms', methods=['GET', 'POST'])
 def test():
     form = DrinkForm()
     if form.validate_on_submit():
@@ -148,7 +138,12 @@ def test():
         filename.save(os.path.join(app.instance_path,'products', filename))
         flash("Product {} succesvol aangemaakt".format(product.name))
         return redirect(url_for('admin'))
-    return render_template('testforms.html', form=form)
+    return render_template('testforms.html', form=form)'''
+
+@app.route('/about')
+@register_breadcrumb(app, '.about', 'Over Tikker', order=1)
+def about():
+    return render_template('about.html', title="Over Tikker")
 
 ##
 #
@@ -166,10 +161,7 @@ def admin():
 def admin_users():
     form = UserRegistrationForm()
     if form.validate_on_submit():
-        user = User(name=form.name.data, usergroup_id=form.group.data)
-        db.session.add(user)
-        db.session.commit()
-        flash("Gebruiker {} succesvol geregistreerd".format(user.name))
+        db_handler.adduser(form.name.data, form.group.data)
         return redirect(url_for('admin_users'))
     return render_template("admin/manusers.html", title="Gebruikersbeheer", backurl=url_for('index'), User=User, Usergroup=Usergroup, form=form)
 
@@ -187,16 +179,10 @@ def admin_users_delete(userid):
 
 @app.route('/admin/users/delete/<int:userid>/exec')
 def admin_users_delete_exec(userid):
-    user = User.query.get(userid)
-    for t in user.transactions.all():
-        db.session.delete(t)
-    for u in user.upgrades.all():
-        db.session.delete(u)
-    for p in user.purchases.all():
-        db.session.delete(p)
-    db.session.delete(user)
-    db.session.commit()
-    flash("Gebruiker {} verwijderd".format(user.name))
+    if (User.query.get(userid).balance != 0.0):
+        flash("Deze gebruiker heeft nog geen saldo van € 0!")
+        return redirect(url_for('admin_users'))
+    db_handler.deluser(userid)
     return redirect(url_for('admin_users'))
 
 @app.route('/admin/transactions')
@@ -215,20 +201,7 @@ def admin_transactions_delete(tranid):
 
 @app.route('/admin/transactions/delete/<int:tranid>/exec')
 def admin_transactions_delete_exec(tranid):
-    transaction = Transaction.query.get(tranid)
-    if transaction.purchase_id is None:
-        upgrade = Upgrade.query.get(transaction.upgrade_id)
-        db.session.delete(upgrade)
-    else:
-        purchase = Purchase.query.get(transaction.purchase_id)
-        db.session.delete(purchase)
-    for t in Transaction.query.filter(Transaction.user_id == transaction.user_id, Transaction.timestamp > transaction.timestamp).all():
-        t.newbal = t.newbal - transaction.balchange
-    user = User.query.get(transaction.user_id)
-    user.balance = user.balance - transaction.balchange
-    db.session.delete(transaction)
-    db.session.commit()
-    flash("Transactie met ID {} succesvol verwijderd!".format(transaction.id))
+    db_handler.delpurchase(tranid)
     return redirect(url_for('admin_transactions'))
 
 @app.route('/admin/drinks', methods=['GET', 'POST'])
@@ -237,44 +210,25 @@ def admin_drinks():
     drinks = Product.query.all()
     form = DrinkForm()
     if form.validate_on_submit():
-        product = Product(name=form.name.data, price=form.price.data, purchaseable=True)
-        db.session.add(product)
-        db.session.commit()
-        image = form.image.data
-        filename, file_extension = os.path.splitext(secure_filename(image.filename))
-        filename = str(product.id) + file_extension
-        image.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-        flash("Product {} succesvol aangemaakt".format(product.name))
+        db_handler.adddrink(form.name.data, form.price.data, form.image.data)
         return redirect(url_for('admin_drinks'))
     return render_template('admin/mandrinks.html', drinks=drinks, form=form)
 
 @app.route('/admin/drinks/edit/<int:drinkid>', methods=['GET', 'POST'])
 def admin_drinks_edit(drinkid):
-    product = Product.query.get(drinkid)
     form = ChangeDrinkForm()
     form2 = ChangeDrinkImageForm()
     if form.submit1.data and form.validate_on_submit():
-        product.name = form.name.data
-        product.price = form.price.data
-        product.purchaseable = form.purchaseable.data
-        db.session.commit()
-        flash("Product {} (ID: {}) succesvol aangepast!".format(product.name, product.id))
+        db_handler.editdrink_attr(drinkid, form.name.data, form.price.data, form.purchaseable.data)
         return redirect(url_for('admin_drinks'))
     if form2.submit2.data and form2.validate_on_submit():
-        image = form2.image.data
-        filename, file_extension = os.path.splitext(secure_filename(image.filename))
-        filename = str(product.id) + file_extension
-        image.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-        flash("Afbeelding van product {} (ID: {}) succesvol aangepast!".format(product.name, product.id))
+        db_handler.editdrink_image(drinkid, form2.image.data)
         return redirect(url_for('admin_drinks'))
-    return render_template('admin/editdrink.html', product=product, form=form, form2=form2)
+    return render_template('admin/editdrink.html', product=Product.query.get(drinkid), form=form, form2=form2)
 
 @app.route('/admin/drinks/delete/<int:drinkid>')
 def admin_drinks_delete(drinkid):
-    product = Product.query.get(drinkid)
-    product.purchaseable = False
-    db.session.commit()
-    flash('Product {} is niet meer beschikbaar'.format(product.name))
+    db_handler.deldrink(drinkid)
     return redirect(url_for('admin_drinks'))
 
 @app.route('/admin/usergroups', methods=['GET', 'POST'])
@@ -282,10 +236,7 @@ def admin_drinks_delete(drinkid):
 def admin_usergroups():
     form = UserGroupRegistrationForm()
     if form.validate_on_submit():
-        usergroup = Usergroup(name=form.name.data)
-        db.session.add(usergroup)
-        db.session.commit()
-        flash("Groep {} succesvol aangemaakt".format(usergroup.name))
+        db_handler.addusergroup(form.name.data)
         return redirect(url_for('admin_usergroups'))
     return render_template("admin/manusergroups.html", title="Groepen", form=form, Usergroup=Usergroup)
 
@@ -304,10 +255,10 @@ def admin_usergroups_delete(usergroupid):
 
 @app.route('/admin/usergroups/delete/<int:usergroupid>/exec')
 def admin_usergroups_delete_exec(usergroupid):
-    usergroup = Usergroup.query.get(usergroupid)
-    db.session.delete(usergroup)
-    db.session.commit()
-    flash("Groep {} verwijderd".format(usergroup.name))
+    if len(Usergroup.query.get(usergroupid).users.all()) != 0:
+        flash("Deze groep heeft nog gebruikers! Verwijder deze eerst.")
+        return redirect(url_for('admin_usergroups'))
+    db_handler.delusergroup(usergroupid)
     return redirect(url_for('admin_usergroups'))
 
 ##
