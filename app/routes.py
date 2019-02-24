@@ -13,6 +13,8 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import math
+from datetime import datetime
+from dateutil import tz
 
 db_handler = dbhandler()
 
@@ -52,6 +54,25 @@ def make_autopct(values):
         return '{p:.2f}%  ({v:d})'.format(p=pct,v=val)
     return my_autopct
 
+def convert_to_local_time(transactions):
+    from_zone = tz.tzutc()
+    to_zone = tz.tzlocal()
+    result = []
+
+    for t in transactions:
+    # utc = datetime.utcnow()
+        utc = datetime.strptime(t.datetime, '%Y-%m-%d %H:%M:%S.%f')
+
+        # Tell the datetime object that it's in UTC time zone since
+        # datetime objects are 'naive' by default
+        utc = utc.replace(tzinfo=from_zone)
+
+        # Convert time zone
+        result.append(utc.astimezone(to_zone))
+
+    return result
+
+
 plotcolours = ["#0b8337", "#ffd94a", "#707070"]
 
 @app.route('/')
@@ -75,7 +96,11 @@ def login():
 def upgrade():
     form = UpgradeBalanceForm()
     if form.validate_on_submit():
-        db_handler.addbalance(form.user.data, form.amount.data)
+        amount = float(form.amount.data.replace(",", "."))
+        if amount < 0.0:
+            flash("Opwaardering kan niet negatief zijn!", "danger")
+            return render_template('upgrade.html', title='Opwaarderen', form=form)
+        db_handler.addbalance(form.user.data, amount)
         return redirect(url_for('index'))
     return render_template('upgrade.html', title='Opwaarderen', form=form)
 
@@ -95,7 +120,8 @@ def users():
 def user(userid):
     user = User.query.get(userid)
     transactions = user.transactions.order_by(Transaction.id.desc()).all()
-    purchases = user.purchases.all()
+    for t in transactions:
+        print(t.timestamp)
     upgrades = user.upgrades.all()
     return render_template('user.html', user=user, transactions=transactions, Purchase=Purchase, upgrades=upgrades, Product=Product)
 
@@ -139,11 +165,6 @@ def test():
         flash("Product {} succesvol aangemaakt".format(product.name))
         return redirect(url_for('admin'))
     return render_template('testforms.html', form=form)'''
-
-@app.route('/about')
-@register_breadcrumb(app, '.about', 'Over Tikker', order=1)
-def about():
-    return render_template('about.html', title="Over Tikker")
 
 ##
 #
@@ -210,7 +231,7 @@ def admin_drinks():
     drinks = Product.query.all()
     form = DrinkForm()
     if form.validate_on_submit():
-        db_handler.adddrink(form.name.data, form.price.data, form.image.data)
+        db_handler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), form.image.data)
         return redirect(url_for('admin_drinks'))
     return render_template('admin/mandrinks.html', drinks=drinks, form=form)
 
@@ -219,7 +240,7 @@ def admin_drinks_edit(drinkid):
     form = ChangeDrinkForm()
     form2 = ChangeDrinkImageForm()
     if form.submit1.data and form.validate_on_submit():
-        db_handler.editdrink_attr(drinkid, form.name.data, form.price.data, form.purchaseable.data)
+        db_handler.editdrink_attr(drinkid, form.name.data, float(form.price.data.replace(",", ".")), form.purchaseable.data)
         return redirect(url_for('admin_drinks'))
     if form2.submit2.data and form2.validate_on_submit():
         db_handler.editdrink_image(drinkid, form2.image.data)

@@ -132,6 +132,7 @@ body {
 @font-face {
     font-family: standardtext;
     src: url(body_breeserif.ttf);
+    font-size: 20px;
 }
 
 @font-face {
@@ -147,6 +148,12 @@ body {
 
 .btn-green {
     background-color: #0b8337;
+    color: #000000;
+    margin: 5px;
+}
+
+.btn-grey {
+    background-color: #939393;
     color: #000000;
     margin: 5px;
 }
@@ -167,4 +174,20 @@ th {text-align: center;}
 .front-image {
     border: 2px solid red;
     margin: 2px;
+}
+
+#cart {
+  border-collapse: collapse;
+  border: 2px solid black;
+}
+
+#cartdiv {
+  text-align: center;
+}
+
+.group_bal {
+  border-radius: 15px;
+  background-color: #C0C0C0;
+    padding-left: 5px;
+    padding-right: 5px;
 }

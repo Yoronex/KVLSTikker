@@ -34,7 +34,7 @@ class dbhandler():
                                   newbal=user.balance)
         db.session.add(transaction)
         db.session.commit()
-        flash("Gebruiker {} heeft succesvol opgewaardeerd met {} euro".format(user.name, upgrade.amount), "success")
+        flash("Gebruiker {} heeft succesvol opgewaardeerd met €{}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ",")), "success")
 
     def adddrink(self, name, price, image):
         product = Product(name=name, price=price, purchaseable=True)

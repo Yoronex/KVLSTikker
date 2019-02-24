@@ -26,7 +26,7 @@ class User(db.Model):
 
 class Upgrade(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime(timezone=True), index=True, default=datetime.now())
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     transactions = db.relationship('Transaction', backref='upgrade', lazy='dynamic')
     amount = db.Column(db.Float)
@@ -48,7 +48,7 @@ class Product(db.Model):
 
 class Purchase(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime(timezone=True), index=True, default=datetime.now())
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     transactions = db.relationship('Transaction', backref='purchase', lazy='dynamic')
@@ -60,7 +60,7 @@ class Purchase(db.Model):
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime(timezone=True), index=True, default=datetime.now())
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     purchase_id = db.Column(db.Integer, db.ForeignKey('purchase.id'))
     upgrade_id = db.Column(db.Integer, db.ForeignKey('upgrade.id'))
