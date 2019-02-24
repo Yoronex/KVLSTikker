@@ -1,5 +1,5 @@
-from app import db
 from datetime import datetime
+from app import db
 
 
 class Usergroup(db.Model):
@@ -16,8 +16,9 @@ class User(db.Model):
     name = db.Column(db.String(64), index=True)
     usergroup_id = db.Column(db.Integer, db.ForeignKey('usergroup.id'))
     balance = db.Column(db.Float, default=0)
-    upgrades = db.relationship('Upgrade', backref='author', lazy='dynamic')
-    purchases = db.relationship('Purchase', backref='author', lazy='dynamic')
+    upgrades = db.relationship('Upgrade', backref='user', lazy='dynamic')
+    purchases = db.relationship('Purchase', backref='user', lazy='dynamic')
+    transactions = db.relationship('Transaction', backref='user', lazy='dynamic')
 
     def __repr__(self):
         return '<User {}>'.format(self.name)
@@ -25,8 +26,9 @@ class User(db.Model):
 
 class Upgrade(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime(timezone=True), index=True, default=datetime.now())
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    transactions = db.relationship('Transaction', backref='upgrade', lazy='dynamic')
     amount = db.Column(db.Float)
 
     def __repr__(self):
@@ -46,10 +48,21 @@ class Product(db.Model):
 
 class Purchase(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    timestamp = db.Column(db.DateTime(timezone=True), index=True, default=datetime.now())
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    transactions = db.relationship('Transaction', backref='purchase', lazy='dynamic')
+    amount = db.Column(db.Integer)
     price = db.Column(db.Float)
 
     def __repr__(self):
         return '<Purchase {}>'.format(self.price)
+
+class Transaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime(timezone=True), index=True, default=datetime.now())
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    purchase_id = db.Column(db.Integer, db.ForeignKey('purchase.id'))
+    upgrade_id = db.Column(db.Integer, db.ForeignKey('upgrade.id'))
+    balchange = db.Column(db.Float)
+    newbal = db.Column(db.Float)

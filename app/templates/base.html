@@ -1,69 +1,112 @@
-<HTML>
-    <head>
-        <meta name="viewport" content="width=devide-width, initial-scale=1">
-        <style>
-            body {}
+{% extends 'bootstrap/base.html' %}
 
-            .sidenav {
-            height: 100%;
-            width: 10%;
-            position: fixed;
-            z-index: 1;
-            top: 0;
-            left: 0;
-            background-color: #111;
-            overflow-x: hidden;
-            padding-top: 20px;
-            }
+{% block title %}
+    {% if title %}{{ title }} - KVLS Tikker
+    {% else %}KVLS Tikker
+    {% endif %}
+{% endblock %}
 
-            .sidenav a {
-            padding: 6px 8px 6px 16px;
-            text-decoration: none;
-            font-size: 25px;
-            color: #818181;
-            display: block;
-            }
+{% block styles %}
+{{super()}}
+<link rel="stylesheet" href="{{url_for('.static', filename='styles.css')}}">
+{% endblock %}
 
-            .sidenav a:hover {
-                color: #f1f1f1;
-            }
-
-            .main {
-                margin-left: 10%; /* Same as the width of the sidenav */
-                font-size: 28px; /* Increased text to enable scrolling */
-                padding: 0px 10px;
-            }
-
-            @media screen and (max-height: 450px) {
-                .sidenav {padding-top: 15px;}
-                .sidenav a {font-size: 18px;}
-            }
-        </style>
-        {% if title %}
-        <title>{{ title }} - KVLS Tikker</title>
-        {% else %}
-        <title>KVLS Tikker</title>
-        {% endif %}
-    </head>
-    <body>
-        <div class="sidenav">
-            <a href="{{ url_for('index') }}">Home</a>
-            <a href="{{ url_for('register') }}">Registreer</a>
-            <a href="{{ url_for('balance') }}">Saldo's</a>
-            <a href="{{ url_for('upgrade') }}">Opwaarderen</a>
+{% block navbar %}
+        <div class="profile-sidebar">
+            <!-- SIDEBAR USERPIC -->
+            <div class="profile-userpic">
+                <a href="{{ url_for('index') }}"><img src="{{ url_for('.static', filename='logo.png') }}" class="img-responsive" alt=""></a>
+            </div>
+            <!-- END SIDEBAR USERPIC -->
+            <!-- SIDEBAR USER TITLE -->
+            <div class="profile-usertitle">
+                <div class="profile-usertitle-name">
+                    Tikker
+                </div>
+            </div>
+            <!-- END SIDEBAR USER TITLE -->
+            <!-- SIDEBAR BUTTONS -->
+            <div class="profile-userbuttons">
+                <a href="{{ url_for('admin') }}" class="btn btn-green">Admin</a>
+                <button type="button" class="btn btn-yellow" data-toggle="modal" data-target="#about">Over</button>
+            </div>
+            <!-- END SIDEBAR BUTTONS -->
+            <!-- SIDEBAR MENU -->
+            <div class="profile-usermenu">
+                <ul class="nav">
+                    <li>
+                        <a href="{{ url_for('index') }}">
+                        Home </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('balance') }}">
+                        Gebruikers overzicht </a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('upgrade') }}">
+                        Opwaarderen</a>
+                    </li>
+                </ul>
+            </div>
+            <!-- END MENU -->
         </div>
-        <div class="main">
-        {% with messages = get_flashed_messages() %}
+
+          <!-- Modal -->
+        <div class="modal fade" id="about" role="dialog">
+            <div class="modal-dialog">
+
+                <!-- Modal content-->
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                        <h4 class="modal-title">Over Tikker</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>Tikker is een nieuw systeem om de consumpties van leden, leiding en andere mensen binnen Scouting Kornet van Limburg Stirum bij te houden.
+                            Er kunnen meerdere groepen opgezet worden, waarbinnen gebruikers aangemaakt kunnen worden. Denk hierbij aan speltakken, maar ook leiding of externen.
+                            Het systeem is zeer flexibel: nieuwe groepen en leden kunnen on-the-fly aangemaakt worden, net zoals nieuwe 'producten'.
+                            Transacties zijn makkelijk te doen en eventueel ook aan te passen, indien dit nodig is.<br>
+                        Bedacht, ontworpen en gebouwd door Roy Kakkenberg, © Roy Kakkenberg 2018-2019</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default" data-dismiss="modal">Sluiten</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+{% endblock %}
+
+{% block content %}
+    <!--<div class="footer">Roy Kakkenberg 2018</div>-->
+
+    <script>
+        window.setTimeout(function() {
+            $(".alert").fadeTo(500, 0).slideUp(500, function(){
+                $(this).remove();
+            });
+        }, 4000);
+    </script>
+
+    <div class="main">
+        {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-        <ul>
-            {% for message in messages %}
-            <li>{{ message }}</li>
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade in" role="alert">
+                <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                {{ message }}
+            </div>
             {% endfor %}
-        </ul>
         {% endif %}
         {% endwith %}
 
-        {% block content %}{% endblock %}
+        <div>
+        {%- for breadcrumb in breadcrumbs -%}
+            <a href="{{ breadcrumb.url }}">{{ breadcrumb.text }}</a>
+            {{ '/' if not loop.last }}
+        {%- endfor -%}
         </div>
-    </body>
-</HTML>
+
+        {% block app_content %}{% endblock %}
+    </div>
+{% endblock %}

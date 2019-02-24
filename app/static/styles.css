@@ -1,0 +1,193 @@
+/***
+User Profile Sidebar by @keenthemes
+A component of Metronic Theme - #1 Selling Bootstrap 3 Admin Theme in Themeforest: http://j.mp/metronictheme
+Licensed under MIT
+***/
+
+body {
+  background: #F1F3FA;
+}
+
+/* Profile container */
+.profile {
+  margin: 20px 0;
+}
+
+/* Profile sidebar */
+.profile-sidebar {
+  padding: 20px 0 10px 0;
+  background: #fff;
+  height: 100%;
+  width: 280px;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+}
+
+.profile-userpic img {
+  float: none;
+  margin: 0 auto;
+  width: 80%;
+  height: 80%;
+}
+
+.profile-usertitle {
+  text-align: center;
+}
+
+.profile-usertitle-name {
+  /*color: #5a7391;*/
+  color: #000000;
+  font-size: 50px;
+  font-weight: 600;
+  margin-bottom: 7px;
+  font-family: title;
+}
+
+.profile-usertitle-job {
+  text-transform: uppercase;
+  color: #5b9bd1;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 15px;
+}
+
+.profile-userbuttons {
+  text-align: center;
+  margin-top: 10px;
+}
+
+.profile-userbuttons .btn {
+  text-transform: uppercase;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 6px 15px;
+  margin-right: 5px;
+}
+
+.profile-userbuttons .btn:last-child {
+  margin-right: 0px;
+}
+
+.profile-usermenu {
+  margin-top: 30px;
+}
+
+.profile-usermenu ul li {
+  border-bottom: 1px solid #f0f4f7;
+}
+
+.profile-usermenu ul li:last-child {
+  border-bottom: none;
+}
+
+.profile-usermenu ul li a {
+  color: #93a3b5;
+  font-size: 14px;
+  font-weight: 400;
+  font-family: standardtext;
+}
+
+.profile-usermenu ul li a i {
+  margin-right: 8px;
+  font-size: 14px;
+  font-family: standardtext;
+}
+
+.profile-usermenu ul li a:hover {
+  background-color: #fafcfd;
+  color: #5b9bd1;
+}
+
+.profile-usermenu ul li.active {
+  border-bottom: none;
+}
+
+.profile-usermenu ul li.active a {
+  color: #5b9bd1;
+  background-color: #f6f9fb;
+  border-left: 2px solid #5b9bd1;
+  margin-left: -2px;
+}
+
+/* Profile Content */
+.profile-content {
+  padding: 20px;
+  background: #fff;
+  min-height: 460px;
+  font-family: standardtext;
+}
+
+.main {
+    margin-left: 300px; /* Same as the width of the sidenav */
+    margin-top: 8px;
+    margin-right: 10px;
+    margin-bottom: 20px;
+    font-size: 20px; /* Increased text to enable scrolling */
+    padding: 0px 10px;
+    font-family: standardtext;
+}
+
+@font-face {
+    font-family: standardtext;
+    src: url(body_breeserif.ttf);
+    font-size: 20px;
+}
+
+@font-face {
+    font-family: title;
+    src: url(Blanka-Regular.otf);
+}
+
+.btn-yellow {
+    background-color: #ffd94a;
+    color: #000000;
+    margin: 5px;
+}
+
+.btn-green {
+    background-color: #0b8337;
+    color: #000000;
+    margin: 5px;
+}
+
+.btn-grey {
+    background-color: #939393;
+    color: #000000;
+    margin: 5px;
+}
+
+.footer {
+    margin-left: 280px; /* Same as the width of the sidenav */
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+}
+
+td {padding: 10px;}
+
+th {text-align: center;}
+
+.front-image {
+    border: 2px solid red;
+    margin: 2px;
+}
+
+#cart {
+  border-collapse: collapse;
+  border: 2px solid black;
+}
+
+#cartdiv {
+  text-align: center;
+}
+
+.group_bal {
+  border-radius: 15px;
+  background-color: #C0C0C0;
+    padding-left: 5px;
+    padding-right: 5px;
+}

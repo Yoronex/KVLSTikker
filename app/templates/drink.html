@@ -1,23 +1,46 @@
 {% extends "base.html" %}
 
-{% block content %}
-    <h1>Drink: {{ drink.name }}</h1>
-    <table>
+{% block scripts %}
+<script src="{{url_for('.static', filename='cart.js')}}"></script>
+{{super()}}
+{% endblock %}
+
+{% block app_content %}
+<script src="../static/cart.js"></script>
+<body data-minus-img="{{ url_for('static', filename='minus.png') }}">
+
+<div class="row">
+    <h1>{{ drink.name }} afrekenen</h1>
+    <div class="col-md-9">
+
+    <table width="100%">
         <tr>
-            {% for g in Usergroup.query.all() %}
+            {% for g in usergroups %}
             <th>{{ g.name }}</th>
             {% endfor %}
         </tr>
         <tr>
-            {% for g in Usergroup.query.all() %}
-            <td valign="top"><table>
+            {% for g in usergroups %}
+            {% set outer_loop = loop %}
+            <td valign="top" width="{{ 100 / amount_usergroups }}%"><table width="100%" cellpadding="30">
                 {% for u in g.users.all() %}
                 <tr>
-                    <td><a href="/drink/{{ drink.id }}/{{ u.id }}">{{ u.name }}</a></td>
+                    {% if (loop.index + outer_loop.index) % 2 == 0 %}
+                    <td width="100%"><a class="btn btn-block btn-green" onclick="addToCart('{{ u.id }}', '{{ u.name }}', '{{ drink.price }}')">{{ u.name }}</a></td>
+                    {% else %}
+                    <td width="100%"><a class="btn btn-block btn-yellow" onclick="addToCart('{{ u.id }}', '{{ u.name }}', '{{ drink.price }}')">{{ u.name }}</a></td>
+                    {% endif %}
                 </tr>
                 {% endfor %}
             </table></td>
             {% endfor %}
         </tr>
     </table>
+    </div>
+    <div id="cartdiv" class="col-md-3">
+        <table id="cart" width="100%">
+        </table>
+        <a class="btn btn-block btn-grey" id="submitbutton" onclick="submitCart()" width="100%">Versturen</a>
+    </div>
+</div>
 {% endblock %}
