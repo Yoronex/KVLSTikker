@@ -42,6 +42,8 @@ class dbhandler():
         db.session.commit()
         filename, file_extension = os.path.splitext(secure_filename(image.filename))
         filename = str(product.id) + file_extension
+        if not os.path.exists(app.config["UPLOAD_FOLDER"]):
+            os.makedirs(app.config["UPLOAD_FOLDER"])
         image.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
         flash("Product {} succesvol aangemaakt".format(product.name), "success")
 
