@@ -2,6 +2,7 @@ from app import app, db, dbhandler
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction
 from flask import flash
 from werkzeug.utils import secure_filename
+from datetime import datetime
 import os
 
 class dbhandler():
@@ -15,22 +16,22 @@ class dbhandler():
         drink = Product.query.get(drink_id)
         user = User.query.get(user_id)
         user.balance = user.balance - float(drink.price) * quantity
-        purchase = Purchase(user_id=user.id, product_id=drink.id, price=drink.price, amount=quantity)
+        purchase = Purchase(user_id=user.id, timestamp=datetime.now(), product_id=drink.id, price=drink.price, amount=quantity)
         db.session.add(purchase)
         db.session.commit()
         balchange = -drink.price * quantity
-        transaction = Transaction(user_id=user.id, purchase_id=purchase.id, balchange=balchange, newbal=user.balance)
+        transaction = Transaction(user_id=user.id, timestamp=datetime.now(), purchase_id=purchase.id, balchange=balchange, newbal=user.balance)
         db.session.add(transaction)
         db.session.commit()
         flash("{}x {} voor {} verwerkt".format(quantity, drink.name, user.name), "success")
 
     def addbalance(self, user_id, amount):
-        upgrade = Upgrade(user_id=user_id, amount=amount)
+        upgrade = Upgrade(user_id=user_id, timestamp=datetime.now(), amount=amount)
         db.session.add(upgrade)
         db.session.commit()
         user = User.query.get(upgrade.user_id)
         user.balance = user.balance + float(amount)
-        transaction = Transaction(user_id=user_id, upgrade_id=upgrade.id, balchange=upgrade.amount,
+        transaction = Transaction(user_id=user_id, timestamp=datetime.now(), upgrade_id=upgrade.id, balchange=upgrade.amount,
                                   newbal=user.balance)
         db.session.add(transaction)
         db.session.commit()
