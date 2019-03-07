@@ -94,6 +94,8 @@ def login():
 @app.route('/upgrade', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.upgrade', 'Opwaarderen', order=1)
 def upgrade():
+    if request.remote_addr != "127.0.0.1":
+        return render_template('401.html', title="401 Geen toegang")
     form = UpgradeBalanceForm()
     if form.validate_on_submit():
         amount = float(form.amount.data.replace(",", "."))
@@ -175,11 +177,15 @@ def test():
 @app.route('/admin', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.admin', 'Beheerderspaneel', order=1)
 def admin():
+    if request.remote_addr != "127.0.0.1":
+        return render_template('401.html', title="401 Geen toegang")
     return render_template('admin/admin.html', title='Admin paneel')
 
 @app.route('/admin/users', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.admin.users', 'Gebruikersbeheer', order=2)
 def admin_users():
+    if request.remote_addr != "127.0.0.1":
+        return render_template('401.html', title="401 Geen toegang")
     form = UserRegistrationForm()
     if form.validate_on_submit():
         db_handler.adduser(form.name.data, form.group.data)
@@ -188,6 +194,8 @@ def admin_users():
 
 @app.route('/admin/users/delete/<int:userid>')
 def admin_users_delete(userid):
+    if request.remote_addr != "127.0.0.1":
+        return render_template('401.html', title="401 Geen toegang")
     user = User.query.get(userid)
     if user.balance == 0.0:
         message = "gebruiker " + user.name + " wilt verwijderen? Alle historie gaat hierbij verloren!"
@@ -200,6 +208,8 @@ def admin_users_delete(userid):
 
 @app.route('/admin/users/delete/<int:userid>/exec')
 def admin_users_delete_exec(userid):
+    if request.remote_addr != "127.0.0.1":
+        return render_template('401.html', title="401 Geen toegang")
     if (User.query.get(userid).balance != 0.0):
         flash("Deze gebruiker heeft nog geen saldo van € 0!", "danger")
         return redirect(url_for('admin_users'))
@@ -209,6 +219,8 @@ def admin_users_delete_exec(userid):
 @app.route('/admin/transactions')
 @register_breadcrumb(app, '.admin.transactions', 'Transactiebeheer', order=2)
 def admin_transactions():
+    if request.remote_addr != "127.0.0.1":
+        return render_template('401.html', title="401 Geen toegang")
     transactions = Transaction.query.all()
     return render_template('admin/mantransactions.html', User=User, transactions=transactions, Purchase=Purchase, Product=Product)
 
@@ -222,6 +234,8 @@ def admin_transactions_delete(tranid):
 
 @app.route('/admin/transactions/delete/<int:tranid>/exec')
 def admin_transactions_delete_exec(tranid):
+    if request.remote_addr != "127.0.0.1":
+        return render_template('401.html', title="401 Geen toegang")
     db_handler.delpurchase(tranid)
     return redirect(url_for('admin_transactions'))
 
@@ -237,6 +251,8 @@ def admin_drinks():
 
 @app.route('/admin/drinks/edit/<int:drinkid>', methods=['GET', 'POST'])
 def admin_drinks_edit(drinkid):
+    if request.remote_addr != "127.0.0.1":
+        return render_template('401.html', title="401 Geen toegang")
     form = ChangeDrinkForm()
     form2 = ChangeDrinkImageForm()
     if form.submit1.data and form.validate_on_submit():
@@ -249,12 +265,16 @@ def admin_drinks_edit(drinkid):
 
 @app.route('/admin/drinks/delete/<int:drinkid>')
 def admin_drinks_delete(drinkid):
+    if request.remote_addr != "127.0.0.1":
+        return render_template('401.html', title="401 Geen toegang")
     db_handler.deldrink(drinkid)
     return redirect(url_for('admin_drinks'))
 
 @app.route('/admin/usergroups', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.admin.usergroups', 'Groepenbeheer', order=2)
 def admin_usergroups():
+    if request.remote_addr != "127.0.0.1":
+        return render_template('401.html', title="401 Geen toegang")
     form = UserGroupRegistrationForm()
     if form.validate_on_submit():
         db_handler.addusergroup(form.name.data)
@@ -263,6 +283,8 @@ def admin_usergroups():
 
 @app.route('/admin/usergroups/delete/<int:usergroupid>')
 def admin_usergroups_delete(usergroupid):
+    if request.remote_addr != "127.0.0.1":
+        return render_template('401.html', title="401 Geen toegang")
     usergroup = Usergroup.query.get(usergroupid)
     users = usergroup.users.all()
     if len(users) == 0:
@@ -276,6 +298,8 @@ def admin_usergroups_delete(usergroupid):
 
 @app.route('/admin/usergroups/delete/<int:usergroupid>/exec')
 def admin_usergroups_delete_exec(usergroupid):
+    if request.remote_addr != "127.0.0.1":
+        return render_template('401.html', title="401 Geen toegang")
     if len(Usergroup.query.get(usergroupid).users.all()) != 0:
         flash("Deze groep heeft nog gebruikers! Verwijder deze eerst.", "danger")
         return redirect(url_for('admin_usergroups'))
@@ -364,3 +388,4 @@ def stats_user(userid):
 @app.route('/stats/drink/<int:drinkid>')
 def stats_drink(drinkid):
     return None
+

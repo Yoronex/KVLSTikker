@@ -144,18 +144,25 @@ body {
     background-color: #ffd94a;
     color: #000000;
     margin: 5px;
+    font-size: 20px;
 }
 
 .btn-green {
     background-color: #0b8337;
     color: #000000;
     margin: 5px;
+    text-shadow: -1px 0 grey, 0 1px grey, 1px 0 grey, 0 -1px grey;
+    font-size: 20px;
 }
 
 .btn-grey {
     background-color: #939393;
     color: #000000;
     margin: 5px;
+}
+
+.btn-text {
+    text-shadow: -1px 0 white, 0 1px white, 1px 0 white, 0 -1px white;
 }
 
 .footer {
