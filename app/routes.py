@@ -221,7 +221,7 @@ def admin_users_delete_exec(userid):
 def admin_transactions():
     if request.remote_addr != "127.0.0.1":
         return render_template('401.html', title="401 Geen toegang")
-    transactions = Transaction.query.all()
+    transactions = reversed(Transaction.query.all())
     return render_template('admin/mantransactions.html', User=User, transactions=transactions, Purchase=Purchase, Product=Product)
 
 @app.route('/admin/transactions/delete/<int:tranid>')
@@ -389,3 +389,4 @@ def stats_user(userid):
 def stats_drink(drinkid):
     return None
 
+app.config["BOOTSTRAP_SERVE_LOCAL"] = True

@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="{{url_for('.static', filename='styles.css')}}">
 {% endblock %}
 
-{% block navbar %}
+{% block navbar_old %}
         <div class="profile-sidebar">
             <!-- SIDEBAR USERPIC -->
             <div class="profile-userpic">
@@ -78,35 +78,62 @@
 {% endblock %}
 
 {% block content %}
-    <!--<div class="footer">Roy Kakkenberg 2018</div>-->
+<div class="d-flex" id="wrapper">
 
-    <script>
-        window.setTimeout(function() {
-            $(".alert").fadeTo(500, 0).slideUp(500, function(){
-                $(this).remove();
-            });
-        }, 4000);
-    </script>
-
-    <div class="main">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade in" role="alert">
-                <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-                {{ message }}
+    <!-- Sidebar -->
+    <div class="bg-light border-right" id="sidebar-wrapper">
+      <div class="sidebar-heading">
+          <a href="{{ url_for('index') }}"><img src="{{ url_for('.static', filename='logo.png') }}" class="sidebar-logo text-center" alt=""></a>
+          <div class="sidebar-tikker-name">
+            Tikker
+          </div>
+          <div class="sidebar-menubuttons">
+                <a href="{{ url_for('admin') }}" class="btn btn-green">Admin</a>
+                <button type="button" class="btn btn-yellow" data-toggle="modal" data-target="#about">Over</button>
             </div>
-            {% endfor %}
-        {% endif %}
-        {% endwith %}
+      </div>
 
-        <div>
-        {%- for breadcrumb in breadcrumbs -%}
-            <a href="{{ breadcrumb.url }}">{{ breadcrumb.text }}</a>
-            {{ '/' if not loop.last }}
-        {%- endfor -%}
-        </div>
 
-        {% block app_content %}{% endblock %}
+      <div class="list-group list-group-flush">
+        <a href="{{ url_for('index') }}" class="list-group-item list-group-item-action bg-light">Home</a>
+        <a href="{{ url_for('balance') }}" class="list-group-item list-group-item-action bg-light">Gebruikers Overzicht</a>
+        <a href="{{ url_for('upgrade') }}" class="list-group-item list-group-item-action bg-light">Opwaarderen</a>
+      </div>
     </div>
+    <!-- /#sidebar-wrapper -->
+
+<div id="page-content-wrapper">
+<div class="container-fluid">
+            <script>
+                window.setTimeout(function() {
+                    $(".alert").fadeTo(500, 0).slideUp(500, function(){
+                        $(this).remove();
+                    });
+                }, 4000);
+            </script>
+
+            <div class="main">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade in" role="alert">
+                        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                {% endif %}
+                {% endwith %}
+
+                <div>
+                {%- for breadcrumb in breadcrumbs -%}
+                    <a href="{{ breadcrumb.url }}">{{ breadcrumb.text }}</a>
+                    {{ '/' if not loop.last }}
+                {%- endfor -%}
+                </div>
+
+                {% block app_content %}{% endblock %}
+            </div>
+    </div>
+</div>
+</div>
 {% endblock %}

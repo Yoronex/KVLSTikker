@@ -9,7 +9,9 @@ app = Flask(__name__)
 app.config.from_object(Config)
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-bootstrap = Bootstrap(app)
+Bootstrap(app)
 breadcrumbs = Breadcrumbs(app=app)
+app.config['BOOTSTRAP_SERVE_LOCAL'] = True
+
 
 from app import routes, models
