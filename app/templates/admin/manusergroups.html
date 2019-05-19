@@ -15,7 +15,7 @@
                 <tr>
                     <td>{{ u.id }}</td>
                     <td>{{ u.name }}</td>
-                    <td><a href="/admin/usergroups/delete/{{ u.id }}"><img src="{{ url_for('.static', filename='redcross.png') }}" height="30" width="30" alt="Verwijder" title="Verwijder {{ u.name }} uit Tikker"/></a></td>
+                    <td><a href="/admin/usergroups/delete/{{ u.id }}"><img src="{{ url_for('.static', filename='img/redcross.png') }}" height="30" width="30" alt="Verwijder" title="Verwijder {{ u.name }} uit Tikker"/></a></td>
                 </tr>
                 {% endfor %}
             </table>

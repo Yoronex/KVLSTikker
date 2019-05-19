@@ -19,14 +19,14 @@
                         <td><strike>{{ d.id }}</strike></td>
                         <td><strike>{{ d.name }}</strike></td>
                         <td><strike>€ {{ '%.2f' % d.price }}</strike></td>
-                        <td><strike><a href="/admin/drinks/edit/{{ d.id }}"><img src="{{ url_for('.static', filename='edit.png') }}" height="30" width="30" alt="Bewerken" title="Bewerk product"/></a></strike></td>
+                        <td><strike><a href="/admin/drinks/edit/{{ d.id }}"><img src="{{ url_for('.static', filename='img/edit.png') }}" height="30" width="30" alt="Bewerken" title="Bewerk product"/></a></strike></td>
                         <td></td>
                 {% else %}
                     <td>{{ d.id }}</td>
                     <td>{{ d.name }}</td>
                     <td>€ {{ '%.2f' % d.price }}</td>
-                    <td><a href="/admin/drinks/edit/{{ d.id }}"><img src="{{ url_for('.static', filename='edit.png') }}" height="30" width="30" alt="Bewerken" title="Bewerk product"/></a></td>
-                    <td><a href="/admin/drinks/delete/{{ d.id }}"><img src="{{ url_for('.static', filename='redcross.png') }}" height="30" width="30" alt="Verwijder" title="Verwijder product"/></a></td>
+                    <td><a href="/admin/drinks/edit/{{ d.id }}"><img src="{{ url_for('.static', filename='img/edit.png') }}" height="30" width="30" alt="Bewerken" title="Bewerk product"/></a></td>
+                    <td><a href="/admin/drinks/delete/{{ d.id }}"><img src="{{ url_for('.static', filename='img/redcross.png') }}" height="30" width="30" alt="Verwijder" title="Verwijder product"/></a></td>
                 {% endif %}
                 </tr>
                 {% endfor %}

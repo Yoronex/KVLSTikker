@@ -27,7 +27,7 @@
             {% else %}
             <td><span style="color: green;font-weight:bold;">€ {{ '%.2f' % t.balchange }}</span></td>
             {% endif %}
-            <td><a href="/admin/transactions/delete/{{ t.id }}"><img src="{{ url_for('.static', filename='redcross.png') }}" height="30" width="30" alt="Verwijder" title="Verwijder transactie uit Tikker"/></a></td>
+            <td><a href="/admin/transactions/delete/{{ t.id }}"><img src="{{ url_for('.static', filename='img/redcross.png') }}" height="30" width="30" alt="Verwijder" title="Verwijder transactie uit Tikker"/></a></td>
         </tr>
         {% endfor %}
     </table>

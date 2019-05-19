@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
 {% block scripts %}
-<script src="{{url_for('.static', filename='cart.js')}}"></script>
+<script src="{{url_for('.static', filename='js/cart.js')}}"></script>
 {{super()}}
 {% endblock %}
 
 {% block app_content %}
-<script src="../static/cart.js"></script>
-<body data-minus-img="{{ url_for('static', filename='minus.png') }}">
+<script src="../static/js/cart.js"></script>
+<body data-minus-img="{{ url_for('static', filename='img/minus.png') }}">
 
 <div class="container-fluid">
     <div class="row">

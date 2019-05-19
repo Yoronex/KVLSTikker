@@ -8,86 +8,22 @@
 
 {% block styles %}
 {{super()}}
-<link rel="stylesheet" href="{{url_for('.static', filename='styles.css')}}">
+<link rel="stylesheet" href="{{url_for('.static', filename='css/styles.css')}}">
 {% endblock %}
 
-{% block navbar_old %}
-<div class="profile-sidebar">
-    <!-- SIDEBAR USERPIC -->
-    <div class="profile-userpic">
-        <a href="{{ url_for('index') }}"><img src="{{ url_for('.static', filename='logo.png') }}" class="img-responsive"
-                                              alt=""></a>
-    </div>
-    <!-- END SIDEBAR USERPIC -->
-    <!-- SIDEBAR USER TITLE -->
-    <div class="profile-usertitle">
-        <div class="profile-usertitle-name">
-            Tikker
-        </div>
-    </div>
-    <!-- END SIDEBAR USER TITLE -->
-    <!-- SIDEBAR BUTTONS -->
-    <div class="profile-userbuttons">
-        <a href="{{ url_for('admin') }}" class="btn btn-green">Admin</a>
-        <button type="button" class="btn btn-yellow" data-toggle="modal" data-target="#about">Over</button>
-    </div>
-    <!-- END SIDEBAR BUTTONS -->
-    <!-- SIDEBAR MENU -->
-    <div class="profile-usermenu">
-        <ul class="nav">
-            <li>
-                <a href="{{ url_for('index') }}">
-                    Home </a>
-            </li>
-            <li>
-                <a href="{{ url_for('balance') }}">
-                    Gebruikers overzicht </a>
-            </li>
-            <li>
-                <a href="{{ url_for('upgrade') }}">
-                    Opwaarderen</a>
-            </li>
-        </ul>
-    </div>
-    <!-- END MENU -->
-</div>
-
-<!-- Modal -->
-<div class="modal fade" id="about" role="dialog">
-    <div class="modal-dialog">
-
-        <!-- Modal content-->
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal">&times;</button>
-                <h4 class="modal-title">Over Tikker</h4>
-            </div>
-            <div class="modal-body">
-                <p>Tikker is een nieuw systeem om de consumpties van leden, leiding en andere mensen binnen Scouting
-                    Kornet van Limburg Stirum bij te houden.
-                    Er kunnen meerdere groepen opgezet worden, waarbinnen gebruikers aangemaakt kunnen worden. Denk
-                    hierbij aan speltakken, maar ook leiding of externen.
-                    Het systeem is zeer flexibel: nieuwe groepen en leden kunnen on-the-fly aangemaakt worden, net zoals
-                    nieuwe 'producten'.
-                    Transacties zijn makkelijk te doen en eventueel ook aan te passen, indien dit nodig is.<br>
-                    Bedacht, ontworpen en gebouwd door Roy Kakkenberg, © Roy Kakkenberg 2018-2019</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Sluiten</button>
-            </div>
-        </div>
-
-    </div>
-</div>
+{% block scripts %}
 {% endblock %}
 
 {% block content %}
+<script type="text/javascript" src="{{url_for('.static', filename='js/clock.js')}}"></script>
+<body onload="startTime()">
+
 <div class="d-flex" id="wrapper">
 
     <!-- Sidebar -->
     <div class="bg-light border-right" id="sidebar-wrapper">
         <div class="sidebar-heading">
-            <a href="{{ url_for('index') }}"><img src="{{ url_for('.static', filename='logo.png') }}"
+            <a href="{{ url_for('index') }}"><img src="{{ url_for('.static', filename='img/logo.png') }}"
                                                   class="sidebar-logo text-center" alt=""></a>
             <div class="sidebar-tikker-name">
                 Tikker
@@ -139,6 +75,7 @@
                     </div>
                     <h1>{{ h1 }}</h1>
                 </div>
+                <div class="col-auto"><div id="clock"></div></div>
             </div>
             <div class="row">
                 <div class="col">
