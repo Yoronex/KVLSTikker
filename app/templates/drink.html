@@ -6,7 +6,6 @@
 {% endblock %}
 
 {% block app_content %}
-<script src="../static/js/cart.js"></script>
 <body data-minus-img="{{ url_for('static', filename='img/minus.png') }}">
 
 <div class="container-fluid">
@@ -37,9 +36,9 @@
             </div>
         </div>
         <div class="col-md-auto">
-            <table id="cart" width="100%">
+            <table id="cart" class="img-thumbnail" width="100%">
             </table>
-            <a class="btn btn-block btn-grey" id="submitbutton" onclick="submitCart()" width="100%">Versturen</a>
+            <a class="btn btn-block btn-grey" id="submitbutton" onclick="submitCart()" width="90%">Versturen</a>
         </div>
     </div>
 </div>

@@ -9,15 +9,20 @@
 {% block styles %}
 {{super()}}
 <link rel="stylesheet" href="{{url_for('.static', filename='css/styles.css')}}">
+<link rel="stylesheet" href="{{url_for('.static', filename='css/menu.css')}}">
+<link rel="stylesheet" href="{{url_for('.static', filename='css/fonts.css')}}">
 {% endblock %}
 
 {% block scripts %}
+<script type="text/javascript" src="{{url_for('.static', filename='js/jquery-3.4.1.min.js')}}"></script>
+<script type="text/javascript" src="{{url_for('.static', filename='js/clock.js')}}"></script>
+<script type="text/javascript" src="{{url_for('.static', filename='js/darklight.js')}}"></script>
 {% endblock %}
 
 {% block content %}
-<script type="text/javascript" src="{{url_for('.static', filename='js/clock.js')}}"></script>
 <body onload="startTime()">
 
+<div id="body" class="light-mode">
 <div class="d-flex" id="wrapper">
 
     <!-- Sidebar -->
@@ -46,7 +51,7 @@
 
     <div id="page-content-wrapper">
         <div class="container-fluid main">
-            <div class="row">
+            <div class="row" style="align-items: center">
                 <div class="col">
                     <script>
                         window.setTimeout(function () {
@@ -75,6 +80,7 @@
                     </div>
                     <h1>{{ h1 }}</h1>
                 </div>
+                <div class="col-auto"><a class="btn btn-block btn-grey" id="darklight" onclick="toggleDarkLight()">Dark/Light</a></div>
                 <div class="col-auto"><div id="clock"></div></div>
             </div>
             <div class="row">

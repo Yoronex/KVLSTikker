@@ -94,6 +94,7 @@ function submitCart() {
 
 
 window.onload = function() {
-    makeSubmitInvisible()
+    makeSubmitInvisible();
+    startTime();
 }
 
