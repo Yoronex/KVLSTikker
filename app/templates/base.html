@@ -51,7 +51,7 @@
 
     <div id="page-content-wrapper">
         <div class="container-fluid main">
-            <div class="row" style="align-items: center">
+            <div class="row">
                 <div class="col">
                     <script>
                         window.setTimeout(function () {
@@ -64,13 +64,17 @@
                     {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
                     {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade in" role="alert">
+                    <div class="alert alert-{{ category }} alert-dismissible" role="alert">
                         <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
                         {{ message }}
                     </div>
                     {% endfor %}
                     {% endif %}
                     {% endwith %}
+                </div>
+            </div>
+            <div class="row" style="align-items: center">
+                <div class="col">
 
                     <div>
                         {%- for breadcrumb in breadcrumbs -%}
