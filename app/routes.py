@@ -115,7 +115,8 @@ def upgrade():
         if amount < 0.0:
             flash("Opwaardering kan niet negatief zijn!", "danger")
             return render_template('upgrade.html', title='Opwaarderen', form=form)
-        db_handler.addbalance(form.user.data, amount)
+        alert = (db_handler.addbalance(form.user.data, amount))
+        flash(alert[0], alert[1])
         return redirect(url_for('index'))
     return render_template('upgrade.html', title='Opwaarderen', h1="Opwaarderen", form=form)
 
@@ -163,16 +164,25 @@ def drink(drinkid):
 @app.route('/drink/<int:drinkid>/<int:userid>')
 def purchase(drinkid, userid):
     quantity = 1
-    db_handler.addpurchase(drinkid, userid, quantity)
+    alert = (db_handler.addpurchase(drinkid, userid, quantity))
+    flash(alert[0], alert[1])
     return redirect(url_for('index'))
 
 
 # Input in format of <userid>a<amount>&...
 @app.route('/drink/<int:drink_id>/<string:cart>')
 def purchase_from_cart(drink_id, cart):
+    final_alert = {}
+
     for order in cart.split('&'):
         data = order.split('a')
-        db_handler.addpurchase(drink_id, int(data[0]), int(data[1]))
+        alert = (db_handler.addpurchase(drink_id, int(data[0]), int(data[1])))
+        if alert[1] not in final_alert:
+            final_alert[alert[1]] = alert[0]
+        else:
+            final_alert[alert[1]] = final_alert[alert[1]] + ", \n " + alert[0]
+    for key, value in final_alert.items():
+        flash(value, key)
     return redirect(url_for('index'))
 
 
@@ -214,7 +224,8 @@ def admin_users():
         return render_template('401.html', title="401 Geen toegang")
     form = UserRegistrationForm()
     if form.validate_on_submit():
-        db_handler.adduser(form.name.data, form.group.data)
+        alert = (db_handler.adduser(form.name.data, form.group.data))
+        flash(alert[0], alert[1])
         return redirect(url_for('admin_users'))
     return render_template("admin/manusers.html", title="Gebruikersbeheer", h1="Gebruikersbeheer", backurl=url_for('index'), User=User,
                            Usergroup=Usergroup, form=form)
@@ -243,7 +254,8 @@ def admin_users_delete_exec(userid):
     if (User.query.get(userid).balance != 0.0):
         flash("Deze gebruiker heeft nog geen saldo van € 0!", "danger")
         return redirect(url_for('admin_users'))
-    db_handler.deluser(userid)
+    alert = (db_handler.deluser(userid))
+    flash(alert[0], alert[1])
     return redirect(url_for('admin_users'))
 
 
@@ -271,7 +283,8 @@ def admin_transactions_delete(tranid):
 def admin_transactions_delete_exec(tranid):
     if request.remote_addr != "127.0.0.1":
         return render_template('401.html', title="401 Geen toegang", h1="Geen toegang")
-    db_handler.delpurchase(tranid)
+    alert = (db_handler.delpurchase(tranid))
+    flash(alert[0], alert[1])
     return redirect(url_for('admin_transactions'))
 
 
@@ -281,7 +294,8 @@ def admin_drinks():
     drinks = Product.query.all()
     form = DrinkForm()
     if form.validate_on_submit():
-        db_handler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), form.image.data)
+        alert = (db_handler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), form.image.data))
+        flash(alert[0], alert[1])
         return redirect(url_for('admin_drinks'))
     return render_template('admin/mandrinks.html', title="Productbeheer", h1="Productbeheer", drinks=drinks, form=form)
 
@@ -293,11 +307,13 @@ def admin_drinks_edit(drinkid):
     form = ChangeDrinkForm()
     form2 = ChangeDrinkImageForm()
     if form.submit1.data and form.validate_on_submit():
-        db_handler.editdrink_attr(drinkid, form.name.data, float(form.price.data.replace(",", ".")),
-                                  form.purchaseable.data)
+        alert = (db_handler.editdrink_attr(drinkid, form.name.data, float(form.price.data.replace(",", ".")),
+                                  form.purchaseable.data))
+        flash(alert[0], alert[1])
         return redirect(url_for('admin_drinks'))
     if form2.submit2.data and form2.validate_on_submit():
-        db_handler.editdrink_image(drinkid, form2.image.data)
+        alert = (db_handler.editdrink_image(drinkid, form2.image.data))
+        flash(alert[0], alert[1])
         return redirect(url_for('admin_drinks'))
     product = Product.query.get(drinkid)
     return render_template('admin/editdrink.html', title="{} bewerken".format(product.name), h1="Pas {} (ID: {}) aan".format(product.name, product.id), product=product, form=form, form2=form2)
@@ -307,7 +323,8 @@ def admin_drinks_edit(drinkid):
 def admin_drinks_delete(drinkid):
     if request.remote_addr != "127.0.0.1":
         return render_template('401.html', title="401 Geen toegang", h1="Geen toegang")
-    db_handler.deldrink(drinkid)
+    alert = (db_handler.deldrink(drinkid))
+    flash(alert[0], alert[1])
     return redirect(url_for('admin_drinks'))
 
 
@@ -318,7 +335,8 @@ def admin_usergroups():
         return render_template('401.html', title="401 Geen toegang", h1="Geen toegang")
     form = UserGroupRegistrationForm()
     if form.validate_on_submit():
-        db_handler.addusergroup(form.name.data)
+        alert = (db_handler.addusergroup(form.name.data))
+        flash(alert[0], alert[1])
         return redirect(url_for('admin_usergroups'))
     return render_template("admin/manusergroups.html", title="Groepen", h1="Groepenbeheer", form=form, Usergroup=Usergroup)
 
@@ -347,7 +365,8 @@ def admin_usergroups_delete_exec(usergroupid):
     if len(Usergroup.query.get(usergroupid).users.all()) != 0:
         flash("Deze groep heeft nog gebruikers! Verwijder deze eerst.", "danger")
         return redirect(url_for('admin_usergroups'))
-    db_handler.delusergroup(usergroupid)
+    alert = (db_handler.delusergroup(usergroupid))
+    flash(alert[0], alert[1])
     return redirect(url_for('admin_usergroups'))
 
 

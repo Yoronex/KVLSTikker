@@ -1,6 +1,5 @@
 from app import app, db, dbhandler
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction
-from flask import flash
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import os
@@ -23,7 +22,7 @@ class dbhandler():
         transaction = Transaction(user_id=user.id, timestamp=datetime.now(), purchase_id=purchase.id, balchange=balchange, newbal=user.balance)
         db.session.add(transaction)
         db.session.commit()
-        flash("{}x {} voor {} verwerkt".format(quantity, drink.name, user.name), "success")
+        return "{}x {} voor {} verwerkt".format(quantity, drink.name, user.name), "success"
 
     def addbalance(self, user_id, amount):
         upgrade = Upgrade(user_id=user_id, timestamp=datetime.now(), amount=amount)
@@ -35,7 +34,7 @@ class dbhandler():
                                   newbal=user.balance)
         db.session.add(transaction)
         db.session.commit()
-        flash("Gebruiker {} heeft succesvol opgewaardeerd met €{}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ",")), "success")
+        return "Gebruiker {} heeft succesvol opgewaardeerd met €{}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ",")), "success"
 
     def adddrink(self, name, price, image):
         product = Product(name=name, price=price, purchaseable=True)
@@ -46,19 +45,19 @@ class dbhandler():
         if not os.path.exists(app.config["UPLOAD_FOLDER"]):
             os.makedirs(app.config["UPLOAD_FOLDER"])
         image.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-        flash("Product {} succesvol aangemaakt".format(product.name), "success")
+        return "Product {} succesvol aangemaakt".format(product.name), "success"
 
     def adduser(self, name, group):
         user = User(name=name, usergroup_id=group)
         db.session.add(user)
         db.session.commit()
-        flash("Gebruiker {} succesvol geregistreerd".format(user.name), "success")
+        return "Gebruiker {} succesvol geregistreerd".format(user.name), "success"
 
     def addusergroup(self, name):
         usergroup = Usergroup(name=name)
         db.session.add(usergroup)
         db.session.commit()
-        flash("Groep {} succesvol aangemaakt".format(usergroup.name), "success")
+        return "Groep {} succesvol aangemaakt".format(usergroup.name), "success"
 
     def deluser(self, user_id):
         user = User.query.get(user_id)
@@ -70,7 +69,7 @@ class dbhandler():
             db.session.delete(p)
         db.session.delete(user)
         db.session.commit()
-        flash("Gebruiker {} verwijderd".format(user.name), "success")
+        return "Gebruiker {} verwijderd".format(user.name), "success"
 
     def delpurchase(self, transaction_id):
         transaction = Transaction.query.get(transaction_id)
@@ -86,19 +85,19 @@ class dbhandler():
         user.balance = user.balance - transaction.balchange
         db.session.delete(transaction)
         db.session.commit()
-        flash("Transactie met ID {} succesvol verwijderd!".format(transaction.id), "success")
+        return "Transactie met ID {} succesvol verwijderd!".format(transaction.id), "success"
 
     def deldrink(self, drink_id):
         product = Product.query.get(drink_id)
         product.purchaseable = False
         db.session.commit()
-        flash('Product {} is niet meer beschikbaar'.format(product.name), "success")
+        return 'Product {} is niet meer beschikbaar'.format(product.name), "success"
 
     def delusergroup(self, usergroup_id):
         usergroup = Usergroup.query.get(usergroup_id)
         db.session.delete(usergroup)
         db.session.commit()
-        flash("Groep {} verwijderd".format(usergroup.name), "success")
+        return "Groep {} verwijderd".format(usergroup.name), "success"
 
     def editdrink_attr(self, product_id, name, price, purchaseable):
         product = Product.query.get(product_id)
@@ -106,11 +105,11 @@ class dbhandler():
         product.price = price
         product.purchaseable = purchaseable
         db.session.commit()
-        flash("Product {} (ID: {}) succesvol aangepast!".format(product.name, product.id), "success")
+        return "Product {} (ID: {}) succesvol aangepast!".format(product.name, product.id), "success"
 
     def editdrink_image(self, product_id, image):
         product = Product.query.get(product_id)
         filename, file_extension = os.path.splitext(secure_filename(image.filename))
         filename = str(product.id) + file_extension
         image.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-        flash("Afbeelding van product {} (ID: {}) succesvol aangepast!".format(product.name, product.id), "success")
+        return "Afbeelding van product {} (ID: {}) succesvol aangepast!".format(product.name, product.id), "success"
