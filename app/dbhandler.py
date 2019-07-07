@@ -12,6 +12,8 @@ class dbhandler():
         return db_obj
 
     def addpurchase(self, drink_id, user_id, quantity):
+        if type(quantity) is float:
+            quantity = float(round(quantity * 100)) / 100
         drink = Product.query.get(drink_id)
         user = User.query.get(user_id)
         user.balance = user.balance - float(drink.price) * quantity

@@ -11,6 +11,7 @@ from flask_breadcrumbs import Breadcrumbs, register_breadcrumb
 import pandas as pd
 import numpy as np
 import matplotlib
+import copy
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -157,8 +158,8 @@ def purchasehistory():
 def drink(drinkid):
     drink = Product.query.get(drinkid)
     usergroups = Usergroup.query.all()
-    return render_template('drink.html', title=drink.name, h1=drink.name + " afrekenen", drink=drink, User=User, usergroups=usergroups,
-                           amount_usergroups=len(usergroups))
+    return render_template('drink.html', title=drink.name, h1=drink.name + " afrekenen", drink=drink, usergroups=usergroups,
+                           amount_usergroups=len(usergroups), shared=False)
 
 
 @app.route('/drink/<int:drinkid>/<int:userid>')
@@ -173,10 +174,47 @@ def purchase(drinkid, userid):
 @app.route('/drink/<int:drink_id>/<string:cart>')
 def purchase_from_cart(drink_id, cart):
     final_alert = {}
+    shared = False
 
     for order in cart.split('&'):
         data = order.split('a')
-        alert = (db_handler.addpurchase(drink_id, int(data[0]), int(data[1])))
+        if data[0] == '0':
+            shared = True
+            amount = data[1]
+        else:
+            alert = (db_handler.addpurchase(drink_id, int(data[0]), int(data[1])))
+            if alert[1] not in final_alert:
+                final_alert[alert[1]] = alert[0]
+            else:
+                final_alert[alert[1]] = final_alert[alert[1]] + ", \n " + alert[0]
+    for key, value in final_alert.items():
+        flash(value, key)
+    if not shared:
+        return redirect(url_for('index'))
+    else:
+        return redirect(url_for('purchase_together', drinkid=drink_id, amount=amount))
+
+
+@register_breadcrumb(app, '.drink.id.shared', 'Gezamelijk', order=3)
+@app.route('/drink/<int:drinkid>/shared/<int:amount>')
+def purchase_together(drinkid, amount):
+    drink = copy.deepcopy(Product.query.get(drinkid))
+    usergroups = Usergroup.query.all()
+    drink.price = drink.price * amount
+    return render_template('drink.html', title=drink.name, h1="Gezamelijk "+ str(amount) + " " + drink.name + " afrekenen", drink=drink, usergroups=usergroups,
+                           amount_usergroups=len(usergroups), shared=True)
+
+# Input in format of <userid>a<amount>&
+@app.route('/drink/<int:drinkid>/shared/<int:amount>/<string:cart>')
+def purchase_from_cart_together(drinkid, amount, cart):
+    final_alert = {}
+    denominator = 0
+    for order in cart.split('&'):
+        denominator = denominator + int(order.split('a')[1])
+
+    for order in cart.split('&'):
+        data = order.split('a')
+        alert = db_handler.addpurchase(drinkid, int(data[0]), float(int(data[1])) * amount / denominator)
         if alert[1] not in final_alert:
             final_alert[alert[1]] = alert[0]
         else:

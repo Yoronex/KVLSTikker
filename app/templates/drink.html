@@ -14,6 +14,9 @@
 
             <div class="container-fluid">
                 <div class="row">
+                    {% if shared == false %}
+                    <a class="btn btn-block btn-grey" onclick="addToCart('0', 'Gedeeld', '{{ drink.price }}')">Gezamelijk</a>
+                    {% endif %}
                     {% for g in usergroups %}
                     <div class="col">{{ g.name }}</div>
                     {% endfor %}
@@ -24,9 +27,9 @@
                         {% for u in g.users.all() %}
                         <tr>
                             {% if (loop.index + outer_loop.index) % 2 == 0 %}
-                            <td width="100%"><a class="btn btn-block btn-green" onclick="addToCart('{{ u.id }}', '{{ u.name }}', '{{ drink.price }}')">{{ u.name }}</a></td>
+                            <td width="100%"><a class="btn btn-block btn-green" onclick="addToCart('{{ u.id }}', '{{ u.name }}', '{{ drink.price }}', '{{ shared }}')">{{ u.name }}</a></td>
                             {% else %}
-                            <td width="100%"><a class="btn btn-block btn-yellow" onclick="addToCart('{{ u.id }}', '{{ u.name }}', '{{ drink.price }}')">{{ u.name }}</a></td>
+                            <td width="100%"><a class="btn btn-block btn-yellow" onclick="addToCart('{{ u.id }}', '{{ u.name }}', '{{ drink.price }}', '{{ shared }}')">{{ u.name }}</a></td>
                             {% endif %}
                         </tr>
                         {% endfor %}

@@ -52,7 +52,7 @@ class Purchase(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     transactions = db.relationship('Transaction', backref='purchase', lazy='dynamic')
-    amount = db.Column(db.Integer)
+    amount = db.Column(db.Float)
     price = db.Column(db.Float)
 
     def __repr__(self):
