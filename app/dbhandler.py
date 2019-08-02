@@ -1,5 +1,5 @@
 from app import app, db, dbhandler
-from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction
+from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import os
@@ -16,10 +16,12 @@ class dbhandler():
             quantity = float(round(quantity * 100)) / 100
         drink = Product.query.get(drink_id)
         user = User.query.get(user_id)
+        self.take_from_inventory(user, drink_id, quantity)
+
         user.balance = user.balance - float(drink.price) * quantity
         purchase = Purchase(user_id=user.id, timestamp=datetime.now(), product_id=drink.id, price=drink.price, amount=quantity)
         db.session.add(purchase)
-        db.session.commit()
+        #db.session.commit()
         balchange = -drink.price * quantity
         transaction = Transaction(user_id=user.id, timestamp=datetime.now(), purchase_id=purchase.id, balchange=balchange, newbal=user.balance)
         db.session.add(transaction)
@@ -49,14 +51,14 @@ class dbhandler():
         image.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
         return "Product {} succesvol aangemaakt".format(product.name), "success"
 
-    def adduser(self, name, group):
-        user = User(name=name, usergroup_id=group)
+    def adduser(self, name, group, profitgroup):
+        user = User(name=name, usergroup_id=group, profitgroup_id=profitgroup)
         db.session.add(user)
         db.session.commit()
         return "Gebruiker {} succesvol geregistreerd".format(user.name), "success"
 
     def addusergroup(self, name):
-        usergroup = Usergroup(name=name)
+        usergroup = Usergroup(name=name, )
         db.session.add(usergroup)
         db.session.commit()
         return "Groep {} succesvol aangemaakt".format(usergroup.name), "success"
@@ -115,3 +117,110 @@ class dbhandler():
         filename = str(product.id) + file_extension
         image.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
         return "Afbeelding van product {} (ID: {}) succesvol aangepast!".format(product.name, product.id), "success"
+
+    # -- Inventory management -- #
+
+    def find_oldest_inventory(self, product_id):
+        inventories = Inventory.query.filter(Inventory.product_id == product_id).all()
+        if len(inventories) == 0:
+            return None
+        elif type(inventories) is Inventory:
+            return inventories
+        else:
+            return inventories[0]
+
+    def get_inventory(self, product_id):
+        inventories = Inventory.query.filter(Inventory.product_id == product_id).all()
+        sum = 0
+        for i in inventories:
+            sum = sum + i.quantity
+        return sum
+
+    def add_inventory(self, product_id, quantity, price_before_profit, note):
+        inventory = self.find_oldest_inventory(product_id)
+        if inventory is not None and inventory.quantity < 0:
+
+            purchases = Purchase.query.filter(Inventory.product_id == product_id).all()
+            filtered_purchases = []
+            i = 0
+            amount = 0
+
+            if inventory.quantity >= -float(quantity):
+                goal = 0
+            else:
+                goal = -(inventory.quantity + quantity)
+
+            while amount < -inventory.quantity:
+                i = i - 1
+                t = purchases[i]
+                amount = amount + t.amount
+                filtered_purchases.append(t)
+
+            product = Product.query.get(product_id)
+            profit = product.price - price_before_profit
+            old_quantity = -inventory.quantity
+            j = 0
+
+            while amount > goal:
+                j = j - 1
+                amount = amount - filtered_purchases[j].amount
+                profitgroup = Usergroup.query.get(User.query.get(filtered_purchases[j].user_id).profitgroup_id)
+                if amount >= goal:
+                    profitgroup.profit = profitgroup.profit + (old_quantity - amount) * profit
+                    old_quantity = amount
+                else:
+                    profitgroup.profit = profitgroup.profit + (filtered_purchases[j].amount - goal) * profit
+                profitgroup = None
+
+
+            if inventory.quantity + quantity < 0:
+                inventory.quantity = inventory.quantity + quantity
+            elif inventory.quantity + quantity == 0:
+                db.session.delete(inventory)
+            else:
+                new_inventory = Inventory(product_id=product_id, quantity=quantity + inventory.quantity, price_before_profit=price_before_profit, note=note)
+                db.session.delete(inventory)
+                db.session.add(new_inventory)
+
+        else:
+            inventory = Inventory(product_id=product_id, quantity=float(quantity), price_before_profit=price_before_profit, note=note)
+            db.session.add(inventory)
+
+        db.session.commit()
+        product = Product.query.get(product_id)
+        return "{} {} toegevoegd aan inventaris!".format(str(quantity), product.name), "success"
+
+    def take_from_inventory(self, user, product_id, quantity):
+        product = Product.query.get(product_id)
+        profitgroup = Usergroup.query.get(user.profitgroup_id)
+        while 0 < quantity:
+            inventory = self.find_oldest_inventory(product_id)
+            if inventory is None:
+                inventory = Inventory(product_id=product_id, quantity= float(- quantity), note="Noodinventaris")
+                db.session.add(inventory)
+                db.session.commit()
+                break
+            else:
+                if quantity < inventory.quantity:
+                    profit = product.price - inventory.price_before_profit
+                    profitgroup.profit = profitgroup.profit + (profit * quantity)
+                    inventory.quantity = inventory.quantity - quantity
+                    break
+                elif quantity >= inventory.quantity > 0.0:
+                    profit = product.price - inventory.price_before_profit  # calculate profit
+                    profitgroup.profit = profitgroup.profit + (profit * inventory.quantity)  # add profit to profitgroup
+                    quantity = quantity - inventory.quantity  # decrease quantity
+                    db.session.delete(inventory)  # delete empty inventory
+                    db.session.commit()
+                else:
+                    inventory.quantity = inventory.quantity - quantity
+                    break
+
+    def force_edit(self):
+        inventory = Inventory.query.all()[0]
+        inventory.quantity = float(1.0)
+        print(inventory.quantity)
+
+
+
+

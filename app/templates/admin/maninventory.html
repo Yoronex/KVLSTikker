@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+    <div class="row">
+        <div class="col-xl-6">
+            <h2>Inventaris</h2>
+            <table>
+                <tr>
+                    <th>ID</th>
+                    <th>Datum</th>
+                    <th>Wat</th>
+                    <th>Hoeveel</th>
+                    <th>€</th>
+                    <th>Notities</th>
+                </tr>
+                {% for i in Inventory.query.all() %}
+                <tr>
+                    <td>{{ i.id }}</td>
+                    <td>{{ i.timestamp.strftime("%Y-%m-%d") }}</td>
+                    <td>{{ Product.query.get(i.product_id).name }}</td>
+                    <td>{{ i.quantity }}</td>
+                    {% if i.price_before_profit is none %}
+                    <td><span style="color: red;font-weight:bold;">--</span></td>
+                    {% else %}
+                    <td>€ {{ '%.2f' % i.price_before_profit }}</td>
+                    {% endif %}
+                    <td>{{ i.note }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div class="col-xl-6">
+            <h2>Voeg inventaris toe</h2>
+            {{ wtf.quick_form(form) }}
+        </div>
+    </div>
+{% endblock %}

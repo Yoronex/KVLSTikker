@@ -2,20 +2,17 @@ from typing import Dict, Any
 
 from threading import Thread
 from flask import render_template, flash, redirect, url_for, request
+from sqlalchemy import and_
 from app import app
 from app.dbhandler import dbhandler
 from app.forms import LoginForm, UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm, \
-    ChangeDrinkForm, ChangeDrinkImageForm
-from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction
+    ChangeDrinkForm, ChangeDrinkImageForm, AddInventoryForm
+from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory
 from flask_breadcrumbs import Breadcrumbs, register_breadcrumb
 import pandas as pd
-import numpy as np
-import matplotlib
 import copy
+import collections
 
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import math
 from datetime import datetime
 from dateutil import tz
 
@@ -82,6 +79,14 @@ def convert_to_local_time(transactions):
         result.append(utc.astimezone(to_zone))
 
     return result
+
+
+def get_inventory(product_id):
+    inventory = Inventory.query.filter(product_id=product_id).all()
+    sum = 0
+    for i in inventory:
+        sum = sum + inventory.quantity
+    return sum
 
 
 plotcolours = ["#0b8337", "#ffd94a", "#707070"]
@@ -252,7 +257,7 @@ def test():
 def admin():
     if request.remote_addr != "127.0.0.1":
         return render_template('401.html', title="401 Geen toegang")
-    return render_template('admin/admin.html', title='Admin paneel', h1="Beheerderspaneel")
+    return render_template('admin/admin.html', title='Admin paneel', h1="Beheerderspaneel", Usergroup=Usergroup)
 
 
 @app.route('/admin/users', methods=['GET', 'POST'])
@@ -262,7 +267,7 @@ def admin_users():
         return render_template('401.html', title="401 Geen toegang")
     form = UserRegistrationForm()
     if form.validate_on_submit():
-        alert = (db_handler.adduser(form.name.data, form.group.data))
+        alert = (db_handler.adduser(form.name.data, form.group.data, form.profitgroup.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_users'))
     return render_template("admin/manusers.html", title="Gebruikersbeheer", h1="Gebruikersbeheer", backurl=url_for('index'), User=User,
@@ -408,6 +413,35 @@ def admin_usergroups_delete_exec(usergroupid):
     return redirect(url_for('admin_usergroups'))
 
 
+@app.route('/admin/inventory/', methods=['GET', 'POST'])
+def admin_inventory():
+    if request.remote_addr != "127.0.0.1":
+        return render_template('401.html', title="401 Geen toegang")
+    form = AddInventoryForm()
+    if form.validate_on_submit():
+        alert = (db_handler.add_inventory(int(form.product.data), int(form.quantity.data), float(form.purchase_price.data.replace(",", ".")), form.note.data))
+        flash(alert[0], alert[1])
+        return redirect(url_for('admin_inventory'))
+
+    return render_template("admin/maninventory.html", title="Inventarisbeheer", h1="Inventarisbeheer", backurl=url_for('index'), Product=Product,
+                           Inventory=Inventory, form=form)
+
+
+@app.route('/admin/inventory/add')
+def admin_add_to_inventory():
+    return
+
+
+@app.route('/admin/inventory/correct')
+def admin_correct_inventory():
+    return
+
+
+@app.route('/force')
+def force_execute():
+    db_handler.force_edit()
+    return "succes"
+
 ##
 #
 # Statistieken
@@ -418,7 +452,7 @@ def admin_usergroups_delete_exec(usergroupid):
 def stats():
     return None
 
-
+'''
 @app.route('/stats/user/<int:userid>')
 def stats_user(userid):
     user = User.query.get(userid)
@@ -493,6 +527,30 @@ def stats_user(userid):
     return render_template('stats/statsuser.html', title="Statistieken voor {}".format(user.name), user=user,
                            filenames=filenames)
 
+'''
+
+@app.route('/stats/user/<int:userid>')
+def stats_user(userid):
+    user = User.query.get(userid)
+    count = {}
+    for p in user.purchases:
+        if p.product_id not in count:
+            count[p.product_id] = p.amount
+        else:
+            count[p.product_id] = count[p.product_id] + p.amount
+    sorted_count = collections.OrderedDict(count)
+    if len(count) < 10:
+        size = len(count)
+    else:
+        size = 10
+
+    labels_raw = sorted_count.keys()
+    labels = []
+    data = sorted_count.values()
+    for i in range(0, len(labels_raw)):
+        labels.append(Product.query.get(i))
+
+    return render_template("stats/statsuser.html", title="Statistieken van " + user.name, h1="Statistieken van " + user.name, data=data, labels=labels, products=Product.query.all())
 
 @app.route('/stats/drink/<int:drinkid>')
 def stats_drink(drinkid):

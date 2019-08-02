@@ -2,7 +2,8 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, SelectField, SelectMultipleField, widgets, IntegerField, \
     DecimalField, BooleanField, FileField
 from wtforms.validators import ValidationError, DataRequired, EqualTo
-from app.models import User, Usergroup
+from app.models import User, Usergroup, Product
+from sqlalchemy import and_
 from app import db
 
 
@@ -24,11 +25,14 @@ class UserRegistrationForm(FlaskForm):
 
     name = StringField('Naam', validators=[DataRequired()])
     group = SelectField('Groep')
+    profitgroup = SelectField('Opbrengst gaat naar')
     submit_user = SubmitField('Verstuur')
 
     def __init__(self, *args, **kwargs):
         super(UserRegistrationForm, self).__init__(*args, **kwargs)
-        self.group.choices = [(str(g.id), g.name) for g in Usergroup.query.all()]
+        choices = [(str(g.id), g.name) for g in Usergroup.query.all()]
+        self.group.choices = choices
+        self.profitgroup.choices = choices
 
     def updategroups(self):
         global groups
@@ -79,3 +83,18 @@ class ChangeDrinkForm(FlaskForm):
 class ChangeDrinkImageForm(FlaskForm):
     image = FileField('Afbeelding', validators=[DataRequired()])
     submit2 = SubmitField('Uploaden')
+
+
+class AddInventoryForm(FlaskForm):
+    product = SelectField('Product', validators=[DataRequired()])
+    quantity = StringField('Aantal', validators=[DataRequired()])
+    purchase_price = StringField('Inkoopprijs per stuk', validators=[DataRequired()])
+    note = StringField('Notities')
+    submit_inventory = SubmitField('Verstuur')
+
+    def __init__(self, *args, **kwargs):
+        super(AddInventoryForm, self).__init__(*args, **kwargs)
+        products = []
+        for p in Product.query.filter(and_(Product.components == None), (Product.purchaseable == True)).all():
+            products.append((str(p.id), p.name))
+        self.product.choices = products
