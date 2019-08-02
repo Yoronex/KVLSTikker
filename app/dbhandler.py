@@ -120,6 +120,28 @@ class dbhandler():
 
     # -- Inventory management -- #
 
+    def get_inventory_stock(self, product_id):
+        result = {}
+        inventories = Inventory.query.filter(Inventory.product_id == product_id).all()
+        if len(inventories) == 0:
+            result['quantity'] = 0
+            result['entries'] = 0
+            result['oldest'] = None
+            result['newest'] = None
+        elif type(inventories) is Inventory:
+            result['quantity'] = int(inventories.quantity)
+            result['entries'] = 1
+            result['oldest'] = inventories.timestamp
+            result['newest'] = inventories.timestamp
+        else:
+            result['quantity'] = 0
+            result['entries'] = len(inventories)
+            result['oldest'] = inventories[0].timestamp
+            result['newest'] = inventories[-1].timestamp
+            for i in inventories:
+                result['quantity'] = result['quantity'] + int(i.quantity)
+        return result
+
     def find_oldest_inventory(self, product_id):
         inventories = Inventory.query.filter(Inventory.product_id == product_id).all()
         if len(inventories) == 0:

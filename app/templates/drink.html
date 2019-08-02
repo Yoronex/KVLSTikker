@@ -10,38 +10,71 @@
 
 <div class="container-fluid">
     <div class="row">
-        <div class="col">
+        <div class="col-xl-9">
 
             <div class="container-fluid">
                 <div class="row">
-                    {% if shared == false %}
-                    <a class="btn btn-block btn-grey" onclick="addToCart('0', 'Gedeeld', '{{ drink.price }}')">Gezamelijk</a>
-                    {% endif %}
                     {% for g in usergroups %}
-                    <div class="col">{{ g.name }}</div>
+                    <div class="col" style="text-align: center">{{ g.name }}</div>
                     {% endfor %}
                     <div class="w-100"></div>
                     {% for g in usergroups %}
                     {% set outer_loop = loop %}
-                    <div class="col"><table width="100%" cellpadding="30">
-                        {% for u in g.users.all() %}
-                        <tr>
-                            {% if (loop.index + outer_loop.index) % 2 == 0 %}
-                            <td width="100%"><a class="btn btn-block btn-green" onclick="addToCart('{{ u.id }}', '{{ u.name }}', '{{ drink.price }}', '{{ shared }}')">{{ u.name }}</a></td>
-                            {% else %}
-                            <td width="100%"><a class="btn btn-block btn-yellow" onclick="addToCart('{{ u.id }}', '{{ u.name }}', '{{ drink.price }}', '{{ shared }}')">{{ u.name }}</a></td>
-                            {% endif %}
-                        </tr>
-                        {% endfor %}
-                    </table></div>
+                    <div class="col">
+                        <table width="100%" cellpadding="30">
+                            {% for u in g.users.all() %}
+                            <tr>
+                                {% if (loop.index + outer_loop.index) % 2 == 0 %}
+                                <td width="100%"><a class="btn btn-block btn-green"
+                                                    onclick="addToCart('{{ u.id }}', '{{ u.name }}', '{{ drink.price }}', '{{ shared }}')">{{
+                                    u.name }}</a></td>
+                                {% else %}
+                                <td width="100%"><a class="btn btn-block btn-yellow"
+                                                    onclick="addToCart('{{ u.id }}', '{{ u.name }}', '{{ drink.price }}', '{{ shared }}')">{{
+                                    u.name }}</a></td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
                     {% endfor %}
                 </div>
             </div>
         </div>
-        <div class="col-md-auto">
-            <table id="cart" class="img-thumbnail" width="100%">
-            </table>
-            <a class="btn btn-block btn-grey" id="submitbutton" onclick="submitCart()" width="90%">Versturen</a>
+        <div class="col-xl">
+            {% if shared == false %}
+            <a class="btn btn-block btn-grey" onclick="addToCart('0', 'Gedeeld', '{{ drink.price }}')">Gezamelijk</a>
+            {% endif %}
+            <div class="img-thumbnail" width="100%">
+                <table width="100%">
+                    <tr>
+                        <th colspan="2">Inventaris</th>
+                    </tr>
+                    <tr>
+                        <td style="text-align: right" width="50%">Aantal:</td>
+                        <td style="text-align: left" width="50%">
+                            {% if stock.quantity < 0 %}<span style="color: red;">{{ stock.quantity }}</span>
+                            {% else %} {{ stock.quantity }}
+                        {% endif %} </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: right" width="50%">DB Invoeren:</td>
+                        <td style="text-align: left" width="50%">{{ stock.entries }}</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: right" width="50%">Oudste:</td>
+                        <td style="text-align: left" width="50%">{{ stock.oldest.strftime("%Y-%m-%d") }}</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: right" width="50%">Nieuwste:</td>
+                        <td style="text-align: left" width="50%">{{ stock.newest.strftime("%Y-%m-%d") }}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="img-thumbnail">
+                <table id="cart" width="100%"></table>
+                <a class="btn btn-block btn-grey" id="submitbutton" onclick="submitCart()" width="90%">Versturen</a>
+            </div>
         </div>
     </div>
 </div>

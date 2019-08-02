@@ -164,7 +164,7 @@ def drink(drinkid):
     drink = Product.query.get(drinkid)
     usergroups = Usergroup.query.all()
     return render_template('drink.html', title=drink.name, h1=drink.name + " afrekenen", drink=drink, usergroups=usergroups,
-                           amount_usergroups=len(usergroups), shared=False)
+                           amount_usergroups=len(usergroups), shared=False, stock=db_handler.get_inventory_stock(drinkid))
 
 
 @app.route('/drink/<int:drinkid>/<int:userid>')
@@ -207,7 +207,7 @@ def purchase_together(drinkid, amount):
     usergroups = Usergroup.query.all()
     drink.price = drink.price * amount
     return render_template('drink.html', title=drink.name, h1="Gezamelijk "+ str(amount) + " " + drink.name + " afrekenen", drink=drink, usergroups=usergroups,
-                           amount_usergroups=len(usergroups), shared=True)
+                           amount_usergroups=len(usergroups), shared=True, stock=db_handler.get_inventory_stock(drinkid))
 
 # Input in format of <userid>a<amount>&
 @app.route('/drink/<int:drinkid>/shared/<int:amount>/<string:cart>')
@@ -257,7 +257,29 @@ def test():
 def admin():
     if request.remote_addr != "127.0.0.1":
         return render_template('401.html', title="401 Geen toegang")
-    return render_template('admin/admin.html', title='Admin paneel', h1="Beheerderspaneel", Usergroup=Usergroup)
+
+    products = []
+    for p in Product.query.filter(and_(Product.components == None), (Product.purchaseable == True)).all():
+        result = db_handler.get_inventory_stock(p.id)
+        result['name'] = p.name
+        products.append(result)
+
+    transactions = {}
+    t_list = []
+    upgrades = Upgrade.query.all()
+    purchases = Purchase.query.all()
+    transactions['upgrades'] = len(upgrades)
+    transactions['purchases'] = len(purchases)
+    transactions['total'] = len(upgrades) + len(purchases)
+    transactions['upgrades_value'] = 0
+    transactions['purchases_value'] = 0
+    for u in upgrades:
+        transactions['upgrades_value'] = transactions['upgrades_value'] + u.amount
+    for p in purchases:
+        transactions['purchases_value'] = transactions['purchases_value'] + p.amount * p.price
+    transactions['revenue'] = transactions['upgrades_value'] - transactions['purchases_value']
+
+    return render_template('admin/admin.html', title='Admin paneel', h1="Beheerderspaneel", Usergroup=Usergroup, products=products, transactions=transactions)
 
 
 @app.route('/admin/users', methods=['GET', 'POST'])
