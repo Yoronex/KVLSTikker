@@ -21,7 +21,7 @@ class dbhandler():
         user.balance = user.balance - float(drink.price) * quantity
         purchase = Purchase(user_id=user.id, timestamp=datetime.now(), product_id=drink.id, price=drink.price, amount=quantity)
         db.session.add(purchase)
-        #db.session.commit()
+        db.session.commit()
         balchange = -drink.price * quantity
         transaction = Transaction(user_id=user.id, timestamp=datetime.now(), purchase_id=purchase.id, balchange=balchange, newbal=user.balance)
         db.session.add(transaction)
@@ -128,11 +128,6 @@ class dbhandler():
             result['entries'] = 0
             result['oldest'] = None
             result['newest'] = None
-        elif type(inventories) is Inventory:
-            result['quantity'] = int(inventories.quantity)
-            result['entries'] = 1
-            result['oldest'] = inventories.timestamp
-            result['newest'] = inventories.timestamp
         else:
             result['quantity'] = 0
             result['entries'] = len(inventories)
@@ -140,6 +135,9 @@ class dbhandler():
             result['newest'] = inventories[-1].timestamp
             for i in inventories:
                 result['quantity'] = result['quantity'] + int(i.quantity)
+            if result['quantity'] < 0:
+                result['oldest'] = None
+                result['newest'] = None
         return result
 
     def find_oldest_inventory(self, product_id):
@@ -237,6 +235,20 @@ class dbhandler():
                 else:
                     inventory.quantity = inventory.quantity - quantity
                     break
+
+    def payout_profit(self, usergroup_id, amount, password):
+        if password != app.config['ADMIN_PASSWORD']:
+            return "Verificatiecode is ongeldig. Probeer het opnieuw", "danger"
+
+        usergroup = Usergroup.query.get(usergroup_id)
+        if amount > usergroup.profit:
+            return "Het uit te keren bedrag is groter dan de opgebouwde winst! Kies een lager bedrag", "danger"
+        if amount == 0:
+            return "Het gekozen bedrag is ongeldig"
+
+        usergroup.profit = usergroup.profit - amount
+        db.session.commit()
+        return "€ {} winst van {} uitgekeerd uit Tikker".format(str('%.2f' % usergroup.profit), usergroup.name), "success"
 
     def force_edit(self):
         inventory = Inventory.query.all()[0]

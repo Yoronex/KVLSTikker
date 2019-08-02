@@ -1,26 +1,17 @@
 {% extends "base.html" %}
 
 {% block app_content %}
-    <table width="100%">
-        <colgroup>
-            {% for g in usergroups %}
-            <col class="group_bal" />
-            {% endfor %}
-        </colgroup>
-        <thead>
-            <tr>
-                {% for g in usergroups %}
-                <th>{{ g.name }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                {% for g in usergroups %}
-                <td valign="top" width="{{ 100 / amount_usergroups }}%"><table width="100%">
+    <div class="row">
+        {% for g in usergroups %}
+        <div class="col-md">
+            <div class="img-thumbnail">
+                <table width="100%">
+                    <tr>
+                        <th colspan="2">{{ g.name }}</th>
+                    </tr>
                     {% for u in g.users.all() %}
                     <tr>
-                        <td width="50%" align="right"><a href="/user/{{ u.id }}">{{ u.name }}</a></td>
+                        <td width="50%" style="text-align: right">{{ u.name }}</td>
                         {% if u.balance < 0 %}
                         <td width="50%"><span style="color: red;font-weight:bold;">€{{ '%.2f' % u.balance }}</span></td>
                         {% else %}
@@ -28,9 +19,9 @@
                         {% endif %}
                     </tr>
                     {% endfor %}
-                </table></td>
-                {% endfor %}
-            </tr>
-        </tbody>
-    </table>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 {% endblock %}

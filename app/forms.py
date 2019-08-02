@@ -1,6 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField, SelectMultipleField, widgets, IntegerField, \
-    DecimalField, BooleanField, FileField
+from wtforms import StringField, PasswordField, SubmitField, SelectField, SelectMultipleField, widgets, IntegerField, DecimalField, BooleanField, FileField, TextAreaField, PasswordField
 from wtforms.validators import ValidationError, DataRequired, EqualTo
 from app.models import User, Usergroup, Product
 from sqlalchemy import and_
@@ -89,7 +88,7 @@ class AddInventoryForm(FlaskForm):
     product = SelectField('Product', validators=[DataRequired()])
     quantity = StringField('Aantal', validators=[DataRequired()])
     purchase_price = StringField('Inkoopprijs per stuk', validators=[DataRequired()])
-    note = StringField('Notities')
+    note = TextAreaField('Notities')
     submit_inventory = SubmitField('Verstuur')
 
     def __init__(self, *args, **kwargs):
@@ -98,3 +97,17 @@ class AddInventoryForm(FlaskForm):
         for p in Product.query.filter(and_(Product.components == None), (Product.purchaseable == True)).all():
             products.append((str(p.id), p.name))
         self.product.choices = products
+
+
+class PayOutProfitForm(FlaskForm):
+    usergroup = SelectField('Groep', validators=[DataRequired()])
+    amount = StringField('Bedrag', validators=[DataRequired()])
+    verification = PasswordField('Verificatiecode', validators=[DataRequired()])
+    submit_payout = SubmitField('Verstuur')
+
+    def __init__(self, *args, **kwargs):
+        super(PayOutProfitForm, self).__init__(*args, **kwargs)
+        usergroups = []
+        for u in Usergroup.query.all():
+            usergroups.append((str(u.id), u.name))
+        self.usergroup.choices = usergroups

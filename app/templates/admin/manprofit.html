@@ -3,29 +3,23 @@
 
 {% block app_content %}
     <div class="row">
-        <div class="col-md-6">
-            <h2>Alle groepen</h2>
+        <div class="col-xl-6">
+            <h2>Alle winst</h2>
             <table>
                 <tr>
-                    <th>ID</th>
-                    <th>Naam</th>
+                    <th>Group</th>
                     <th>Winst</th>
-                    <th>Gebruikers</th>
-                    <th></th>
                 </tr>
                 {% for u in Usergroup.query.all() %}
                 <tr>
-                    <td>{{ u.id }}</td>
                     <td>{{ u.name }}</td>
                     <td><span style="color: green;font-weight:bold;">€ {{ '%.2f' % u.profit }}</span></td>
-                    <td>{{ u.users.all()|length }}</td>
-                    <td><a href="/admin/usergroups/delete/{{ u.id }}"><img src="{{ url_for('.static', filename='img/redcross.png') }}" height="30" width="30" alt="Verwijder" title="Verwijder {{ u.name }} uit Tikker"/></a></td>
                 </tr>
                 {% endfor %}
             </table>
         </div>
-        <div class="col-md-5">
-            <h2>Nieuwe groep maken</h2>
+        <div class="col-xl-6">
+            <h2>Winst uitbetalen</h2>
             {{ wtf.quick_form(form) }}
         </div>
     </div>

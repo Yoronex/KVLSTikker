@@ -5,8 +5,7 @@ from flask import render_template, flash, redirect, url_for, request
 from sqlalchemy import and_
 from app import app
 from app.dbhandler import dbhandler
-from app.forms import LoginForm, UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm, \
-    ChangeDrinkForm, ChangeDrinkImageForm, AddInventoryForm
+from app.forms import LoginForm, UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm, ChangeDrinkForm, ChangeDrinkImageForm, AddInventoryForm, PayOutProfitForm
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory
 from flask_breadcrumbs import Breadcrumbs, register_breadcrumb
 import pandas as pd
@@ -145,8 +144,6 @@ def users():
 def user(userid):
     user = User.query.get(userid)
     transactions = user.transactions.order_by(Transaction.id.desc()).all()
-    for t in transactions:
-        print(t.timestamp)
     upgrades = user.upgrades.all()
     return render_template('user.html', title=user.name, h1="Informatie over " + user.name, user=user, transactions=transactions, Purchase=Purchase, upgrades=upgrades,
                            Product=Product)
@@ -449,14 +446,21 @@ def admin_inventory():
                            Inventory=Inventory, form=form)
 
 
-@app.route('/admin/inventory/add')
-def admin_add_to_inventory():
-    return
-
-
 @app.route('/admin/inventory/correct')
 def admin_correct_inventory():
     return
+
+
+@app.route('/admin/profit', methods=['GET', 'POST'])
+def payout_profit():
+    if request.remote_addr != "127.0.0.1":
+        return render_template('401.html', title="401 Geen toegang")
+    form = PayOutProfitForm()
+    if form.validate_on_submit():
+        alert = db_handler.payout_profit(int(form.usergroup.data), float(form.amount.data.replace(",", ".")), form.verification.data)
+        flash(alert[0], alert[1])
+        return redirect(url_for('payout_profit'))
+    return render_template("admin/manprofit.html", title="Winst uitkeren", h1="Winst uitkeren", Usergroup=Usergroup, form=form)
 
 
 @app.route('/force')

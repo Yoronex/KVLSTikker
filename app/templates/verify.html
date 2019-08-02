@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
 {% block app_content %}
-    <center><p>Weet je zeker dat je {{ message }}<br>
+    <p style="text-align: center">Weet je zeker dat je {{ message }}<br>
     Deze actie kan niet ongedaan gemaakt worden!</p>
-    <table>
+    <table width="100%">
         <tr>
-            <td><a href="{{ agree_url }}"><img src="{{ url_for('.static', filename='img/reencheck.png') }}" height="30" width="30" alt="Verwijder" title="Verwijder uit Tikker"/></a></td>
-            <td><a href="{{ return_url }}"><img src="{{ url_for('.static', filename='img/redcross.png') }}" height="30" width="30" alt="Afbreken" title="Ga terug"/></a></td>
+            <td style="text-align: right" width="50%"><a href="{{ agree_url }}"><img src="{{ url_for('.static', filename='img/greencheck.png') }}" height="30" width="30" alt="Verwijder" title="Verwijder uit Tikker"/></a></td>
+            <td style="text-align: left" width="50%"><a href="{{ return_url }}"><img src="{{ url_for('.static', filename='img/redcross.png') }}" height="30" width="30" alt="Afbreken" title="Ga terug"/></a></td>
         </tr>
     </table>
-    </center>
+
 {% endblock %}
