@@ -50,7 +50,8 @@ class UserGroupRegistrationForm(FlaskForm):
 class DrinkForm(FlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
     price = StringField('Prijs', validators=[DataRequired()])
-    image = FileField('Afbeelding', validators=[DataRequired()])
+    image = FileField('Afbeelding (statisch)', validators=[DataRequired()])
+    hoverimage = FileField('Afbeelding (hover)', validators=[DataRequired()])
     submit_drink = SubmitField('Verstuur')
 
 
@@ -80,7 +81,8 @@ class ChangeDrinkForm(FlaskForm):
 
 
 class ChangeDrinkImageForm(FlaskForm):
-    image = FileField('Afbeelding', validators=[DataRequired()])
+    image = FileField('Afbeelding (statisch)')
+    hoverimage = FileField('Afbeelding (hover)')
     submit2 = SubmitField('Uploaden')
 
 

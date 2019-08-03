@@ -1,25 +1,16 @@
 {% extends "base.html" %}
 
 {% block app_content %}
-    <!--{% for p in Product.query.filter(Product.purchaseable == True).all() %}
-    <p><a href="/drink/{{ p.id }}">{{ p.name }}</a></p>
-    {% endfor %}-->
     <div class="row">
-        <div class="col-md-12">
-            <center>
-            {% for p in Product.query.filter(Product.purchaseable == True).all() %}
-            <!--<table>
-                <tr>
-                    <td><a href="/drink/{{ p.id }}>"><img src="{{ url_for('.static', filename='products/{}.jpg'.format(p.id) ) }}" height='200' width='200'></a></td>
-                </tr>
-                <tr>
-                    <td><center>€{{ p.price }}</center></td>
-                </tr>
-
-            </table>-->
-                <a href="/drink/{{ p.id }}"><img src="{{ url_for('.static', filename='products/{}.jpg'.format(p.id) ) }}" title="{{ p.name }} voor €{{ '%.2f' % p.price }}" class="front-image" height='230' width='230'></a>
-            {% endfor %}
-            </center>
+        <div class="col-md-12" style="text-align: center">
+        {% for p in Product.query.filter(Product.purchaseable == True).all() %}
+            <div class="front-image">
+                <a href="/drink/{{ p.id }}">
+                    <img src="{{ url_for('.static', filename='products/{}'.format(p.image) ) }}" title="{{ p.name }} voor €{{ '%.2f' % p.price }}" style="max-width:100%;max-height:100%;">
+                    <img src="{{ url_for('.static', filename='products/{}'.format(p.hoverimage) ) }}" title="{{ p.name }} voor €{{ '%.2f' % p.price }}" class="img-top" style="max-width:100%;max-height:100%;">
+                </a>
+            </div>
+        {% endfor %}
         </div>
     </div>
 {% endblock %}

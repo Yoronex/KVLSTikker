@@ -10,6 +10,7 @@
                     <th>ID</th>
                     <th>Naam</th>
                     <th>Groep</th>
+                    <th>Winst</th>
                     <th>Saldo</th>
                     <th></th>
                 </tr>
@@ -18,6 +19,7 @@
                     <td>{{ u.id }}</td>
                     <td>{{ u.name }}</td>
                     <td>{{ Usergroup.query.get(u.usergroup_id) }}</td>
+                    <td>{{ Usergroup.query.get(u.profitgroup_id) }}</td>
                     {% if u.balance < 0 %}
                     <td><span style="color: red;font-weight:bold;">€ {{ '%.2f' % u.balance }}</span></td>
                     {% else %}

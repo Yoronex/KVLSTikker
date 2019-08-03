@@ -15,17 +15,22 @@
     font-size: 20px
 }
 
+.btn-block {
+    margin-left: 5px;
+    margin-right: 5px !important;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
 .btn-yellow {
     background-color: #ffd94a;
     color: #000000;
-    margin: 5px;
     font-size: 20px;
 }
 
 .btn-green {
     background-color: #0b8337;
     color: white;
-    margin: 5px;
     /*text-shadow: -1px 0 grey, 0 1px grey, 1px 0 grey, 0 -1px grey;*/
     font-size: 20px;
 }
@@ -33,7 +38,6 @@
 .btn-grey {
     background-color: #939393;
     color: #000000;
-    margin: 5px;
 }
 
 .btn-text {
@@ -50,7 +54,7 @@
 }
 
 td {
-    padding: 10px;
+    padding: 5px;
 }
 
 th {
@@ -60,6 +64,22 @@ th {
 .front-image {
     border: 2px solid red;
     margin: 2px;
+    width: 230px;
+    height: 230px;
+    position: relative;
+    display: inline-block;
+}
+
+.front-image .img-top {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 99;
+}
+
+.front-image:hover .img-top {
+    display: inline;
 }
 
 #cart {
@@ -81,4 +101,13 @@ th {
     background-color: #C0C0C0;
     padding-left: 5px;
     padding-right: 5px;
+}
+
+.graph {
+    height: 100%;
+    width: 100%
+}
+
+.img-thumbnail {
+    margin: 15px
 }

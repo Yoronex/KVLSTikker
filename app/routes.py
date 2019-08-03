@@ -88,6 +88,14 @@ def get_inventory(product_id):
     return sum
 
 
+def get_usergroups_with_users():
+    usergroups = Usergroup.query.all()
+    for g in usergroups:
+        if len(g.users.all()) == 0:
+            usergroups.remove(g)
+    return usergroups
+
+
 plotcolours = ["#0b8337", "#ffd94a", "#707070"]
 
 
@@ -129,7 +137,7 @@ def upgrade():
 @app.route('/balance')
 @register_breadcrumb(app, '.balance', "Saldo's", order=1)
 def balance():
-    usergroups = Usergroup.query.all()
+    usergroups = get_usergroups_with_users()
     return render_template('balance.html', title='Saldo', h1="Saldo's", usergroups=usergroups, amount_usergroups=len(usergroups))
 
 
@@ -159,7 +167,7 @@ def purchasehistory():
 @register_breadcrumb(app, '.drink.id', '', dynamic_list_constructor=view_drink_dlc, order=2)
 def drink(drinkid):
     drink = Product.query.get(drinkid)
-    usergroups = Usergroup.query.all()
+    usergroups = get_usergroups_with_users()
     return render_template('drink.html', title=drink.name, h1=drink.name + " afrekenen", drink=drink, usergroups=usergroups,
                            amount_usergroups=len(usergroups), shared=False, stock=db_handler.get_inventory_stock(drinkid))
 
@@ -201,7 +209,7 @@ def purchase_from_cart(drink_id, cart):
 @app.route('/drink/<int:drinkid>/shared/<int:amount>')
 def purchase_together(drinkid, amount):
     drink = copy.deepcopy(Product.query.get(drinkid))
-    usergroups = Usergroup.query.all()
+    usergroups = Usergroup.query.filter(len(Usergroup.users.all()) > 0).all()
     drink.price = drink.price * amount
     return render_template('drink.html', title=drink.name, h1="Gezamelijk "+ str(amount) + " " + drink.name + " afrekenen", drink=drink, usergroups=usergroups,
                            amount_usergroups=len(usergroups), shared=True, stock=db_handler.get_inventory_stock(drinkid))
@@ -356,13 +364,14 @@ def admin_drinks():
     drinks = Product.query.all()
     form = DrinkForm()
     if form.validate_on_submit():
-        alert = (db_handler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), form.image.data))
+        alert = (db_handler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), form.image.data, form.hoverimage.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_drinks'))
     return render_template('admin/mandrinks.html', title="Productbeheer", h1="Productbeheer", drinks=drinks, form=form)
 
 
 @app.route('/admin/drinks/edit/<int:drinkid>', methods=['GET', 'POST'])
+@register_breadcrumb(app, '.admin.drinks.id', '', dynamic_list_constructor=view_drink_dlc, order=3)
 def admin_drinks_edit(drinkid):
     if request.remote_addr != "127.0.0.1":
         return render_template('401.html', title="401 Geen toegang", h1="Geen toegang")
@@ -374,7 +383,7 @@ def admin_drinks_edit(drinkid):
         flash(alert[0], alert[1])
         return redirect(url_for('admin_drinks'))
     if form2.submit2.data and form2.validate_on_submit():
-        alert = (db_handler.editdrink_image(drinkid, form2.image.data))
+        alert = (db_handler.editdrink_image(drinkid, form2.image.data, form2.hoverimage.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_drinks'))
     product = Product.query.get(drinkid)

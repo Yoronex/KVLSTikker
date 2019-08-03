@@ -11,6 +11,17 @@ class dbhandler():
             db_obj = dbhandler()
         return db_obj
 
+    def remove_existing_file(self, filename):
+        file_loc = os.path.join(app.config["UPLOAD_FOLDER"] + filename)
+        if os.path.exists(file_loc):
+            os.remove(file_loc)
+
+    def create_filename(self, product, old_filename, image, character):
+        filename, file_extension = os.path.splitext(secure_filename(image.filename))
+        filename = str(product.id) + character + "-" + str(int(old_filename.split('-')[1]) + 1) + file_extension
+        self.remove_existing_file(filename)
+        return filename
+
     def addpurchase(self, drink_id, user_id, quantity):
         if type(quantity) is float:
             quantity = float(round(quantity * 100)) / 100
@@ -40,15 +51,30 @@ class dbhandler():
         db.session.commit()
         return "Gebruiker {} heeft succesvol opgewaardeerd met €{}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ",")), "success"
 
-    def adddrink(self, name, price, image):
-        product = Product(name=name, price=price, purchaseable=True)
+    def adddrink(self, name, price, image, hoverimage):
+        s_filename, s_file_extension = os.path.splitext(secure_filename(image.filename))
+        h_filename, h_file_extension = os.path.splitext(secure_filename(hoverimage.filename))
+        if s_file_extension[1:] not in app.config["ALLOWED_EXTENSIONS"]:
+            return "Statische afbeelding is niet van het correcte bestandstype (geen .png, .jpg, .bmp of .gif)", "danger"
+        if h_file_extension[1:] not in app.config["ALLOWED_EXTENSIONS"]:
+            return "Hover afbeelding is niet van het correcte bestandstype (geen .png, .jpg, .bmp of .gif)", "danger"
+        
+        product = Product(name=name, price=price, purchaseable=True, image="", hoverimage="")  # image="s" + s_file_extension, hoverimage="h" + h_file_extension)
         db.session.add(product)
         db.session.commit()
-        filename, file_extension = os.path.splitext(secure_filename(image.filename))
-        filename = str(product.id) + file_extension
+
         if not os.path.exists(app.config["UPLOAD_FOLDER"]):
             os.makedirs(app.config["UPLOAD_FOLDER"])
-        image.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+        product.image = self.create_filename(product, str(product.id) + "s-0", image, "s")
+        image.save(os.path.join(app.config["UPLOAD_FOLDER"], product.image))
+
+        if hoverimage == "":
+            product.hoverimage = product.image
+        else:
+            product.hoverimage = self.create_filename(product, str(product.id) + "h-0", hoverimage, "h")
+            hoverimage.save(os.path.join(app.config["UPLOAD_FOLDER"], product.hoverimage))
+        db.session.commit()
+
         return "Product {} succesvol aangemaakt".format(product.name), "success"
 
     def adduser(self, name, group, profitgroup):
@@ -111,11 +137,23 @@ class dbhandler():
         db.session.commit()
         return "Product {} (ID: {}) succesvol aangepast!".format(product.name, product.id), "success"
 
-    def editdrink_image(self, product_id, image):
+    def editdrink_image(self, product_id, image, hoverimage):
         product = Product.query.get(product_id)
-        filename, file_extension = os.path.splitext(secure_filename(image.filename))
-        filename = str(product.id) + file_extension
-        image.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+        print(image)
+        print(hoverimage)
+        if image != "":
+            s_filename, s_file_extension = os.path.splitext(secure_filename(image.filename))
+            if s_file_extension[1:] not in app.config["ALLOWED_EXTENSIONS"]:
+                return "Statische afbeelding is niet van het correcte bestandstype (geen .png, .jpg, .bmp of .gif)", "danger"
+            product.image = self.create_filename(product, os.path.splitext(product.image)[0], image, "s")
+            image.save(os.path.join(app.config["UPLOAD_FOLDER"], product.image))
+        if hoverimage != "":
+            h_filename, h_file_extension = os.path.splitext(secure_filename(hoverimage.filename))
+            if h_file_extension[1:] not in app.config["ALLOWED_EXTENSIONS"]:
+                return "Hover afbeelding is niet van het correcte bestandstype (geen .png, .jpg, .bmp of .gif)", "danger"
+            product.hoverimage = self.create_filename(product, os.path.splitext(product.image)[0], hoverimage, "h")
+            hoverimage.save(os.path.join(app.config["UPLOAD_FOLDER"], product.hoverimage))
+        db.session.commit()
         return "Afbeelding van product {} (ID: {}) succesvol aangepast!".format(product.name, product.id), "success"
 
     # -- Inventory management -- #
@@ -251,9 +289,10 @@ class dbhandler():
         return "€ {} winst van {} uitgekeerd uit Tikker".format(str('%.2f' % usergroup.profit), usergroup.name), "success"
 
     def force_edit(self):
-        inventory = Inventory.query.all()[0]
-        inventory.quantity = float(1.0)
-        print(inventory.quantity)
+        for p in Product.query.all():
+            if p.image == str(p.id) + ".jpg":
+                p.image = ".jpg"
+        db.session.commit()
 
 
 
