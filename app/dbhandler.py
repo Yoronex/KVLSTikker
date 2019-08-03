@@ -78,7 +78,7 @@ class dbhandler():
             return result_recipe
         return None
 
-    def adddrink(self, name, price, image, hoverimage, recipe):
+    def adddrink(self, name, price, image, hoverimage, recipe, inventory_warning):
         result_recipe = self.parse_recipe(recipe)
         if type(result_recipe) is tuple:
             return result_recipe
@@ -91,7 +91,7 @@ class dbhandler():
             if h_file_extension[1:] not in app.config["ALLOWED_EXTENSIONS"]:
                 return "Hover afbeelding is niet van het correcte bestandstype (geen .png, .jpg, .bmp of .gif)", "danger"
 
-        product = Product(name=name, price=price, purchaseable=True, image="", hoverimage="", components=result_recipe)  # image="s" + s_file_extension, hoverimage="h" + h_file_extension)
+        product = Product(name=name, price=price, purchaseable=True, image="", hoverimage="", components=result_recipe, inventory_warning=inventory_warning)
         db.session.add(product)
         db.session.commit()
 
@@ -161,7 +161,7 @@ class dbhandler():
         db.session.commit()
         return "Groep {} verwijderd".format(usergroup.name), "success"
 
-    def editdrink_attr(self, product_id, name, price, purchaseable, recipe):
+    def editdrink_attr(self, product_id, name, price, purchaseable, recipe, inventory_warning):
         result_recipe = self.parse_recipe(recipe)
         if type(result_recipe) is tuple:
             return result_recipe
@@ -170,6 +170,7 @@ class dbhandler():
         product.price = price
         product.purchaseable = purchaseable
         product.components = result_recipe
+        product.inventory_warning = inventory_warning
         db.session.commit()
         return "Product {} (ID: {}) succesvol aangepast!".format(product.name, product.id), "success"
 
@@ -210,6 +211,7 @@ class dbhandler():
     def get_inventory_stock_for_product(self, product_id):
         result = {}
         inventories = Inventory.query.filter(Inventory.product_id == product_id).all()
+        result['inventory_warning'] = Product.query.get(product_id).inventory_warning
         if len(inventories) == 0:
             result['quantity'] = 0
             result['entries'] = 0

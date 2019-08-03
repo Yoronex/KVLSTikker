@@ -70,6 +70,7 @@
                         <td style="text-align: right" width="50%">Aantal:</td>
                         <td style="text-align: left" width="50%">
                             {% if s.quantity < 0 %}<span style="color: red;">{{ s.quantity }}</span>
+                            {% elif s.quantity <= s.inventory_warning %}<span style="color: darkorange;">{{ s.quantity }}</span>
                             {% else %} {{ s.quantity }}
                         {% endif %} </td>
                     </tr>

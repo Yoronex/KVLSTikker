@@ -52,6 +52,7 @@ class Product(db.Model):
     purchaseable = db.Column(db.Boolean)
     purchases = db.relationship('Purchase', backref='product', lazy='dynamic')
     price = db.Column(db.Float)
+    inventory_warning = db.Column(db.Integer, nullable=True)
 
     def __repr__(self):
         return '<Product {} voor {}>'.format(self.name, self.price)

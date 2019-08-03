@@ -1,7 +1,7 @@
 from typing import Dict, Any
 
 from threading import Thread
-from flask import render_template, flash, redirect, url_for, request
+from flask import render_template, flash, redirect, url_for, request, abort
 from sqlalchemy import and_
 from app import app
 from app.dbhandler import dbhandler
@@ -105,7 +105,7 @@ plotcolours = ["#0b8337", "#ffd94a", "#707070"]
 @register_breadcrumb(app, '.', 'Home', order=0)
 @register_breadcrumb(app, '.drink', 'Product', order=1)
 def index():
-    return render_template('index.html', title='Home', h1="Kies iets uit!",  Product=Product)
+    return render_template('index.html', title='Home', h1="Kies iets uit!",  Product=Product), 200
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -121,7 +121,7 @@ def login():
 @register_breadcrumb(app, '.upgrade', 'Opwaarderen', order=1)
 def upgrade():
     if request.remote_addr != "127.0.0.1":
-        return render_template('401.html', title="401 Geen toegang")
+        abort(403)
     form = UpgradeBalanceForm()
     if form.validate_on_submit():
         amount = float(form.amount.data.replace(",", "."))
@@ -138,7 +138,7 @@ def upgrade():
 @register_breadcrumb(app, '.balance', "Saldo's", order=1)
 def balance():
     usergroups = get_usergroups_with_users()
-    return render_template('balance.html', title='Saldo', h1="Saldo's", usergroups=usergroups, amount_usergroups=len(usergroups))
+    return render_template('balance.html', title='Saldo', h1="Saldo's", usergroups=usergroups, amount_usergroups=len(usergroups)), 200
 
 
 @app.route('/user')
@@ -154,13 +154,13 @@ def user(userid):
     transactions = user.transactions.order_by(Transaction.id.desc()).all()
     upgrades = user.upgrades.all()
     return render_template('user.html', title=user.name, h1="Informatie over " + user.name, user=user, transactions=transactions, Purchase=Purchase, upgrades=upgrades,
-                           Product=Product)
+                           Product=Product), 200
 
 
 @app.route('/purchasehistory')
 def purchasehistory():
     return render_template('purchasehistory.html', title='Aankoophistorie', h1="Aankoophistorie", User=User, Product=Product,
-                           Purchase=Purchase)
+                           Purchase=Purchase), 200
 
 
 @app.route('/drink/<int:drinkid>', methods=['GET', 'POST'])
@@ -169,7 +169,7 @@ def drink(drinkid):
     drink = Product.query.get(drinkid)
     usergroups = get_usergroups_with_users()
     return render_template('drink.html', title=drink.name, h1=drink.name + " afrekenen", drink=drink, usergroups=usergroups, Product=Product,
-                           shared=False, stock=db_handler.get_inventory_stock(drinkid))
+                           shared=False, stock=db_handler.get_inventory_stock(drinkid)), 200
 
 
 @app.route('/drink/<int:drinkid>/<int:userid>')
@@ -212,7 +212,7 @@ def purchase_together(drinkid, amount):
     usergroups = Usergroup.query.filter(len(Usergroup.users.all()) > 0).all()
     drink.price = drink.price * amount
     return render_template('drink.html', title=drink.name, h1="Gezamelijk "+ str(amount) + " " + drink.name + " afrekenen", drink=drink, usergroups=usergroups, Product=Product,
-                           shared=True, stock=db_handler.get_inventory_stock(drinkid))
+                           shared=True, stock=db_handler.get_inventory_stock(drinkid)), 200
 
 # Input in format of <userid>a<amount>&
 @app.route('/drink/<int:drinkid>/shared/<int:amount>/<string:cart>')
@@ -261,7 +261,7 @@ def test():
 @register_breadcrumb(app, '.admin', 'Beheerderspaneel', order=1)
 def admin():
     if request.remote_addr != "127.0.0.1":
-        return render_template('401.html', title="401 Geen toegang")
+        abort(403)
 
     products = []
     for p in Product.query.filter(and_(Product.components == None), (Product.purchaseable == True)).all():
@@ -284,34 +284,34 @@ def admin():
         transactions['purchases_value'] = transactions['purchases_value'] + p.amount * p.price
     transactions['revenue'] = transactions['upgrades_value'] - transactions['purchases_value']
 
-    return render_template('admin/admin.html', title='Admin paneel', h1="Beheerderspaneel", Usergroup=Usergroup, products=products, transactions=transactions)
+    return render_template('admin/admin.html', title='Admin paneel', h1="Beheerderspaneel", Usergroup=Usergroup, products=products, transactions=transactions), 200
 
 
 @app.route('/admin/users', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.admin.users', 'Gebruikersbeheer', order=2)
 def admin_users():
     if request.remote_addr != "127.0.0.1":
-        return render_template('401.html', title="401 Geen toegang")
+        abort(403)
     form = UserRegistrationForm()
     if form.validate_on_submit():
         alert = (db_handler.adduser(form.name.data, form.group.data, form.profitgroup.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_users'))
     return render_template("admin/manusers.html", title="Gebruikersbeheer", h1="Gebruikersbeheer", backurl=url_for('index'), User=User,
-                           Usergroup=Usergroup, form=form)
+                           Usergroup=Usergroup, form=form), 200
 
 
 @app.route('/admin/users/delete/<int:userid>')
 def admin_users_delete(userid):
     if request.remote_addr != "127.0.0.1":
-        return render_template('401.html', title="401 Geen toegang", h1="Geen toegang")
+        abort(403)
     user = User.query.get(userid)
     if user.balance == 0.0:
         message = "gebruiker " + user.name + " wilt verwijderen? Alle historie gaat hierbij verloren!"
         agree_url = url_for("admin_users_delete_exec", userid=userid)
         return_url = url_for("admin_users")
         return render_template("verify.html", title="Bevestigen", message=message, user=user, agree_url=agree_url,
-                               return_url=return_url)
+                               return_url=return_url), 200
     else:
         flash("Deze gebruiker heeft nog geen saldo van € 0!", "danger")
         return redirect(url_for('admin_users'))
@@ -320,7 +320,7 @@ def admin_users_delete(userid):
 @app.route('/admin/users/delete/<int:userid>/exec')
 def admin_users_delete_exec(userid):
     if request.remote_addr != "127.0.0.1":
-        return render_template('401.html', title="401 Geen toegang", h1="Geen toegang")
+        abort(403)
     if (User.query.get(userid).balance != 0.0):
         flash("Deze gebruiker heeft nog geen saldo van € 0!", "danger")
         return redirect(url_for('admin_users'))
@@ -333,10 +333,10 @@ def admin_users_delete_exec(userid):
 @register_breadcrumb(app, '.admin.transactions', 'Transactiebeheer', order=2)
 def admin_transactions():
     if request.remote_addr != "127.0.0.1":
-        return render_template('401.html', title="401 Geen toegang", h1="Geen toegang")
+        abort(403)
     transactions = reversed(Transaction.query.all())
     return render_template('admin/mantransactions.html', title="Transactiebeheer", h1="Alle transacties", User=User, transactions=transactions, Purchase=Purchase,
-                           Product=Product)
+                           Product=Product), 200
 
 
 @app.route('/admin/transactions/delete/<int:tranid>')
@@ -346,13 +346,13 @@ def admin_transactions_delete(tranid):
     agree_url = url_for("admin_transactions_delete_exec", tranid=tranid)
     return_url = url_for("admin_transactions")
     return render_template("verify.html", title="Bevestigen", message=message, transaction=transaction,
-                           agree_url=agree_url, return_url=return_url)
+                           agree_url=agree_url, return_url=return_url), 200
 
 
 @app.route('/admin/transactions/delete/<int:tranid>/exec')
 def admin_transactions_delete_exec(tranid):
     if request.remote_addr != "127.0.0.1":
-        return render_template('401.html', title="401 Geen toegang", h1="Geen toegang")
+        abort(403)
     alert = (db_handler.delpurchase(tranid))
     flash(alert[0], alert[1])
     return redirect(url_for('admin_transactions'))
@@ -363,40 +363,41 @@ def admin_transactions_delete_exec(tranid):
 def admin_drinks():
     form = DrinkForm()
     if form.validate_on_submit():
-        alert = (db_handler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), form.image.data, form.hoverimage.data, form.recipe.data))
+        alert = (db_handler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), form.image.data, form.hoverimage.data, form.recipe.data, form.inventory_warning.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_drinks'))
-    return render_template('admin/mandrinks.html', title="Productbeheer", h1="Productbeheer", Product=Product, form=form)
+    return render_template('admin/mandrinks.html', title="Productbeheer", h1="Productbeheer", Product=Product, form=form), 200
 
 
 @app.route('/admin/drinks/edit/<int:drinkid>', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.admin.drinks.id', '', dynamic_list_constructor=view_drink_dlc, order=3)
 def admin_drinks_edit(drinkid):
     if request.remote_addr != "127.0.0.1":
-        return render_template('401.html', title="401 Geen toegang", h1="Geen toegang")
+        abort(403)
     form = ChangeDrinkForm()
     form2 = ChangeDrinkImageForm()
     recipe = ""
     product = Product.query.get(drinkid)
-    for key, value in product.components.items():
-        recipe = recipe + str(value) + "x" + str(key) + ", "
+    if product.components is not None:
+        for key, value in product.components.items():
+            recipe = recipe + str(value) + "x" + str(key) + ", "
 
     if form.submit1.data and form.validate_on_submit():
         alert = (db_handler.editdrink_attr(drinkid, form.name.data, float(form.price.data.replace(",", ".")),
-                                  form.purchaseable.data, form.recipe.data))
+                                  form.purchaseable.data, form.recipe.data, form.inventory_warning.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_drinks'))
     if form2.submit2.data and form2.validate_on_submit():
         alert = (db_handler.editdrink_image(drinkid, form2.image.data, form2.hoverimage.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_drinks'))
-    return render_template('admin/editdrink.html', title="{} bewerken".format(product.name), h1="Pas {} (ID: {}) aan".format(product.name, product.id), product=product, form=form, form2=form2, recipe=recipe[:-2])
+    return render_template('admin/editdrink.html', title="{} bewerken".format(product.name), h1="Pas {} (ID: {}) aan".format(product.name, product.id), product=product, form=form, form2=form2, recipe=recipe[:-2]), 200
 
 
 @app.route('/admin/drinks/delete/<int:drinkid>')
 def admin_drinks_delete(drinkid):
     if request.remote_addr != "127.0.0.1":
-        return render_template('401.html', title="401 Geen toegang", h1="Geen toegang")
+        abort(403)
     alert = (db_handler.deldrink(drinkid))
     flash(alert[0], alert[1])
     return redirect(url_for('admin_drinks'))
@@ -406,19 +407,19 @@ def admin_drinks_delete(drinkid):
 @register_breadcrumb(app, '.admin.usergroups', 'Groepenbeheer', order=2)
 def admin_usergroups():
     if request.remote_addr != "127.0.0.1":
-        return render_template('401.html', title="401 Geen toegang", h1="Geen toegang")
+        abort(403)
     form = UserGroupRegistrationForm()
     if form.validate_on_submit():
         alert = (db_handler.addusergroup(form.name.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_usergroups'))
-    return render_template("admin/manusergroups.html", title="Groepen", h1="Groepenbeheer", form=form, Usergroup=Usergroup)
+    return render_template("admin/manusergroups.html", title="Groepen", h1="Groepenbeheer", form=form, Usergroup=Usergroup), 200
 
 
 @app.route('/admin/usergroups/delete/<int:usergroupid>')
 def admin_usergroups_delete(usergroupid):
     if request.remote_addr != "127.0.0.1":
-        return render_template('401.html', title="401 Geen toegang", h1="Geen toegang")
+        abort(403)
     usergroup = Usergroup.query.get(usergroupid)
     users = usergroup.users.all()
     if len(users) == 0:
@@ -426,7 +427,7 @@ def admin_usergroups_delete(usergroupid):
         agree_url = url_for("admin_usergroups_delete_exec", usergroupid=usergroupid)
         return_url = url_for("admin_usergroups")
         return render_template("verify.html", title="Bevestigen", message=message, user=user, agree_url=agree_url,
-                               return_url=return_url)
+                               return_url=return_url), 200
     else:
         flash("Deze groep heeft nog gebruikers! Verwijder deze eerst.", "danger")
         return redirect(url_for('admin_usergroups'))
@@ -435,7 +436,7 @@ def admin_usergroups_delete(usergroupid):
 @app.route('/admin/usergroups/delete/<int:usergroupid>/exec')
 def admin_usergroups_delete_exec(usergroupid):
     if request.remote_addr != "127.0.0.1":
-        return render_template('401.html', title="401 Geen toegang", h1="Geen toegang")
+        abort(403)
     if len(Usergroup.query.get(usergroupid).users.all()) != 0:
         flash("Deze groep heeft nog gebruikers! Verwijder deze eerst.", "danger")
         return redirect(url_for('admin_usergroups'))
@@ -447,7 +448,7 @@ def admin_usergroups_delete_exec(usergroupid):
 @app.route('/admin/inventory/', methods=['GET', 'POST'])
 def admin_inventory():
     if request.remote_addr != "127.0.0.1":
-        return render_template('401.html', title="401 Geen toegang")
+        abort(403)
     form = AddInventoryForm()
     if form.validate_on_submit():
         alert = (db_handler.add_inventory(int(form.product.data), int(form.quantity.data), float(form.purchase_price.data.replace(",", ".")), form.note.data))
@@ -455,7 +456,7 @@ def admin_inventory():
         return redirect(url_for('admin_inventory'))
 
     return render_template("admin/maninventory.html", title="Inventarisbeheer", h1="Inventarisbeheer", backurl=url_for('index'), Product=Product,
-                           Inventory=Inventory, form=form)
+                           Inventory=Inventory, form=form), 200
 
 
 @app.route('/admin/inventory/correct')
@@ -466,13 +467,13 @@ def admin_correct_inventory():
 @app.route('/admin/profit', methods=['GET', 'POST'])
 def payout_profit():
     if request.remote_addr != "127.0.0.1":
-        return render_template('401.html', title="401 Geen toegang")
+        abort(403)
     form = PayOutProfitForm()
     if form.validate_on_submit():
         alert = db_handler.payout_profit(int(form.usergroup.data), float(form.amount.data.replace(",", ".")), form.verification.data)
         flash(alert[0], alert[1])
         return redirect(url_for('payout_profit'))
-    return render_template("admin/manprofit.html", title="Winst uitkeren", h1="Winst uitkeren", Usergroup=Usergroup, form=form)
+    return render_template("admin/manprofit.html", title="Winst uitkeren", h1="Winst uitkeren", Usergroup=Usergroup, form=form), 200
 
 
 @app.route('/force')
@@ -588,11 +589,59 @@ def stats_user(userid):
     for i in range(0, len(labels_raw)):
         labels.append(Product.query.get(i))
 
-    return render_template("stats/statsuser.html", title="Statistieken van " + user.name, h1="Statistieken van " + user.name, data=data, labels=labels, products=Product.query.all())
+    return render_template("stats/statsuser.html", title="Statistieken van " + user.name, h1="Statistieken van " + user.name, data=data, labels=labels, products=Product.query.all()), 200
 
 @app.route('/stats/drink/<int:drinkid>')
 def stats_drink(drinkid):
     return None
+
+
+@app.route('/test/exception')
+def throw_exception():
+    len(None)
+    return
+
+
+@app.route('/error/403')
+def show_401():
+    message = "Je bezoekt Tikker niet vanaf de computer waar Tikker op is geïnstalleerd. Je hebt daarom geen toegang tot deze pagina."
+    gif = url_for('.static', filename='img/403.mp4')
+    return render_template('error.html', title="403", h1="Error 403", message=message, gif_url=gif), 403
+
+
+@app.route('/error/404')
+def show_404():
+    message = "Deze pagina bestaat (nog) niet! Klik op het KVLS logo links om terug te gaan naar het hoofdmenu."
+    gif = url_for('.static', filename='img/404.mp4')
+    return render_template('error.html', title="404", h1="Error 404", message=message, gif_url=gif), 404
+
+
+@app.route('/error/500')
+def show_500():
+    message = "Achter de schermen is iets helemaal fout gegaan! Om dit probleem in de toekomst niet meer te zien, stuur aub berichtje naar Roy met wat je aan het doen was in Tikker toen deze foutmelding verscheen, zodat hij opgelost kan worden!"
+    gif = url_for('.static', filename='img/500.mp4')
+    return render_template('error.html', title="500", h1="Error 500", message=message, gif_url=gif), 500
+
+
+@app.errorhandler(403)
+def no_access_error(error):
+    message = "Je bezoekt Tikker niet vanaf de computer waar Tikker op is geïnstalleerd. Je hebt daarom geen toegang tot deze pagina."
+    gif = url_for('.static', filename='img/403.mp4')
+    return render_template('error.html', title="403", h1="Error 403", message=message, gif_url=gif), 403
+
+
+@app.errorhandler(404)
+def not_found_error(error):
+    message = "Deze pagina bestaat (nog) niet! Klik op het KVLS logo links om terug te gaan naar het hoofdmenu."
+    gif = url_for('.static', filename='img/404.mp4')
+    return render_template('error.html', title="404", h1="Error 404", message=message, gif_url=gif), 404
+
+
+@app.errorhandler(500)
+def exception_error(error):
+    message = "Achter de schermen is iets helemaal fout gegaan! Om dit probleem in de toekomst niet meer te zien, stuur aub berichtje naar Roy met wat je aan het doen was in Tikker toen deze foutmelding verscheen, zodat hij opgelost kan worden!"
+    gif = url_for('.static', filename='img/500.mp4')
+    return render_template('error.html', title="500", h1="Error 500", message=message, gif_url=gif), 500
 
 
 app.config["BOOTSTRAP_SERVE_LOCAL"] = True

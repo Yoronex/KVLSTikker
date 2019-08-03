@@ -10,6 +10,7 @@
                     <th>ID</th>
                     <th>Naam</th>
                     <th>Prijs</th>
+                    <th>Inv Waarsch.</th>
                     <th>Ingrediënten</th>
                     <th></th>
                     <th></th>
@@ -20,6 +21,7 @@
                     <td style="text-decoration: line-through;">{{ d.id }}</td>
                     <td style="text-decoration: line-through;">{{ d.name }}</td>
                     <td style="text-decoration: line-through;">€ {{ '%.2f' % d.price }}</td>
+                    <td style="text-decoration: line-through;">{{ d.inventory_warning }}</td>
                     {% if d.components is not none %}
                     <td style="text-decoration: line-through;">{% for key, value in d.components.items() %} {{ value }}x {{ Product.query.get(key).name }} {% endfor %}
                     {% else %}
@@ -32,6 +34,7 @@
                     <td>{{ d.id }}</td>
                     <td>{{ d.name }}</td>
                     <td>€ {{ '%.2f' % d.price }}</td>
+                    <td>{{ d.inventory_warning }}</td>
                     {% if d.components is not none %}
                     <td>{% for key, value in d.components.items() %} {{ value }}x {{ Product.query.get(key).name }}{% if loop.index < d.components.items()|length %},{% endif %} {% endfor %}</td>
                     {% else %} <td></td> {% endif %}

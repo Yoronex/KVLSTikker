@@ -37,7 +37,7 @@
                 </tr>
                 {% for u in Usergroup.query.all() %}
                 <tr>
-                    <td width="50%" style="text-align: right">{{ u.name }}</td>
+                    <td width="50%" style="text-align: right">{{ u.name }}:</td>
                     <td width="50%" style="text-align: left"><span style="color: green;font-weight:bold;">€{{ '%.2f' % u.profit }}</span></td>
                 </tr>
                 {% endfor %}
@@ -57,19 +57,19 @@
                     <td width="50%" style="text-align: left">{{ transactions.upgrades }}</td>
                 </tr>
                 <tr>
-                    <td width="50%" style="text-align: right">Waarde</td>
+                    <td width="50%" style="text-align: right">Waarde:</td>
                     <td width="50%" style="text-align: left"><span style="color: green;font-weight:bold;">€{{ '%.2f' % transactions.upgrades_value }}</span></td>
                 </tr>
                 <tr>
-                    <td width="50%" style="text-align: right">Aankopen: </td>
+                    <td width="50%" style="text-align: right">Aankopen:</td>
                     <td width="50%" style="text-align: left">{{ transactions.purchases }}</td>
                 </tr>
                 <tr>
-                    <td width="50%" style="text-align: right">Waarde</td>
+                    <td width="50%" style="text-align: right">Waarde:</td>
                     <td width="50%" style="text-align: left"><span style="color: red;font-weight:bold;">€{{ '%.2f' % transactions.purchases_value }}</span></td>
                 </tr>
                 <tr>
-                    <td style="text-align: right" width="50%">Balans</td>
+                    <td style="text-align: right" width="50%">Balans:</td>
                     <td style="text-align: left" width="50%">
                         {% if transactions.revenue < 0 %}<span style="color: red;font-weight:bold;">€{{ '%.2f' % transactions.revenue }}</span>
                         {% else %}<span style="color: green;font-weight:bold;">€{{ '%.2f' % transactions.revenue }}</span>
@@ -88,6 +88,7 @@
                     <td style="text-align: right" width="50%">{{ p.name }}:</td>
                     <td style="text-align: left" width="50%">
                         {% if p.quantity < 0 %}<span style="color: red;">{{ p.quantity }}</span>
+                        {% elif p.quantity <= p.inventory_warning %}<span style="color: darkorange;">{{ p.quantity }}</span>
                         {% else %} {{ p.quantity }}
                     {% endif %} </td>
                 </tr>
