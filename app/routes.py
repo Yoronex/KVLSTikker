@@ -168,8 +168,8 @@ def purchasehistory():
 def drink(drinkid):
     drink = Product.query.get(drinkid)
     usergroups = get_usergroups_with_users()
-    return render_template('drink.html', title=drink.name, h1=drink.name + " afrekenen", drink=drink, usergroups=usergroups,
-                           amount_usergroups=len(usergroups), shared=False, stock=db_handler.get_inventory_stock(drinkid))
+    return render_template('drink.html', title=drink.name, h1=drink.name + " afrekenen", drink=drink, usergroups=usergroups, Product=Product,
+                           shared=False, stock=db_handler.get_inventory_stock(drinkid))
 
 
 @app.route('/drink/<int:drinkid>/<int:userid>')
@@ -211,8 +211,8 @@ def purchase_together(drinkid, amount):
     drink = copy.deepcopy(Product.query.get(drinkid))
     usergroups = Usergroup.query.filter(len(Usergroup.users.all()) > 0).all()
     drink.price = drink.price * amount
-    return render_template('drink.html', title=drink.name, h1="Gezamelijk "+ str(amount) + " " + drink.name + " afrekenen", drink=drink, usergroups=usergroups,
-                           amount_usergroups=len(usergroups), shared=True, stock=db_handler.get_inventory_stock(drinkid))
+    return render_template('drink.html', title=drink.name, h1="Gezamelijk "+ str(amount) + " " + drink.name + " afrekenen", drink=drink, usergroups=usergroups, Product=Product,
+                           shared=True, stock=db_handler.get_inventory_stock(drinkid))
 
 # Input in format of <userid>a<amount>&
 @app.route('/drink/<int:drinkid>/shared/<int:amount>/<string:cart>')
@@ -266,8 +266,8 @@ def admin():
     products = []
     for p in Product.query.filter(and_(Product.components == None), (Product.purchaseable == True)).all():
         result = db_handler.get_inventory_stock(p.id)
-        result['name'] = p.name
-        products.append(result)
+        result[0]['name'] = p.name
+        products.append(result[0])
 
     transactions = {}
     t_list = []
@@ -361,13 +361,12 @@ def admin_transactions_delete_exec(tranid):
 @app.route('/admin/drinks', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.admin.drinks', 'Productbeheer', order=2)
 def admin_drinks():
-    drinks = Product.query.all()
     form = DrinkForm()
     if form.validate_on_submit():
-        alert = (db_handler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), form.image.data, form.hoverimage.data))
+        alert = (db_handler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), form.image.data, form.hoverimage.data, form.recipe.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_drinks'))
-    return render_template('admin/mandrinks.html', title="Productbeheer", h1="Productbeheer", drinks=drinks, form=form)
+    return render_template('admin/mandrinks.html', title="Productbeheer", h1="Productbeheer", Product=Product, form=form)
 
 
 @app.route('/admin/drinks/edit/<int:drinkid>', methods=['GET', 'POST'])
@@ -377,17 +376,21 @@ def admin_drinks_edit(drinkid):
         return render_template('401.html', title="401 Geen toegang", h1="Geen toegang")
     form = ChangeDrinkForm()
     form2 = ChangeDrinkImageForm()
+    recipe = ""
+    product = Product.query.get(drinkid)
+    for key, value in product.components.items():
+        recipe = recipe + str(value) + "x" + str(key) + ", "
+
     if form.submit1.data and form.validate_on_submit():
         alert = (db_handler.editdrink_attr(drinkid, form.name.data, float(form.price.data.replace(",", ".")),
-                                  form.purchaseable.data))
+                                  form.purchaseable.data, form.recipe.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_drinks'))
     if form2.submit2.data and form2.validate_on_submit():
         alert = (db_handler.editdrink_image(drinkid, form2.image.data, form2.hoverimage.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_drinks'))
-    product = Product.query.get(drinkid)
-    return render_template('admin/editdrink.html', title="{} bewerken".format(product.name), h1="Pas {} (ID: {}) aan".format(product.name, product.id), product=product, form=form, form2=form2)
+    return render_template('admin/editdrink.html', title="{} bewerken".format(product.name), h1="Pas {} (ID: {}) aan".format(product.name, product.id), product=product, form=form, form2=form2, recipe=recipe[:-2])
 
 
 @app.route('/admin/drinks/delete/<int:drinkid>')

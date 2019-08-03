@@ -111,3 +111,9 @@ th {
 .img-thumbnail {
     margin: 15px
 }
+
+@media (min-width: 768px) {
+    .min-width-460-md {
+        min-width: 460px;
+    }
+}

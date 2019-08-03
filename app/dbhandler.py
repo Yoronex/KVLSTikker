@@ -27,7 +27,12 @@ class dbhandler():
             quantity = float(round(quantity * 100)) / 100
         drink = Product.query.get(drink_id)
         user = User.query.get(user_id)
-        self.take_from_inventory(user, drink_id, quantity)
+
+        if drink.components is None:
+            self.take_from_inventory(user, drink_id, quantity)
+        else:
+            for key, val in drink.components.items():
+                self.take_from_inventory(user, key, val * quantity)
 
         user.balance = user.balance - float(drink.price) * quantity
         purchase = Purchase(user_id=user.id, timestamp=datetime.now(), product_id=drink.id, price=drink.price, amount=quantity)
@@ -51,15 +56,42 @@ class dbhandler():
         db.session.commit()
         return "Gebruiker {} heeft succesvol opgewaardeerd met €{}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ",")), "success"
 
-    def adddrink(self, name, price, image, hoverimage):
+    def parse_recipe(self, recipe):
+        if recipe != "":
+            components = recipe.split(",")
+            result_recipe = {}
+            for c in components:
+                data = c.replace(" ", "").split("x")
+                if int(data[0]) <= 0 or int(data[1]) <= 0 or len(data) != 2:
+                    return "Recept voldoet niet aan de gegeven syntax!", "danger"
+                len_a = int(len(data[0])) + int(len(data[1])) + 1
+                len_b = int(len(c.replace(" ", "")))
+                if len_a != len_b:
+                    return "MEEP", "danger"
+                data[0] = int(data[0])
+                data[1] = int(data[1])
+                if Product.query.get(data[1]) is None or Product.query.get(data[1]).purchaseable is False:
+                    return "Product met ID {} bestaat niet of is niet beschikbaar!".format(str(data[1])), "danger"
+                result_recipe[data[1]] = data[0]
+            if len(result_recipe.items() <= 1):
+                return "Een recept kan niet uit één type product bestaan!"
+            return result_recipe
+        return None
+
+    def adddrink(self, name, price, image, hoverimage, recipe):
+        result_recipe = self.parse_recipe(recipe)
+        if type(result_recipe) is tuple:
+            return result_recipe
+
         s_filename, s_file_extension = os.path.splitext(secure_filename(image.filename))
-        h_filename, h_file_extension = os.path.splitext(secure_filename(hoverimage.filename))
         if s_file_extension[1:] not in app.config["ALLOWED_EXTENSIONS"]:
             return "Statische afbeelding is niet van het correcte bestandstype (geen .png, .jpg, .bmp of .gif)", "danger"
-        if h_file_extension[1:] not in app.config["ALLOWED_EXTENSIONS"]:
-            return "Hover afbeelding is niet van het correcte bestandstype (geen .png, .jpg, .bmp of .gif)", "danger"
-        
-        product = Product(name=name, price=price, purchaseable=True, image="", hoverimage="")  # image="s" + s_file_extension, hoverimage="h" + h_file_extension)
+        if hoverimage != "":
+            h_filename, h_file_extension = os.path.splitext(secure_filename(hoverimage.filename))
+            if h_file_extension[1:] not in app.config["ALLOWED_EXTENSIONS"]:
+                return "Hover afbeelding is niet van het correcte bestandstype (geen .png, .jpg, .bmp of .gif)", "danger"
+
+        product = Product(name=name, price=price, purchaseable=True, image="", hoverimage="", components=result_recipe)  # image="s" + s_file_extension, hoverimage="h" + h_file_extension)
         db.session.add(product)
         db.session.commit()
 
@@ -129,11 +161,15 @@ class dbhandler():
         db.session.commit()
         return "Groep {} verwijderd".format(usergroup.name), "success"
 
-    def editdrink_attr(self, product_id, name, price, purchaseable):
+    def editdrink_attr(self, product_id, name, price, purchaseable, recipe):
+        result_recipe = self.parse_recipe(recipe)
+        if type(result_recipe) is tuple:
+            return result_recipe
         product = Product.query.get(product_id)
         product.name = name
         product.price = price
         product.purchaseable = purchaseable
+        product.components = result_recipe
         db.session.commit()
         return "Product {} (ID: {}) succesvol aangepast!".format(product.name, product.id), "success"
 
@@ -159,6 +195,19 @@ class dbhandler():
     # -- Inventory management -- #
 
     def get_inventory_stock(self, product_id):
+        if Product.query.get(product_id).components is None:
+            return [self.get_inventory_stock_for_product(product_id)]
+        else:
+            result = []
+            for key, value in Product.query.get(product_id).components.items():
+                p = Product.query.get(key)
+                stock = self.get_inventory_stock_for_product(key)
+                stock["name"] = p.name
+                stock["recipe_quantity"] = value
+                result.append(stock)
+            return result
+
+    def get_inventory_stock_for_product(self, product_id):
         result = {}
         inventories = Inventory.query.filter(Inventory.product_id == product_id).all()
         if len(inventories) == 0:

@@ -51,7 +51,9 @@ class DrinkForm(FlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
     price = StringField('Prijs', validators=[DataRequired()])
     image = FileField('Afbeelding (statisch)', validators=[DataRequired()])
-    hoverimage = FileField('Afbeelding (hover)', validators=[DataRequired()])
+    hoverimage = FileField('Afbeelding (hover)')
+    recipe = StringField('Recept (optioneel)')
+    inventory_warning = IntegerField('Inventaris waarschuwing (optioneel)')
     submit_drink = SubmitField('Verstuur')
 
 
@@ -77,6 +79,8 @@ class ChangeDrinkForm(FlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
     price = StringField('Prijs', validators=[DataRequired()])
     purchaseable = BooleanField('Beschikbaar')
+    recipe = StringField('Recept (optioneel)')
+    inventory_warning = IntegerField('Inventaris waarschuwing (optioneel)')
     submit1 = SubmitField('Versturen')
 
 

@@ -10,21 +10,31 @@
                     <th>ID</th>
                     <th>Naam</th>
                     <th>Prijs</th>
+                    <th>Ingrediënten</th>
                     <th></th>
                     <th></th>
                 </tr>
-                {% for d in drinks %}
+                {% for d in Product.query.all() %}
                 <tr>
                 {% if d.purchaseable is sameas false %}
-                        <td><strike>{{ d.id }}</strike></td>
-                        <td><strike>{{ d.name }}</strike></td>
-                        <td><strike>€ {{ '%.2f' % d.price }}</strike></td>
-                        <td><strike><a href="/admin/drinks/edit/{{ d.id }}"><img src="{{ url_for('.static', filename='img/edit.png') }}" height="30" width="30" alt="Bewerken" title="Bewerk product"/></a></strike></td>
-                        <td></td>
+                    <td style="text-decoration: line-through;">{{ d.id }}</td>
+                    <td style="text-decoration: line-through;">{{ d.name }}</td>
+                    <td style="text-decoration: line-through;">€ {{ '%.2f' % d.price }}</td>
+                    {% if d.components is not none %}
+                    <td style="text-decoration: line-through;">{% for key, value in d.components.items() %} {{ value }}x {{ Product.query.get(key).name }} {% endfor %}
+                    {% else %}
+                    <td></td>
+                    {% endif %}
+                    <td style="text-decoration: line-through;"><a href="/admin/drinks/edit/{{ d.id }}"><img src="{{ url_for('.static', filename='img/edit.png') }}" height="30" width="30" alt="Bewerken" title="Bewerk product"/></a>
+                    </td>
+                    <td></td>
                 {% else %}
                     <td>{{ d.id }}</td>
                     <td>{{ d.name }}</td>
                     <td>€ {{ '%.2f' % d.price }}</td>
+                    {% if d.components is not none %}
+                    <td>{% for key, value in d.components.items() %} {{ value }}x {{ Product.query.get(key).name }}{% if loop.index < d.components.items()|length %},{% endif %} {% endfor %}</td>
+                    {% else %} <td></td> {% endif %}
                     <td><a href="/admin/drinks/edit/{{ d.id }}"><img src="{{ url_for('.static', filename='img/edit.png') }}" height="30" width="30" alt="Bewerken" title="Bewerk product"/></a></td>
                     <td><a href="/admin/drinks/delete/{{ d.id }}"><img src="{{ url_for('.static', filename='img/redcross.png') }}" height="30" width="30" alt="Verwijder" title="Verwijder product"/></a></td>
                 {% endif %}
