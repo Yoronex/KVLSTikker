@@ -194,7 +194,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-.gitignore
+.idea/**
 .idea/inspectionProfiles/
 .idea/other.xml
 .idea/workspace.xml

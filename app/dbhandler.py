@@ -1,8 +1,10 @@
 from app import app, db, dbhandler
-from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory
+from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory, Recipe, Inventory_usage
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import os
+from sqlalchemy import and_, or_
+
 
 class dbhandler():
     def getdb(self):
@@ -28,20 +30,39 @@ class dbhandler():
         drink = Product.query.get(drink_id)
         user = User.query.get(user_id)
 
-        if drink.components is None:
-            self.take_from_inventory(user, drink_id, quantity)
+        if drink.recipe_input is None:
+            inventory = self.take_from_inventory(user, drink_id, quantity)
         else:
-            for key, val in drink.components.items():
-                self.take_from_inventory(user, key, val * quantity)
+            inventory = {'costs': 0, 'inventory_usage': []}
+            #added_price = 0
+            #for key, val in drink.recipe_input.items():
+            for r in Recipe.query.filter(Recipe.product_id == drink.id).all():
+                result = self.take_from_inventory(user, r.ingredient_id, r.quantity * quantity)
+                inventory['costs'] = inventory['costs'] + result['costs']
+                inventory['inventory_usage'] = inventory['inventory_usage'] + result['inventory_usage']
+        profitgroup = Usergroup.query.get(user.profitgroup_id)
+        profit = drink.price * quantity - inventory['costs']
+        profitgroup.profit = profitgroup.profit + profit
+        db.session.commit()
 
         user.balance = user.balance - float(drink.price) * quantity
-        purchase = Purchase(user_id=user.id, timestamp=datetime.now(), product_id=drink.id, price=drink.price, amount=quantity)
+        purchase = Purchase(user_id=user.id, timestamp=datetime.now(), product_id=drink.id, price=drink.price,
+                            amount=quantity)
         db.session.add(purchase)
         db.session.commit()
+
+        for x in inventory['inventory_usage']:
+            i_u = Inventory_usage(purchase_id=purchase.id, inventory_id=x['id'], quantity=x['quantity'])
+            db.session.add(i_u)
+            db.session.commit()
+            i_u = None
+
         balchange = -drink.price * quantity
-        transaction = Transaction(user_id=user.id, timestamp=datetime.now(), purchase_id=purchase.id, balchange=balchange, newbal=user.balance)
+        transaction = Transaction(user_id=user.id, timestamp=datetime.now(), purchase_id=purchase.id,
+                                  balchange=balchange, newbal=user.balance)
         db.session.add(transaction)
         db.session.commit()
+
         return "{}x {} voor {} verwerkt".format(quantity, drink.name, user.name), "success"
 
     def addbalance(self, user_id, amount):
@@ -50,11 +71,14 @@ class dbhandler():
         db.session.commit()
         user = User.query.get(upgrade.user_id)
         user.balance = user.balance + float(amount)
-        transaction = Transaction(user_id=user_id, timestamp=datetime.now(), upgrade_id=upgrade.id, balchange=upgrade.amount,
+        transaction = Transaction(user_id=user_id, timestamp=datetime.now(), upgrade_id=upgrade.id,
+                                  balchange=upgrade.amount,
                                   newbal=user.balance)
         db.session.add(transaction)
         db.session.commit()
-        return "Gebruiker {} heeft succesvol opgewaardeerd met €{}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ",")), "success"
+        return "Gebruiker {} heeft succesvol opgewaardeerd met €{}".format(user.name,
+                                                                           str("%.2f" % upgrade.amount).replace(".",
+                                                                                                                ",")), "success"
 
     def parse_recipe(self, recipe):
         if recipe != "":
@@ -67,22 +91,23 @@ class dbhandler():
                 len_a = int(len(data[0])) + int(len(data[1])) + 1
                 len_b = int(len(c.replace(" ", "")))
                 if len_a != len_b:
-                    return "MEEP", "danger"
+                    return "Recept voldoet niet aan de gegeven syntax!", "danger"
                 data[0] = int(data[0])
                 data[1] = int(data[1])
                 if Product.query.get(data[1]) is None or Product.query.get(data[1]).purchaseable is False:
                     return "Product met ID {} bestaat niet of is niet beschikbaar!".format(str(data[1])), "danger"
                 result_recipe[data[1]] = data[0]
-            if len(result_recipe.items() <= 1):
+            if len(result_recipe) <= 1:
                 return "Een recept kan niet uit één type product bestaan!"
             return result_recipe
         return None
 
-    def adddrink(self, name, price, image, hoverimage, recipe, inventory_warning):
+    def adddrink(self, name, price, image, hoverimage, recipe, inventory_warning, alcohol, volume, unit):
         result_recipe = self.parse_recipe(recipe)
         if type(result_recipe) is tuple:
             return result_recipe
-
+        if inventory_warning is None:
+            inventory_warning = 0
         s_filename, s_file_extension = os.path.splitext(secure_filename(image.filename))
         if s_file_extension[1:] not in app.config["ALLOWED_EXTENSIONS"]:
             return "Statische afbeelding is niet van het correcte bestandstype (geen .png, .jpg, .bmp of .gif)", "danger"
@@ -91,9 +116,18 @@ class dbhandler():
             if h_file_extension[1:] not in app.config["ALLOWED_EXTENSIONS"]:
                 return "Hover afbeelding is niet van het correcte bestandstype (geen .png, .jpg, .bmp of .gif)", "danger"
 
-        product = Product(name=name, price=price, purchaseable=True, image="", hoverimage="", components=result_recipe, inventory_warning=inventory_warning)
+        if result_recipe is not None:
+            product = Product(name=name, price=price, purchaseable=True, image="", hoverimage="",
+                          recipe_input=result_recipe)
+        else:
+            product = Product(name=name, price=price, purchaseable=True, image="", hoverimage="", inventory_warning=inventory_warning, volume=int(float(volume)), unit=unit, alcohol=float(alcohol.replace(",", ".").replace("%", "").replace(" ", "")) / 100)
         db.session.add(product)
         db.session.commit()
+
+        if result_recipe is not None:
+            for key, val in result_recipe.items():
+                db.session.add(Recipe(product_id=product.id, ingredient_id=key, quantity=val))
+            db.session.commit()
 
         if not os.path.exists(app.config["UPLOAD_FOLDER"]):
             os.makedirs(app.config["UPLOAD_FOLDER"])
@@ -109,8 +143,8 @@ class dbhandler():
 
         return "Product {} succesvol aangemaakt".format(product.name), "success"
 
-    def adduser(self, name, group, profitgroup):
-        user = User(name=name, usergroup_id=group, profitgroup_id=profitgroup)
+    def adduser(self, name, group, profitgroup, birthday):
+        user = User(name=name, usergroup_id=group, profitgroup_id=profitgroup, birthday=birthday)
         db.session.add(user)
         db.session.commit()
         return "Gebruiker {} succesvol geregistreerd".format(user.name), "success"
@@ -133,17 +167,48 @@ class dbhandler():
         db.session.commit()
         return "Gebruiker {} verwijderd".format(user.name), "success"
 
-    def delpurchase(self, transaction_id):
+    def deltransaction(self, transaction_id):
         transaction = Transaction.query.get(transaction_id)
+        user = User.query.get(transaction.user_id)
+        profitgroup = Usergroup.query.get(user.profitgroup_id)
+
         if transaction.purchase_id is None:
             upgrade = Upgrade.query.get(transaction.upgrade_id)
             db.session.delete(upgrade)
         else:
             purchase = Purchase.query.get(transaction.purchase_id)
+            profitgroup.profit = profitgroup.profit - purchase.price * purchase.amount
+            inv_usage = Inventory_usage.query.filter(Inventory_usage.purchase_id == purchase.id).all()
+            if type(inv_usage) is not list:
+                inv_usage = [inv_usage]
+            for i in range(0, len(inv_usage)):
+                inventory = Inventory.query.get(inv_usage[i].inventory_id)
+                inventory.quantity = inventory.quantity + inv_usage[i].quantity
+                profitgroup.profit = profitgroup.profit + inventory.price_before_profit * inv_usage[i].quantity
+                db.session.delete(inv_usage[i])
+                db.session.commit()
+                inventory = None
+
+            #inventory_usage = purchase.inventory
+            #print(str(inventory_usage))
+            #for i in inventory_usage:
+            #    inv = Inventory.query.get(i['id'])
+            #    inv.quantity = inv.quantity + i['quantity']
+            #    profitgroup.profit = profitgroup.profit + inv.price_before_profit * i['quantity']
+            #    db.session.commit()
+            #    inv = None
+
+            recipe = Recipe.query.filter(Recipe.product_id == purchase.product_id).all()
+            if len(recipe) == 0:
+                self.fix_negative_inventory(purchase.product_id)
+            else:
+                for r in recipe:
+                    self.fix_negative_inventory(r.ingredient_id)
             db.session.delete(purchase)
-        for t in Transaction.query.filter(Transaction.user_id == transaction.user_id, Transaction.timestamp > transaction.timestamp).all():
+
+        for t in Transaction.query.filter(Transaction.user_id == transaction.user_id,
+                                          Transaction.timestamp > transaction.timestamp).all():
             t.newbal = t.newbal - transaction.balchange
-        user = User.query.get(transaction.user_id)
         user.balance = user.balance - transaction.balchange
         db.session.delete(transaction)
         db.session.commit()
@@ -161,16 +226,30 @@ class dbhandler():
         db.session.commit()
         return "Groep {} verwijderd".format(usergroup.name), "success"
 
-    def editdrink_attr(self, product_id, name, price, purchaseable, recipe, inventory_warning):
+    def editdrink_attr(self, product_id, name, price, purchaseable, recipe, inventory_warning, alcohol, volume, unit):
         result_recipe = self.parse_recipe(recipe)
         if type(result_recipe) is tuple:
             return result_recipe
+
         product = Product.query.get(product_id)
+
+        if product.recipe_input != result_recipe:
+            for r in Recipe.query.filter(Recipe.product_id == product.id):
+                db.session.delete(r)
+            for key, val in result_recipe:
+                db.session.add(Recipe(product_id=product.id, ingredient_id=key, quantity=val))
+
         product.name = name
         product.price = price
         product.purchaseable = purchaseable
-        product.components = result_recipe
+        product.recipe_input = result_recipe
         product.inventory_warning = inventory_warning
+        if alcohol != "":
+            product.alcohol = float(alcohol.replace(",", ".").replace("%", "").replace(" ", "")) / 100
+        else:
+            product.alcohol = None
+        product.volume = int(float(volume))
+        product.unit = unit
         db.session.commit()
         return "Product {} (ID: {}) succesvol aangepast!".format(product.name, product.id), "success"
 
@@ -196,11 +275,11 @@ class dbhandler():
     # -- Inventory management -- #
 
     def get_inventory_stock(self, product_id):
-        if Product.query.get(product_id).components is None:
+        if Product.query.get(product_id).recipe_input is None:
             return [self.get_inventory_stock_for_product(product_id)]
         else:
             result = []
-            for key, value in Product.query.get(product_id).components.items():
+            for key, value in Product.query.get(product_id).recipe_input.items():
                 p = Product.query.get(key)
                 stock = self.get_inventory_stock_for_product(key)
                 stock["name"] = p.name
@@ -229,27 +308,85 @@ class dbhandler():
                 result['newest'] = None
         return result
 
-    def find_oldest_inventory(self, product_id):
-        inventories = Inventory.query.filter(Inventory.product_id == product_id).all()
+    def get_product_stats(self, product_id):
+        result = {}
+
+        if Recipe.query.filter(Recipe.product_id == product_id).count() == 0:
+            p = Product.query.get(product_id)
+            result['alcohol'] = p.volume * p.alcohol
+            result['volume'] = p.volume / 1000
+            result['stock'] = [{"product": p.name, "quantity": self.get_inventory(p.id), "inventory_warning": p.inventory_warning}]
+        else:
+            result['alcohol'] = 0
+            result['stock'] = []
+            result['volume'] = 0.0
+            for r in Recipe.query.filter(Recipe.product_id == product_id).all():
+                p = Product.query.get(r.ingredient_id)
+                result['alcohol'] = result['alcohol'] + p.volume * p.alcohol
+                result['stock'].append({"product": p.name, "quantity": self.get_inventory(p.id), "inventory_warning": p.inventory_warning})
+                result['volume'] = result['volume'] + p.volume / 1000
+
+        purchases = Purchase.query.filter(Purchase.product_id == product_id).all()
+        users = {u.id: [0, 0] for u in User.query.all()}
+        result['total_bought'] = 0
+        for pur in purchases:
+            result['total_bought'] = result['total_bought'] + pur.amount
+            if not pur.round:
+                users[pur.user_id][0] = users[pur.user_id][0] + pur.amount
+            else:
+                users[pur.user_id][1] = users[pur.user_id][1] + 1
+        largest_consumer = None
+        largest_round_giver = None
+        largest_consumer_amount = 0
+        largest_round_giver_amount = 0
+        for user, amount in users.items():
+            if amount[0] > largest_consumer_amount:
+                largest_consumer = user
+                largest_consumer_amount = amount[0]
+            if amount[1] > largest_round_giver_amount:
+                largest_round_giver = user
+                largest_round_giver_amount = amount[1]
+
+        result['largest_consumer'] = {'user': largest_consumer, 'amount': largest_consumer_amount}
+        result['largest_rounder'] = {'user': largest_round_giver, 'amount': largest_round_giver_amount}
+        return result
+
+    def find_inventory(self, product_id, index):
+        inventories = Inventory.query.filter(Inventory.product_id == product_id, Inventory.quantity != 0).all()
         if len(inventories) == 0:
             return None
         elif type(inventories) is Inventory:
             return inventories
         else:
-            return inventories[0]
+            return inventories[index]
+
+    def find_newest_inventory(self, product_id):
+        return self.find_inventory(product_id, -1)
+
+    def find_oldest_inventory(self, product_id):
+        return self.find_inventory(product_id, 0)
 
     def get_inventory(self, product_id):
-        inventories = Inventory.query.filter(Inventory.product_id == product_id).all()
+        inventories = Inventory.query.filter(and_(Inventory.product_id == product_id, Inventory.quantity != 0)).all()
         sum = 0
         for i in inventories:
             sum = sum + i.quantity
         return sum
 
     def add_inventory(self, product_id, quantity, price_before_profit, note):
-        inventory = self.find_oldest_inventory(product_id)
-        if inventory is not None and inventory.quantity < 0:
-
-            purchases = Purchase.query.filter(Inventory.product_id == product_id).all()
+        old_inv = self.find_oldest_inventory(product_id)
+        new_inv = Inventory(product_id=product_id, quantity=float(quantity),
+                              price_before_profit=price_before_profit, note=note)
+        db.session.add(new_inv)
+        db.session.commit()
+        if old_inv is not None and old_inv.quantity < 0:
+            self.fix_neg_inv(old_inv, new_inv)
+            '''
+            purchases = Purchase.query.filter(
+                or_(Purchase.product_id == product_id,
+                    and_(Recipe.ingredient_id == product_id, Recipe.product_id == Purchase.product_id)
+                )
+            ).all()
             filtered_purchases = []
             i = 0
             amount = 0
@@ -259,71 +396,176 @@ class dbhandler():
             else:
                 goal = -(inventory.quantity + quantity)
 
+            product = Product.query.get(product_id)
             while amount < -inventory.quantity:
                 i = i - 1
                 t = purchases[i]
-                amount = amount + t.amount
+                if Recipe.query.filter(Recipe.product_id == t.product_id, Recipe.ingredient_id == product.id).count() == 0:
+                    amount = amount + t.amount
+                else:
+                    temp = Recipe.query.filter(Recipe.product_id == t.product_id, Recipe.ingredient_id == product.id).all()[0]
+                    amount = amount + t.amount * temp.quantity
                 filtered_purchases.append(t)
 
-            product = Product.query.get(product_id)
-            profit = product.price - price_before_profit
+            #profit = product.price - price_before_profit
             old_quantity = -inventory.quantity
             j = 0
 
             while amount > goal:
                 j = j - 1
-                amount = amount - filtered_purchases[j].amount
+
+                t = filtered_purchases[j]
+                if Recipe.query.filter(Recipe.product_id == t.product_id, Recipe.ingredient_id == product.id).count() == 0:
+                    amount = amount - t.amount
+                else:
+                    temp = Recipe.query.filter(Recipe.product_id == t.product_id, Recipe.ingredient_id == product.id).all()[0]
+                    amount = amount - t.amount * temp.quantity
+
                 profitgroup = Usergroup.query.get(User.query.get(filtered_purchases[j].user_id).profitgroup_id)
                 if amount >= goal:
-                    profitgroup.profit = profitgroup.profit + (old_quantity - amount) * profit
+                    profitgroup.profit = profitgroup.profit - (old_quantity - amount) * price_before_profit
+                    i_u = Inventory_usage(purchase_id=t.id, inventory_id=inventory.id, quantity=old_quantity - amount)
+                    db.session.add(i_u)
+                    db.session.commit()
                     old_quantity = amount
                 else:
-                    profitgroup.profit = profitgroup.profit + (filtered_purchases[j].amount - goal) * profit
+                    profitgroup.profit = profitgroup.profit - (filtered_purchases[j].amount - goal) * price_before_profit
+                    i_u = Inventory_usage(purchase_id=t.id, inventory_id=inventory.id, quantity=filtered_purchases[j].amount)
+                    db.session.add(i_u)
+                    db.session.commit()
                 profitgroup = None
-
 
             if inventory.quantity + quantity < 0:
                 inventory.quantity = inventory.quantity + quantity
             elif inventory.quantity + quantity == 0:
-                db.session.delete(inventory)
+                inventory.quantity = 0
             else:
-                new_inventory = Inventory(product_id=product_id, quantity=quantity + inventory.quantity, price_before_profit=price_before_profit, note=note)
-                db.session.delete(inventory)
+                quantity = quantity + inventory.quantity
+                inventory.quantity = 0
+                new_inventory = Inventory(product_id=product_id, quantity=quantity + inventory.quantity,
+                                          price_before_profit=price_before_profit, note=note)
                 db.session.add(new_inventory)
+            db.session.commit()
+            '''
 
-        else:
-            inventory = Inventory(product_id=product_id, quantity=float(quantity), price_before_profit=price_before_profit, note=note)
-            db.session.add(inventory)
-
-        db.session.commit()
         product = Product.query.get(product_id)
         return "{} {} toegevoegd aan inventaris!".format(str(quantity), product.name), "success"
 
+    def fix_neg_inv(self, old_inv, new_inv):
+        inv_use = Inventory_usage.query.filter(Inventory_usage.inventory_id == old_inv.id).all()
+        for i in range(0, len(inv_use)):
+            profitgroup = Usergroup.query.get(User.query.get(Purchase.query.get(inv_use[i].purchase_id).user_id).profitgroup_id)
+            if inv_use[i].quantity > new_inv.quantity:
+                new_inv_use = Inventory_usage(purchase_id=inv_use[i].purchase_id, inventory_id=new_inv.id, quantity=new_inv.quantity)
+                db.session.add(new_inv_use)
+                inv_use[i].quantity = inv_use[i].quantity - new_inv.quantity
+                profitgroup.profit = profitgroup.profit - (new_inv.price_before_profit * new_inv_use.quantity)
+                new_inv.quantity = 0
+                old_inv.quantity = old_inv.quantity + new_inv_use.quantity
+                db.session.commit()
+                break
+            else:
+                inv_use[i].inventory_id = new_inv.id
+                profitgroup.profit = profitgroup.profit - (new_inv.price_before_profit * inv_use[i].quantity)
+                new_inv.quantity = new_inv.quantity - inv_use[i].quantity
+                old_inv.quantity = old_inv.quantity + inv_use[i].quantity
+            db.session.commit()
+
     def take_from_inventory(self, user, product_id, quantity):
         product = Product.query.get(product_id)
-        profitgroup = Usergroup.query.get(user.profitgroup_id)
-        while 0 < quantity:
+        if user is not None:
+            profitgroup = Usergroup.query.get(user.profitgroup_id)
+        else:
+            profitgroup = None
+        added_costs = 0
+        inventory_usage = []
+        while quantity > 0:
             inventory = self.find_oldest_inventory(product_id)
             if inventory is None:
-                inventory = Inventory(product_id=product_id, quantity= float(- quantity), note="Noodinventaris")
+                inventory = Inventory(product_id=product_id, quantity=float(- quantity), price_before_profit=0.0, note="Noodinventaris")
                 db.session.add(inventory)
+                db.session.commit()
+                if profitgroup is not None:
+                    inventory_usage.append({"id": inventory.id, "quantity": quantity})
                 db.session.commit()
                 break
             else:
                 if quantity < inventory.quantity:
-                    profit = product.price - inventory.price_before_profit
-                    profitgroup.profit = profitgroup.profit + (profit * quantity)
+                    #profit = product.price - inventory.price_before_profit
+                    if profitgroup is not None:
+                        #profitgroup.profit = profitgroup.profit + (inventory.price_before_profit * quantity)
+                        added_costs = added_costs + (inventory.price_before_profit * quantity)
+                    inventory_usage.append({"id": inventory.id, "quantity": quantity})
                     inventory.quantity = inventory.quantity - quantity
                     break
                 elif quantity >= inventory.quantity > 0.0:
-                    profit = product.price - inventory.price_before_profit  # calculate profit
-                    profitgroup.profit = profitgroup.profit + (profit * inventory.quantity)  # add profit to profitgroup
+                    #profit = product.price - inventory.price_before_profit  # calculate profit
+                    if profitgroup is not None:
+                        #profitgroup.profit = profitgroup.profit + (inventory.price_before_profit * inventory.quantity)  # add profit to profitgroup
+                        added_costs = added_costs + (inventory.price_before_profit * inventory.quantity)
+                    inventory_usage.append({"id": inventory.id, "quantity": inventory.quantity})
                     quantity = quantity - inventory.quantity  # decrease quantity
-                    db.session.delete(inventory)  # delete empty inventory
-                    db.session.commit()
+                    #  db.session.delete(inventory)  # delete empty inventory
+                    inventory.quantity = 0
                 else:
                     inventory.quantity = inventory.quantity - quantity
                     break
+            db.session.commit()
+        return {"costs": added_costs, "inventory_usage": inventory_usage}
+
+    def add_to_inventory(self, product_id, quantity):
+        p = Product.query.get(product_id)
+        inventory = self.find_newest_inventory(product_id)
+        if inventory is None:
+            inventories = Inventory.query.filter(Inventory.product_id == product_id).all()
+            if len(inventories) == 0:
+                inventory = Inventory(product_id=product_id, price_before_profit=0.0, quantity=0, note="Extra inventaris")
+                db.session.add(inventory)
+            elif type(inventories) is Inventory:
+                inventory = Inventory
+            else:
+                inventory = inventories[-1]
+        inventory.quantity = inventory.quantity + quantity
+        db.session.commit()
+
+    def fix_negative_inventory(self, product_id):
+        neg_inv = Inventory.query.filter(Inventory.product_id == product_id, Inventory.quantity != 0).all()
+        if type(neg_inv) is Inventory:
+            neg_inv = [neg_inv]
+
+        for n in neg_inv:
+            pos_inv = Inventory.query.filter(and_(
+                Inventory.product_id == product_id,
+                Inventory.quantity > 0,
+                Inventory.timestamp < n.timestamp
+            )).all()
+            if type(pos_inv) is Inventory:
+                pos_inv = [pos_inv]
+            for p in pos_inv:
+                self.fix_neg_inv(n, p)
+                if n.quantity == 0:
+                    break
+
+    def correct_inventory(self, json):
+        for i in json:
+            p = Product.query.get(i['product_id'])
+            diff = float(i['stock']) - float(self.calcStock(p.id))
+            if diff < 0:
+                for g_id in i['groups']:
+                    g = Usergroup.query.get(g_id)
+                    g.profit = g.profit + diff * p.price / len(i['groups'])
+                    db.session.commit()
+                    g = None
+                self.take_from_inventory(None, p.id, -diff)
+            elif diff > 0:
+                self.add_to_inventory(p.id, diff)
+                inv = self.find_newest_inventory()
+                for g_id in i['groups']:
+                    g = Usergroup.query.get(g_id)
+                    g.profit = g.profit + diff * inv.price_before_profit / len(i['groups'])
+                    db.session.commit()
+                    g = None
+        return "Inventaris correctie succesvol doorgevoerd!", "success"
 
     def payout_profit(self, usergroup_id, amount, password):
         if password != app.config['ADMIN_PASSWORD']:
@@ -337,14 +579,20 @@ class dbhandler():
 
         usergroup.profit = usergroup.profit - amount
         db.session.commit()
-        return "€ {} winst van {} uitgekeerd uit Tikker".format(str('%.2f' % usergroup.profit), usergroup.name), "success"
+        return "€ {} winst van {} uitgekeerd uit Tikker".format(str('%.2f' % usergroup.profit),
+                                                                usergroup.name), "success"
+
+    def calcStock(self, product_id):
+        inventories = Inventory.query.filter(and_(Inventory.product_id == product_id, Inventory.quantity != 0))
+        sum = 0
+        for i in inventories:
+            sum = sum + i.quantity
+        return sum
+
+    def rollback(self):
+        db.session.rollback()
 
     def force_edit(self):
-        for p in Product.query.all():
-            if p.image == str(p.id) + ".jpg":
-                p.image = ".jpg"
-        db.session.commit()
-
-
-
-
+        for u in Usergroup.query.all():
+            u.profit = 0
+            db.session.commit()

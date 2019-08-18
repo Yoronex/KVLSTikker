@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block scripts %}
+{{ super() }}
+<script type="text/javascript" src="{{url_for('.static', filename='js/invcorr.js')}}"></script>
+<script>
+    init({{products|tojson}}, {{inventories|tojson}}, {{usergroup_ids|tojson}});
+</script>
+{% endblock %}
+
+{% block app_content %}
+    <div class="modal fade" id="startModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="model-header">
+                    <h5 class="modal-title">Inventaris correctie - start</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Je staat op het punt een inventaris correctie te beginnen. Eenmaal begonnen dient hij afgemaakt te worden. Weet je zeker dat je de inventaris correctie wilt beginnen?</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-dismiss="modal">Start</button>
+                    <a href="/admin" type="button" class="btn btn-danger">Terug</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <div class="progress">
+                <div class="progress-bar progress-bar-animated progress-bar-striped" role="progressbar" style="width: 0%" aria-valuenow="00" aria-valuemin="0" aria-valuemax="100" id="progress"></div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-xl-4 img-thumbnail">
+            <h3>Producten</h3>
+            <table width="100%">
+                {% for p in products %}
+                <tr id="product-list-{{ p['id'] }}">
+                    <td width="15%"></td>
+                    <td width="">{{ p['name'] }}</td>
+                    <td></td>
+                    <td></td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div class="col-xl img-thumbnail">
+            <table id="inv-table" width="100%">
+                <colgroup>
+                    <col>
+                    <col style="background-color: lightgrey">
+                    <col>
+                    <col style="background-color: lightgrey">
+                    <col>
+                </colgroup>
+                <tr>
+                    <th>ID</th>
+                    <th>Datum</th>
+                    <th>Hoeveel</th>
+                    <th>€</th>
+                    <th>Notities</th>
+                </tr>
+            </table>
+            <hr>
+            <table>
+                <tr>
+                    <td>Inventaris in Tikker:</td>
+                    <td id="curr_inv"></td>
+                </tr>
+                <tr>
+                    <td>Echte inventaris:</td>
+                    <td><input type="number" id="real_inv"></td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-xl-3 img-thumbnail">
+            <p>Kies welke groepen vergoeden of de extra opbrengst krijgen</p>
+            <table width="100%">
+                {% for g in Usergroup.query.all() %}
+                <tr>
+                    <td width="100%"><input type="checkbox" name="groups" value="{{ g.id }}"> {{ g.name }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            <hr>
+            <button onclick="updatePage()" class="btn btn-green" id="next-btn">Volgende</button>
+        </div>
+    </div>
+{% endblock %}

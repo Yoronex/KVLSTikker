@@ -45,56 +45,63 @@
             {% if shared == false %}
             <a class="btn btn-block btn-grey" onclick="addToCart('0', 'Gedeeld', '{{ drink.price }}')">Gezamelijk</a>
             {% endif %}
-            {% if drink.components is not none %}
+            {% if drink.recipe_input is not none %}
             <div class="img-thumbnail" width="100%" style="font-size: 12pt">
-                <table width="100%">
+                <table style="margin-left:auto;margin-right:auto;">
                     <tr>
                         <th colspan="2">Recept voor {{ drink.name }}</th>
                     </tr>
-                    {% for key, value in drink.components.items() %}
+                    {% for key, value in drink.recipe_input.items() %}
                     <tr>
-                        <td style="text-align: right" width="50%">{{ Product.query.get(key).name }}:</td>
-                        <td style="text-align: left" width="50%">{{ value }}x</td>
+                        <td style="text-align: right">{{ Product.query.get(key).name }}:</td>
+                        <td style="text-align: left">{{ value }}x</td>
                     </tr>
                     {% endfor %}
                 </table>
             </div>
             {% endif %}
-            {% for s in stock %}
+
             <div class="img-thumbnail" width="100%" style="font-size: 12pt">
                 <table width="100%">
                     <tr>
-                        <th colspan="2">Inventaris {% if stock|length != 1 %} {{ s.name }} {% endif %} </th>
+                        <th colspan="2">Statistieken</th>
                     </tr>
+                    {% for s in stats['stock'] %}
                     <tr>
-                        <td style="text-align: right" width="50%">Aantal:</td>
-                        <td style="text-align: left" width="50%">
-                            {% if s.quantity < 0 %}<span style="color: red;">{{ s.quantity }}</span>
-                            {% elif s.quantity <= s.inventory_warning %}<span style="color: darkorange;">{{ s.quantity }}</span>
+                        <td style="text-align: right" width="60%">Inventaris {{ s["product"] }}:</td>
+                        <td style="text-align: left" width="40%">
+                            {% if s.quantity < 0 %}<span style="color: red; font-weight: bold;">{{ s.quantity }}</span>
+                            {% elif s.quantity <= s.inventory_warning %}<span style="color: darkorange; font-weight: bold">{{ s.quantity }}</span>
                             {% else %} {{ s.quantity }}
                         {% endif %} </td>
                     </tr>
+                    {% endfor %}
                     <tr>
-                        <td style="text-align: right" width="50%">DB Invoeren:</td>
-                        <td style="text-align: left" width="50%">{{ s.entries }}</td>
+                        <td style="text-align: right" width="60%">Grootste koper:</td>
+                        <td style="text-align: left" width="40%">{% if stats['largest_consumer']['user'] is not none %}
+                            {{ User.query.get(stats['largest_consumer']['user']).name }} ({{ stats['largest_consumer']['amount']|round|int }})
+                            {% else %} Niemand :( {% endif %}</td>
                     </tr>
                     <tr>
-                        <td style="text-align: right" width="50%">Oudste:</td>
-                        <td style="text-align: left" width="50%">
-                            {% if s.oldest is none %}nvt
-                            {% else %}{{ s.oldest.strftime("%Y-%m-%d") }}
-                        {% endif %}</td>
+                        <td style="text-align: right" width="60%">Meeste rondjes:</td>
+                        <td style="text-align: left" width="40%">{% if stats['largest_rounder']['user'] is not none %}
+                            {{ User.query.get(stats['largest_rounder']['user']).name }} ({{ stats['largest_rounder']['amount']|round|int }})
+                            {% else %} Niemand :( {% endif %}</td>
                     </tr>
                     <tr>
-                        <td style="text-align: right" width="50%">Nieuwste:</td>
-                        <td style="text-align: left" width="50%">
-                            {% if s.oldest is none %}nvt
-                            {% else %}{{ s.newest.strftime("%Y-%m-%d") }}
-                        {% endif %}</td>
+                        <td style="text-align: right" width="60%">Totaal gedronken:</td>
+                        <td style="text-align: left" width="40%">{{ stats['total_bought']|round|int }} ({{ (stats['volume'] * stats['total_bought'])|round|int }} L)</td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: right" width="60%">Totaal alcohol genuttigd:</td>
+                        <td style="text-align: left" width="40%">{% if stats['alcohol'] * stats['total_bought'] >= 1000 %}
+                            {{ (stats['alcohol'] * stats['total_bought'] / 1000)|round(1) }} L
+                            {% else %} {{ (stats['alcohol'] * stats['total_bought'])|round|int }} mL
+                            {% endif %}</td>
                     </tr>
                 </table>
             </div>
-            {% endfor %}
+
             <div class="img-thumbnail">
                 <table id="cart" width="100%"></table>
                 <a class="btn btn-block btn-grey" id="submitbutton" onclick="submitCart()" width="90%">Versturen</a>

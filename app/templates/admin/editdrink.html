@@ -12,8 +12,14 @@
                 {{ wtf.form_field(form.name, value=product.name) }}
                 {{ wtf.form_field(form.price, value=('%.2f' % product.price)) }}
                 {{ wtf.form_field(form.purchaseable, value=product.purchaseable) }}
+                {% if recipe != "" %}
                 {{ wtf.form_field(form.recipe, value=recipe) }}
+                {% else %}
                 {{ wtf.form_field(form.inventory_warning, value=product.inventory_warning) }}
+                {{ wtf.form_field(form.alcohol, value=product.alcohol) }}
+                {{ wtf.form_field(form.volume, value=product.volume) }}
+                {{ wtf.form_field(form.unit, value=product.unit) }}
+                {% endif %}
                 {{ wtf.form_field(form.submit1) }}
             </form>
         </div>

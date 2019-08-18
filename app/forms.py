@@ -1,5 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, SelectField, SelectMultipleField, widgets, IntegerField, DecimalField, BooleanField, FileField, TextAreaField, PasswordField
+from wtforms.fields.html5 import DateField
 from wtforms.validators import ValidationError, DataRequired, EqualTo
 from app.models import User, Usergroup, Product
 from sqlalchemy import and_
@@ -25,6 +26,7 @@ class UserRegistrationForm(FlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
     group = SelectField('Groep')
     profitgroup = SelectField('Opbrengst gaat naar')
+    birthday = DateField('Verjaardag', validators=[DataRequired()])
     submit_user = SubmitField('Verstuur')
 
     def __init__(self, *args, **kwargs):
@@ -52,8 +54,11 @@ class DrinkForm(FlaskForm):
     price = StringField('Prijs', validators=[DataRequired()])
     image = FileField('Afbeelding (statisch)', validators=[DataRequired()])
     hoverimage = FileField('Afbeelding (hover)')
-    recipe = StringField('Recept (optioneel)')
-    inventory_warning = IntegerField('Inventaris waarschuwing (optioneel)')
+    recipe = StringField('Recept')
+    inventory_warning = IntegerField('Inventaris waarschuwing', default=0)
+    alcohol = StringField('Alcoholpercentage')
+    volume = StringField('Hoeveelheid (in milliliters)')
+    unit = StringField('Hoeveelheid (e.g. 1 flesje, 1 shotje, etc)')
     submit_drink = SubmitField('Verstuur')
 
 
@@ -79,8 +84,11 @@ class ChangeDrinkForm(FlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
     price = StringField('Prijs', validators=[DataRequired()])
     purchaseable = BooleanField('Beschikbaar')
-    recipe = StringField('Recept (optioneel)')
-    inventory_warning = IntegerField('Inventaris waarschuwing (optioneel)')
+    recipe = StringField('Recept')
+    inventory_warning = IntegerField('Inventaris waarschuwing')
+    alcohol = StringField('Alcoholpercentage', default=0)
+    volume = StringField('Hoeveelheid (in milliliters)', default=0)
+    unit = StringField('Hoeveelheid (e.g. 1 flesje, 1 shotje, etc)')
     submit1 = SubmitField('Versturen')
 
 
@@ -100,7 +108,7 @@ class AddInventoryForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         super(AddInventoryForm, self).__init__(*args, **kwargs)
         products = []
-        for p in Product.query.filter(and_(Product.components == None), (Product.purchaseable == True)).all():
+        for p in Product.query.filter(and_(Product.recipe_input == None), (Product.purchaseable == True)).all():
             products.append((str(p.id), p.name))
         self.product.choices = products
 

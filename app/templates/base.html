@@ -23,7 +23,7 @@
 <body onload="startTime()">
 
 <div id="body" class="light-mode">
-<div class="d-flex" id="wrapper">
+<div class="d-flex" id="wrapper" style="position: relative;">
 
     <!-- Sidebar -->
     <div class="bg-light border-right" id="sidebar-wrapper">
@@ -46,12 +46,16 @@
                 Overzicht</a>
             <a href="{{ url_for('upgrade') }}" class="list-group-item list-group-item-action bg-light">Opwaarderen</a>
         </div>
+        <div style="position: absolute; bottom: 0;">
+            <img src="{{ url_for('.static', filename='img/NIX18.svg') }}" style="text-align: center; margin: 1rem;" width="285rem">
+        </div>
     </div>
     <!-- /#sidebar-wrapper -->
 
     <div id="page-content-wrapper">
         <div class="container-fluid main" style="height: 100vh;">
             <div class="row">
+                <div id="loader" style="display: none;"></div>
                 <div class="col">
                     <script>
                         window.setTimeout(function () {
@@ -79,7 +83,7 @@
                     <div>
                         {%- for breadcrumb in breadcrumbs -%}
                         <a href="{{ breadcrumb.url }}">{{ breadcrumb.text }}</a>
-                        {{ '/' if not loop.last }}
+                        {{ '/ ' if not loop.last }}
                         {%- endfor -%}
                     </div>
                     <h1>{{ h1 }}</h1>
@@ -88,7 +92,7 @@
                 <div class="col-auto"><div id="clock"></div></div>
             </div>
             <div class="row">
-                <div class="col" style="height:100vh;">
+                <div class="col">
                     {% block app_content %}{% endblock %}
                 </div>
             </div>
