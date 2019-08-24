@@ -43,7 +43,7 @@ class Usergroup(db.Model):
 
 class Upgrade(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.now())
+    timestamp = db.Column(db.DateTime, index=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     transactions = db.relationship('Transaction', backref='upgrade', lazy='dynamic')
     amount = db.Column(db.Float)
@@ -98,7 +98,7 @@ class Inventory_usage(db.Model):
 
 class Purchase(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.now())
+    timestamp = db.Column(db.DateTime, index=True, nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     transactions = db.relationship('Transaction', backref='purchase', lazy='dynamic')
@@ -113,7 +113,7 @@ class Purchase(db.Model):
 
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.now())
+    timestamp = db.Column(db.DateTime, index=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     purchase_id = db.Column(db.Integer, db.ForeignKey('purchase.id'))
     upgrade_id = db.Column(db.Integer, db.ForeignKey('upgrade.id'))
@@ -124,11 +124,14 @@ class Transaction(db.Model):
 # -- inventory management
 class Inventory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.now())
+    timestamp = db.Column(db.DateTime, index=True, nullable=False)
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
     quantity = db.Column(db.Float)
     price_before_profit = db.Column(db.Float)
     note = db.Column(db.String, nullable=True)
+
+    def __repr__(self):
+        return '<Inventory {} (ID {})>'.format(self.product_id, self.id)
 
     @property
     def serialize(self):

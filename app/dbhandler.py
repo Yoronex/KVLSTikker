@@ -245,7 +245,7 @@ class dbhandler():
         product.recipe_input = result_recipe
         product.inventory_warning = inventory_warning
         if alcohol != "":
-            product.alcohol = float(alcohol.replace(",", ".").replace("%", "").replace(" ", "")) / 100
+            product.alcohol = float(str(alcohol).replace(",", ".").replace("%", "").replace(" ", "")) / 100
         else:
             product.alcohol = None
         product.volume = int(float(volume))
@@ -373,14 +373,19 @@ class dbhandler():
             sum = sum + i.quantity
         return sum
 
-    def add_inventory(self, product_id, quantity, price_before_profit, note):
-        old_inv = self.find_oldest_inventory(product_id)
-        new_inv = Inventory(product_id=product_id, quantity=float(quantity),
+    def add_inventory(self, p_id, quantity, price_before_profit, note):
+        old_inv = self.find_oldest_inventory(p_id)
+        neg_inv = Inventory.query.filter(Inventory.product_id == p_id, Inventory.quantity < 0).all()
+        new_inv = Inventory(product_id=p_id, timestamp=datetime.now(), quantity=float(quantity),
                               price_before_profit=price_before_profit, note=note)
         db.session.add(new_inv)
         db.session.commit()
-        if old_inv is not None and old_inv.quantity < 0:
-            self.fix_neg_inv(old_inv, new_inv)
+        for n in neg_inv:
+            self.fix_neg_inv(n, new_inv)
+            if new_inv.quantity == 0:
+                break
+        #if old_inv is not None and old_inv.quantity < 0:
+        #    self.fix_neg_inv(old_inv, new_inv)
             '''
             purchases = Purchase.query.filter(
                 or_(Purchase.product_id == product_id,
@@ -448,15 +453,18 @@ class dbhandler():
             db.session.commit()
             '''
 
-        product = Product.query.get(product_id)
+        product = Product.query.get(p_id)
         return "{} {} toegevoegd aan inventaris!".format(str(quantity), product.name), "success"
 
     def fix_neg_inv(self, old_inv, new_inv):
         inv_use = Inventory_usage.query.filter(Inventory_usage.inventory_id == old_inv.id).all()
         for i in range(0, len(inv_use)):
+            if new_inv.quantity == 0:
+                break
             profitgroup = Usergroup.query.get(User.query.get(Purchase.query.get(inv_use[i].purchase_id).user_id).profitgroup_id)
             if inv_use[i].quantity > new_inv.quantity:
-                new_inv_use = Inventory_usage(purchase_id=inv_use[i].purchase_id, inventory_id=new_inv.id, quantity=new_inv.quantity)
+                new_inv_use = Inventory_usage(purchase_id=inv_use[i].purchase_id, inventory_id=new_inv.id,
+                                              quantity=new_inv.quantity)
                 db.session.add(new_inv_use)
                 inv_use[i].quantity = inv_use[i].quantity - new_inv.quantity
                 profitgroup.profit = profitgroup.profit - (new_inv.price_before_profit * new_inv_use.quantity)
@@ -469,7 +477,7 @@ class dbhandler():
                 profitgroup.profit = profitgroup.profit - (new_inv.price_before_profit * inv_use[i].quantity)
                 new_inv.quantity = new_inv.quantity - inv_use[i].quantity
                 old_inv.quantity = old_inv.quantity + inv_use[i].quantity
-            db.session.commit()
+                db.session.commit()
 
     def take_from_inventory(self, user, product_id, quantity):
         product = Product.query.get(product_id)
@@ -482,11 +490,11 @@ class dbhandler():
         while quantity > 0:
             inventory = self.find_oldest_inventory(product_id)
             if inventory is None:
-                inventory = Inventory(product_id=product_id, quantity=float(- quantity), price_before_profit=0.0, note="Noodinventaris")
+                inventory = Inventory(product_id=product_id, timestamp=datetime.utcnow(), quantity=float(- quantity),
+                                      price_before_profit=0.0, note="Noodinventaris")
                 db.session.add(inventory)
                 db.session.commit()
-                if profitgroup is not None:
-                    inventory_usage.append({"id": inventory.id, "quantity": quantity})
+                inventory_usage.append({"id": inventory.id, "quantity": quantity})
                 db.session.commit()
                 break
             else:
@@ -509,6 +517,7 @@ class dbhandler():
                     inventory.quantity = 0
                 else:
                     inventory.quantity = inventory.quantity - quantity
+                    inventory_usage.append({"id": inventory.id, "quantity": quantity})
                     break
             db.session.commit()
         return {"costs": added_costs, "inventory_usage": inventory_usage}
@@ -519,7 +528,7 @@ class dbhandler():
         if inventory is None:
             inventories = Inventory.query.filter(Inventory.product_id == product_id).all()
             if len(inventories) == 0:
-                inventory = Inventory(product_id=product_id, price_before_profit=0.0, quantity=0, note="Extra inventaris")
+                inventory = Inventory(product_id=product_id, timestamp=datetime.utcnow(), price_before_profit=0.0, quantity=0, note="Extra inventaris")
                 db.session.add(inventory)
             elif type(inventories) is Inventory:
                 inventory = Inventory
@@ -528,17 +537,19 @@ class dbhandler():
         inventory.quantity = inventory.quantity + quantity
         db.session.commit()
 
-    def fix_negative_inventory(self, product_id):
-        neg_inv = Inventory.query.filter(Inventory.product_id == product_id, Inventory.quantity != 0).all()
+    def fix_negative_inventory(self, p_id):
+        neg_inv = Inventory.query.filter(Inventory.product_id == p_id, Inventory.quantity < 0).all()
         if type(neg_inv) is Inventory:
             neg_inv = [neg_inv]
 
         for n in neg_inv:
+            print("N: " + neg_inv.__repr__())
             pos_inv = Inventory.query.filter(and_(
-                Inventory.product_id == product_id,
+                Inventory.product_id == p_id,
                 Inventory.quantity > 0,
-                Inventory.timestamp < n.timestamp
+                Inventory.timestamp > n.timestamp
             )).all()
+            print("P: " + pos_inv.__repr__())
             if type(pos_inv) is Inventory:
                 pos_inv = [pos_inv]
             for p in pos_inv:
