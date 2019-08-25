@@ -195,6 +195,7 @@ dmypy.json
 .pyre/
 
 .idea/**
+.idea/
 .idea/inspectionProfiles/
 .idea/other.xml
 .idea/workspace.xml
@@ -210,6 +211,7 @@ app_testing.db
 migrations/__pycache__/
 migrations/versions/__pycache__/
 migrations_old/
+migrations/
 plot.png
 sqlite3.exe
 test.db
@@ -223,6 +225,8 @@ app/static/js/Chart.bundle.js
 app/static/js/Chart.bundle.min.js
 app/static/js/Chart.js
 app/static/js/Chart.min.js
+backup/
+logs/
 migrations/versions/6a8755aff6f9_.py
 migrations_old_2/README
 migrations_old_2/alembic.ini
@@ -230,3 +234,4 @@ migrations_old_2/env.py
 migrations_old_2/script.py.mako
 migrations_old_2/versions/6b61e689098e_create_table_transaction.py
 migrations_old_2/versions/9925adbe0c25_create_all_tables.py
+/app.db

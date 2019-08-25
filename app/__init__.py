@@ -7,12 +7,29 @@ from flask_bootstrap import Bootstrap
 from flask_breadcrumbs import Breadcrumbs
 from logging.handlers import RotatingFileHandler
 import os
+import zipfile
+from datetime import datetime
 
 # TODO: zipping app.db every boot
-# TODO: shutdown url
 
 app = Flask(__name__)
 app.config.from_object(Config)
+
+print(app.config['BACKUP_FOLDER'])
+print(app.config['MAX_BACKUPS'])
+print(app.config['LOG_FOLDER'])
+print(app.config['SQLALCHEMY_DATABASE_LOC'])
+
+if not os.path.exists(app.config['BACKUP_FOLDER']):
+    os.makedirs(app.config['BACKUP_FOLDER'])
+list_of_files = os.listdir(app.config['BACKUP_FOLDER'])
+if len(list_of_files) >= app.config['MAX_BACKUPS']:
+    full_paths = [os.path.join(app.config['BACKUP_FOLDER'], str(x)) for x in list_of_files]
+    oldest_file = min(full_paths, key=os.path.getctime)
+    os.remove(oldest_file)
+zip_path = os.path.join(app.config['BACKUP_FOLDER'], datetime.now().strftime("%Y%m%d%H%M%S") + ".zip")
+zipfile.ZipFile(zip_path, mode='w').write(app.config['SQLALCHEMY_DATABASE_LOC'])
+
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 Bootstrap(app)

@@ -29,7 +29,9 @@
         <div class="col-xl">
             <a href="/admin/profit" class="btn btn-block btn-yellow">Winst uitkeren</a>
         </div>
-        <div class="col-xl"></div>
+        <div class="col-xl">
+            <a href="/shutdown" class="btn btn-block btn-green">Tikker afsluiten</a>
+        </div>
         <div class="col-xl"></div>
     </div>
 
@@ -43,7 +45,8 @@
                 {% for u in Usergroup.query.all() %}
                 <tr>
                     <td width="50%" style="text-align: right">{{ u.name }}:</td>
-                    <td width="50%" style="text-align: left"><span style="color: green;font-weight:bold;">€{{ '%.2f' % u.profit }}</span></td>
+                    <td width="50%" style="text-align: left">{% if u.profit < 0 %}<span style="color:red;font-weight:bold;">
+                        {% else %}<span style="color:green;font-weight:bold;">{% endif %}€{{ '%.2f' % u.profit }}</span></td>
                 </tr>
                 {% endfor %}
             </table>

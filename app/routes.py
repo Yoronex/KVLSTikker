@@ -97,6 +97,13 @@ def get_usergroups_with_users():
     return usergroups
 
 
+def shutdown_server():
+    func = request.environ.get('werkzeug.server.shutdown')
+    if func is None:
+        raise RuntimeError('Not running with the Werkzeug Server')
+    func()
+
+
 plotcolours = ["#0b8337", "#ffd94a", "#707070"]
 
 
@@ -664,6 +671,15 @@ def stats_drink(drinkid):
 def throw_exception():
     len(None)
     return
+
+
+@app.route('/shutdown', methods=['GET', 'POST'])
+def shutdown():
+    if request.remote_addr != "127.0.0.1":
+        abort(403)
+    shutdown_server()
+    app.logger.info('Tikker shutting down')
+    return render_template('error.html', title="Tikker wordt afgesloten...", h1="Uitschakelen", message="Tikker wordt nu afgesloten. Je kan dit venster sluiten.", gif_url="")
 
 
 @app.route('/error/403')
