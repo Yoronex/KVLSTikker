@@ -75,6 +75,7 @@ class Product(db.Model):
     unit = db.Column(db.String, nullable=True)  # e.g. bottle or 50ml
     alcohol = db.Column(db.Float, nullable=True)  # percentage as float between 0 and 1
     inventory_warning = db.Column(db.Integer, nullable=True)
+    order = db.Column(db.Integer)
 
     def __repr__(self):
         return '<Product {} voor {}>'.format(self.name, self.price)

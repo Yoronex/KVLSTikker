@@ -11,6 +11,7 @@
 
                 {{ wtf.form_field(form.name, value=product.name) }}
                 {{ wtf.form_field(form.price, value=('%.2f' % product.price)) }}
+                {{ wtf.form_field(form.pos, value=form.pos.choices[product.order + 1]) }}
                 {{ wtf.form_field(form.purchaseable, value=product.purchaseable) }}
                 {% if recipe != "" %}
                 {{ wtf.form_field(form.recipe, value=recipe) }}

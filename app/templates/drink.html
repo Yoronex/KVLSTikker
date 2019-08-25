@@ -70,9 +70,9 @@
                     <tr>
                         <td style="text-align: right" width="60%">Inventaris {{ s["product"] }}:</td>
                         <td style="text-align: left" width="40%">
-                            {% if s.quantity < 0 %}<span style="color: red; font-weight: bold;">{{ s.quantity }}</span>
-                            {% elif s.quantity <= s.inventory_warning %}<span style="color: darkorange; font-weight: bold">{{ s.quantity }}</span>
-                            {% else %} {{ s.quantity }}
+                            {% if s.quantity < 0 %}<span style="color: red; font-weight: bold;">{{ s.quantity|round|int }}</span>
+                            {% elif s.quantity <= s.inventory_warning %}<span style="color: darkorange; font-weight: bold">{{ s.quantity|round|int }}</span>
+                            {% else %} {{ s.quantity|round|int }}
                         {% endif %} </td>
                     </tr>
                     {% endfor %}
@@ -104,6 +104,8 @@
 
             <div class="img-thumbnail">
                 <table id="cart" width="100%"></table>
+                <hr>
+                <input type="checkbox" id="round"> Rondje
                 <a class="btn btn-block btn-grey" id="submitbutton" onclick="submitCart()" width="90%">Versturen</a>
             </div>
         </div>

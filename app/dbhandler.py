@@ -24,7 +24,7 @@ class dbhandler():
         self.remove_existing_file(filename)
         return filename
 
-    def addpurchase(self, drink_id, user_id, quantity):
+    def addpurchase(self, drink_id, user_id, quantity, round):
         if type(quantity) is float:
             quantity = float(round(quantity * 100)) / 100
         drink = Product.query.get(drink_id)
@@ -47,7 +47,7 @@ class dbhandler():
 
         user.balance = user.balance - float(drink.price) * quantity
         purchase = Purchase(user_id=user.id, timestamp=datetime.now(), product_id=drink.id, price=drink.price,
-                            amount=quantity)
+                            amount=quantity, round=round)
         db.session.add(purchase)
         db.session.commit()
 
@@ -102,7 +102,7 @@ class dbhandler():
             return result_recipe
         return None
 
-    def adddrink(self, name, price, image, hoverimage, recipe, inventory_warning, alcohol, volume, unit):
+    def adddrink(self, name, price, order, image, hoverimage, recipe, inventory_warning, alcohol, volume, unit):
         result_recipe = self.parse_recipe(recipe)
         if type(result_recipe) is tuple:
             return result_recipe
@@ -116,11 +116,24 @@ class dbhandler():
             if h_file_extension[1:] not in app.config["ALLOWED_EXTENSIONS"]:
                 return "Hover afbeelding is niet van het correcte bestandstype (geen .png, .jpg, .bmp of .gif)", "danger"
 
+        amount_of_prod = Product.query.count()
+        if order < amount_of_prod:
+            p_ord = Product.query.filter(Product.order >= order).all()
+            for i in range(0, len(p_ord)):
+                p_ord[i].order = p_ord[i].order + 1
+        elif order > amount_of_prod:
+            order = amount_of_prod
+
+
         if result_recipe is not None:
-            product = Product(name=name, price=price, purchaseable=True, image="", hoverimage="",
-                          recipe_input=result_recipe)
+            product = Product(name=name, price=price, order=order, purchaseable=True, image="", hoverimage="",
+                              recipe_input=result_recipe)
         else:
-            product = Product(name=name, price=price, purchaseable=True, image="", hoverimage="", inventory_warning=inventory_warning, volume=int(float(volume)), unit=unit, alcohol=float(alcohol.replace(",", ".").replace("%", "").replace(" ", "")) / 100)
+            if volume is "":
+                volume = "0"
+            if alcohol is "":
+                alcohol = "0"
+            product = Product(name=name, price=price, order=order, purchaseable=True, image="", hoverimage="", inventory_warning=inventory_warning, volume=int(float(volume)), unit=unit, alcohol=float(alcohol.replace(",", ".").replace("%", "").replace(" ", "")) / 100)
         db.session.add(product)
         db.session.commit()
 
@@ -226,7 +239,7 @@ class dbhandler():
         db.session.commit()
         return "Groep {} verwijderd".format(usergroup.name), "success"
 
-    def editdrink_attr(self, product_id, name, price, purchaseable, recipe, inventory_warning, alcohol, volume, unit):
+    def editdrink_attr(self, product_id, name, price, order, purchaseable, recipe, inventory_warning, alcohol, volume, unit):
         result_recipe = self.parse_recipe(recipe)
         if type(result_recipe) is tuple:
             return result_recipe
@@ -241,6 +254,17 @@ class dbhandler():
 
         product.name = name
         product.price = price
+        if order > Product.query.count():
+            order = Product.query.count()
+        if order < product.order:
+            p_ord = Product.query.filter(Product.order >= order, Product.order < product.order).all()
+            for i in range(0, len(p_ord)):
+                p_ord[i].order = p_ord[i].order + 1
+        elif order > product.order:
+            p_ord = Product.query.filter(Product.order <= order, Product.order > product.order).all()
+            for i in range(0, len(p_ord)):
+                p_ord[i].order = p_ord[i].order - 1
+        product.order = order
         product.purchaseable = purchaseable
         product.recipe_input = result_recipe
         product.inventory_warning = inventory_warning
@@ -604,6 +628,8 @@ class dbhandler():
         db.session.rollback()
 
     def force_edit(self):
-        for u in Usergroup.query.all():
-            u.profit = 0
+        count = 0
+        for p in Product.query.all():
+            p.order = count
+            count = count + 1
             db.session.commit()

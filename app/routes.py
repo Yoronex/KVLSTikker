@@ -191,14 +191,21 @@ def purchase(drinkid, userid):
 def purchase_from_cart(drink_id, cart):
     final_alert = {}
     shared = False
-
-    for order in cart.split('&'):
+    split = cart.split('&')
+    if len(split) == 0:
+        abort(500)
+    if split[0] == "0":
+        round = False
+    else:
+        round = True
+    print("Round: " + str(round))
+    for order in split[1:len(split)]:
         data = order.split('a')
         if data[0] == '0':
             shared = True
             amount = data[1]
         else:
-            alert = (db_handler.addpurchase(drink_id, int(data[0]), int(data[1])))
+            alert = (db_handler.addpurchase(drink_id, int(data[0]), int(data[1]), round))
             if alert[1] not in final_alert:
                 final_alert[alert[1]] = alert[0]
             else:
@@ -229,12 +236,20 @@ def purchase_together(drinkid, amount):
 def purchase_from_cart_together(drinkid, amount, cart):
     final_alert = {}
     denominator = 0
-    for order in cart.split('&'):
+    split = cart.split('&')
+    if len(split) == 0:
+        abort(500)
+    if split[0] == "0":
+        round = False
+    else:
+        round = True
+    print("Round: " + str(round))
+    for order in split[1:len(split)]:
         denominator = denominator + int(order.split('a')[1])
 
-    for order in cart.split('&'):
+    for order in split[1:len(split)]:
         data = order.split('a')
-        alert = db_handler.addpurchase(drinkid, int(data[0]), float(int(data[1])) * amount / denominator)
+        alert = db_handler.addpurchase(drinkid, int(data[0]), float(int(data[1])) * amount / denominator, round)
         if alert[1] not in final_alert:
             final_alert[alert[1]] = alert[0]
         else:
@@ -378,7 +393,7 @@ def admin_drinks():
     form = DrinkForm()
     if request.method == "POST":
         if form.validate_on_submit():
-            alert = (db_handler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), form.image.data,
+            alert = (db_handler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), int(form.pos.data), form.image.data,
                                          form.hoverimage.data, form.recipe.data, form.inventory_warning.data, form.alcohol.data, form.volume.data, form.unit.data))
             flash(alert[0], alert[1])
             return redirect(url_for('admin_drinks'))
@@ -402,7 +417,7 @@ def admin_drinks_edit(drinkid):
             recipe = recipe + str(value) + "x" + str(key) + ", "
 
     if form.submit1.data and form.validate_on_submit():
-        alert = (db_handler.editdrink_attr(drinkid, form.name.data, float(form.price.data.replace(",", ".")),
+        alert = (db_handler.editdrink_attr(drinkid, form.name.data, float(form.price.data.replace(",", ".")), int(form.pos.data),
                                            form.purchaseable.data, form.recipe.data, form.inventory_warning.data, form.alcohol.data, form.volume.data, form.unit.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_drinks'))

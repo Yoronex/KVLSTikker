@@ -160,6 +160,11 @@ function submitCart() {
     }
 
     var output = "/";
+    if (document.getElementById('round').checked === true) {
+        output = output + "1&"
+    } else {
+        output = output + "0&"
+    }
     for (var key in cartList) {
         output = output + key;
         output = output + "a";

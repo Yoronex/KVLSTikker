@@ -8,9 +8,10 @@
             <table>
                 <tr>
                     <th>ID</th>
+                    <th>Pos</th>
                     <th>Naam</th>
                     <th>Prijs</th>
-                    <th>Inv Waarsch.</th>
+                    <th>Inv W.</th>
                     <th>Ingrediënten</th>
                     <th></th>
                     <th></th>
@@ -19,6 +20,7 @@
                 <tr>
                 {% if d.purchaseable is sameas false %}
                     <td style="text-decoration: line-through;">{{ d.id }}</td>
+                    <td style="text-decoration: line-through;">{{ d.order }}</td>
                     <td style="text-decoration: line-through;">{{ d.name }}</td>
                     <td style="text-decoration: line-through;">€ {{ '%.2f' % d.price }}</td>
                     <td style="text-decoration: line-through;">{{ d.inventory_warning }}</td>
@@ -32,6 +34,7 @@
                     <td></td>
                 {% else %}
                     <td>{{ d.id }}</td>
+                    <td>{{ d.order }}</td>
                     <td>{{ d.name }}</td>
                     <td>€ {{ '%.2f' % d.price }}</td>
                     <td>{{ d.inventory_warning }}</td>

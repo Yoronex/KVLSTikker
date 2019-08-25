@@ -8,6 +8,9 @@ from flask_breadcrumbs import Breadcrumbs
 from logging.handlers import RotatingFileHandler
 import os
 
+# TODO: zipping app.db every boot
+# TODO: shutdown url
+
 app = Flask(__name__)
 app.config.from_object(Config)
 db = SQLAlchemy(app)

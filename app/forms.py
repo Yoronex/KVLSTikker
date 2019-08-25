@@ -52,6 +52,7 @@ class UserGroupRegistrationForm(FlaskForm):
 class DrinkForm(FlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
     price = StringField('Prijs', validators=[DataRequired()])
+    pos = SelectField('Positie', validators=[DataRequired()])
     image = FileField('Afbeelding (statisch)', validators=[DataRequired()])
     hoverimage = FileField('Afbeelding (hover)')
     recipe = StringField('Recept')
@@ -60,6 +61,20 @@ class DrinkForm(FlaskForm):
     volume = StringField('Hoeveelheid (in milliliters)')
     unit = StringField('Hoeveelheid (e.g. 1 flesje, 1 shotje, etc)')
     submit_drink = SubmitField('Verstuur')
+
+    def __init__(self, *args, **kwargs):
+        super(DrinkForm, self).__init__(*args, **kwargs)
+        positions = [("0", "Vooraan")]
+        count = 0
+        for p in Product.query.order_by(Product.order.asc()).all():
+            count = count + 1
+            suffix = ""
+            if not p.purchaseable:
+                suffix = " (UIT)"
+            positions.append((str(count), str(p.order) + ". " + p.name + suffix))
+        positions.append((str(count), "Achteraan"))
+        self.pos.choices = positions
+        self.pos.default = len(positions) - 1
 
 
 class MultiCheckboxField(SelectMultipleField):
@@ -83,13 +98,28 @@ class UpgradeBalanceForm(FlaskForm):
 class ChangeDrinkForm(FlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
     price = StringField('Prijs', validators=[DataRequired()])
-    purchaseable = BooleanField('Beschikbaar')
+    pos = SelectField('Positie', validators=[DataRequired()])
+    purchaseable = BooleanField('Beschikbaar', default=True)
     recipe = StringField('Recept')
     inventory_warning = IntegerField('Inventaris waarschuwing')
     alcohol = StringField('Alcoholpercentage', default=0)
     volume = StringField('Hoeveelheid (in milliliters)', default=0)
     unit = StringField('Hoeveelheid (e.g. 1 flesje, 1 shotje, etc)')
     submit1 = SubmitField('Versturen')
+
+    def __init__(self, *args, **kwargs):
+        super(ChangeDrinkForm, self).__init__(*args, **kwargs)
+        positions = [("0", "Vooraan")]
+        count = 0
+        for p in Product.query.order_by(Product.order.asc()).all():
+            count = count + 1
+            suffix = ""
+            if not p.purchaseable:
+                suffix = " (UIT)"
+            positions.append((str(count), str(p.order) + ". " + p.name + suffix))
+        positions.append((str(count + 1), "Achteraan"))
+        self.pos.choices = positions
+        self.pos.default = len(positions) - 1
 
 
 class ChangeDrinkImageForm(FlaskForm):
