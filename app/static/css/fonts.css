@@ -8,3 +8,8 @@
     font-family: title;
     src: url(../font/Blanka-Regular.otf);
 }
+
+@font-face {
+    font-family: subtitle;
+    src: url(../font/LemonMilk.otf);
+}

@@ -162,9 +162,28 @@ def user(userid):
     user = User.query.get(userid)
     transactions = user.transactions.order_by(Transaction.id.desc()).all()
     upgrades = user.upgrades.all()
+
+    count = {}
+    for p in user.purchases:
+        if p.product_id not in count:
+            count[p.product_id] = p.amount
+        else:
+            count[p.product_id] = count[p.product_id] + p.amount
+    data = []
+    for p_id, amount in count.items():
+        data.append((Product.query.get(p_id).name, int(amount)))
+    data.sort(key=getStatValue, reverse=True)
+    if len(count) < 10:
+        size = len(count)
+    else:
+        size = 10
+
+    values = [data[i][1] for i in range(0, size)]
+    labels = [data[i][0] for i in range(0, size)]
+
     return render_template('user.html', title=user.name, h1="Informatie over " + user.name, user=user,
                            transactions=transactions, Purchase=Purchase, upgrades=upgrades,
-                           Product=Product), 200
+                           Product=Product, data=values, labels=labels), 200
 
 
 @app.route('/purchasehistory')
@@ -202,17 +221,16 @@ def purchase_from_cart(drink_id, cart):
     if len(split) == 0:
         abort(500)
     if split[0] == "0":
-        round = False
+        r = False
     else:
-        round = True
-    print("Round: " + str(round))
+        r = True
     for order in split[1:len(split)]:
         data = order.split('a')
         if data[0] == '0':
             shared = True
             amount = data[1]
         else:
-            alert = (db_handler.addpurchase(drink_id, int(data[0]), int(data[1]), round))
+            alert = (db_handler.addpurchase(drink_id, int(data[0]), int(data[1]), r))
             if alert[1] not in final_alert:
                 final_alert[alert[1]] = alert[0]
             else:
@@ -247,16 +265,15 @@ def purchase_from_cart_together(drinkid, amount, cart):
     if len(split) == 0:
         abort(500)
     if split[0] == "0":
-        round = False
+        r = False
     else:
-        round = True
-    print("Round: " + str(round))
+        r = True
     for order in split[1:len(split)]:
         denominator = denominator + int(order.split('a')[1])
 
     for order in split[1:len(split)]:
         data = order.split('a')
-        alert = db_handler.addpurchase(drinkid, int(data[0]), float(int(data[1])) * amount / denominator, round)
+        alert = db_handler.addpurchase(drinkid, int(data[0]), float(int(data[1])) * amount / denominator, r)
         if alert[1] not in final_alert:
             final_alert[alert[1]] = alert[0]
         else:
@@ -634,6 +651,8 @@ def stats_user(userid):
 
 '''
 
+def getStatValue(elem):
+    return elem[1]
 
 @app.route('/stats/user/<int:userid>')
 def stats_user(userid):
@@ -644,22 +663,19 @@ def stats_user(userid):
             count[p.product_id] = p.amount
         else:
             count[p.product_id] = count[p.product_id] + p.amount
-    sorted_count = collections.OrderedDict(count)
+    data = []
+    for p_id, amount in count.items():
+        data.append((Product.query.get(p_id).name, int(amount)))
+    data.sort(key=getStatValue, reverse=True)
     if len(count) < 10:
         size = len(count)
     else:
         size = 10
 
-    labels_raw = sorted_count.keys()
-    labels = []
-    data = sorted_count.values()
-    for i in range(0, len(labels_raw)):
-        labels.append(Product.query.get(i))
+    values = [data[i][1] for i in range(0, size)]
+    labels = [data[i][0] for i in range(0, size)]
 
-    input = ['Kaas', 'Ham', 'Brood', 'Boter']
-    products = [p.serialize for p in Product.query.all()]
-
-    return render_template("stats/statsuser.html", title="Statistieken van " + user.name, h1="Statistieken van " + user.name, data=data, labels=labels, products=products, input=input), 200
+    return render_template("stats/statsuser.html", title="Statistieken van " + user.name, h1="Statistieken van " + user.name, data=values, labels=labels), 200
 
 
 @app.route('/stats/drink/<int:drinkid>')

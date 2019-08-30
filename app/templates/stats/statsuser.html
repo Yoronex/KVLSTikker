@@ -7,18 +7,15 @@
 <script src="{{url_for('.static', filename='js/Chart.bundle.min.js')}}"></script>
 <script src="{{url_for('.static', filename='js/graph.js')}}"></script>
 <script>
-    window.onload = function() {
-    createBar( {{ data }}, {{ labels }});
-    startTime();
-}
+    createBar({{ data|tojson }}, {{ labels|tojson }});
 </script>
 {{ super() }}
 {% endblock %}
 
 {% block styles %}
+{{ super() }}
 <script src="{{url_for('.static', filename='css/Chart.css')}}"></script>
 <script src="{{url_for('.static', filename='css/Chart.min.css')}}"></script>
-{{ super() }}
 {% endblock %}
 
 {% block app_content %}

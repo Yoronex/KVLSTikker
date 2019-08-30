@@ -10,15 +10,8 @@ import os
 import zipfile
 from datetime import datetime
 
-# TODO: zipping app.db every boot
-
 app = Flask(__name__)
 app.config.from_object(Config)
-
-print(app.config['BACKUP_FOLDER'])
-print(app.config['MAX_BACKUPS'])
-print(app.config['LOG_FOLDER'])
-print(app.config['SQLALCHEMY_DATABASE_LOC'])
 
 if not os.path.exists(app.config['BACKUP_FOLDER']):
     os.makedirs(app.config['BACKUP_FOLDER'])

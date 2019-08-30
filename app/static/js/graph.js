@@ -30,18 +30,64 @@ var myChart = new Chart(ctx, {
             yAxes: [{
                 ticks: {
                     beginAtZero: true
+
                 }
             }]
         }
     }
 });
 
+function backgroundColors(length) {
+    var result = [];
+    for (var i = 0; i < length; i++) {
+        if (i % 2 === 0) {
+            result.push('rgba(11, 131, 55, 0.2)');
+        } else {
+            result.push('rgba(255, 200, 0, 0.2)');
+        }
+    }
+    return result;
+}
+
+function borderColors(length) {
+    var result = [];
+    for (var i = 0; i < length; i++) {
+        if (i % 2 === 0) {
+            result.push('rgba(11, 131, 55, 1.0)');
+        } else {
+            result.push('rgba(255, 200, 0, 1.0)');
+        }
+    }
+    return result;
+}
 
 function createBar(data, labels) {
 
-    var ctx1 = document.getElementById("bar");
-    console.log(data.toString());
-    console.log(labels.toString());
+    var ctx1 = document.getElementById('bar');
+    var myChart = new Chart(ctx1, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: backgroundColors(data.length),
+                borderColor: borderColors(data.length),
+                borderWidth: 1
+            }]
+        },
+        options: {
+            legend: {
+                display: false
+            },
+            scales: {
+                yAxes: [{
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }]
+            }
+        }
+    });
 }
 
 function testInput(input) {

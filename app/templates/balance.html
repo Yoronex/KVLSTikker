@@ -11,7 +11,7 @@
                     </tr>
                     {% for u in g.users.all() %}
                     <tr>
-                        <td width="50%" style="text-align: right">{{ u.name }}</td>
+                        <td width="50%" style="text-align: right"><a href="/user/{{ u.id }}">{{ u.name }}</a></td>
                         {% if u.balance < 0 %}
                         <td width="50%"><span style="color: red;font-weight:bold;">€{{ '%.2f' % u.balance }}</span></td>
                         {% else %}

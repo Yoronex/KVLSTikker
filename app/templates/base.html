@@ -17,86 +17,115 @@
 <script type="text/javascript" src="{{url_for('.static', filename='js/jquery-3.4.1.min.js')}}"></script>
 <script type="text/javascript" src="{{url_for('.static', filename='js/clock.js')}}"></script>
 <script type="text/javascript" src="{{url_for('.static', filename='js/darklight.js')}}"></script>
+
 {% endblock %}
 
 {% block content %}
 <body onload="startTime()">
 
 <div id="body" class="light-mode">
-<div class="d-flex" id="wrapper" style="position: relative;">
 
-    <!-- Sidebar -->
-    <div class="bg-light border-right" id="sidebar-wrapper">
-        <div class="sidebar-heading">
-            <a href="{{ url_for('index') }}"><img src="{{ url_for('.static', filename='img/logo.png') }}"
-                                                  class="sidebar-logo text-center" alt=""></a>
-            <div class="sidebar-tikker-name">
-                Tikker
+    <div class="modal fade" id="about" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Over Tikker (V1.1.0)</h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    Tikker is geschreven door Roy Kakkenberg van de Scouting Kornet van Limburg Olst-Wijhe om bierschulden bij te houden. Het systeem bevat daarnaast een systeem voor het bijhouden van een inventaris, waardoor zelfst winsten per groep bijgehouden kunnen worden. Producten kunnen bestaan uit zichzelf of een mix van meerdere andere producten, waardoor Tikker robuust is als het gaat om inventarissen bijhouden en nieuwe producten toevoegen.
+
+                    Bugs kunnen gemeld worden aan Roy. Als het systeem een fout weergeeft, wordt deze automatisch gelogd. Vergeet deze niet door te geven aan Roy, samen met wat je aan het doen was op dat moment!
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-grey" data-dismiss="modal">Sluiten</button>
+                </div>
             </div>
-            <div class="sidebar-menubuttons">
-                <a href="{{ url_for('admin') }}" class="btn btn-green">Admin</a>
-                <button type="button" class="btn btn-yellow" data-toggle="modal" data-target="#about">Over</button>
-            </div>
-        </div>
-
-
-        <div class="list-group list-group-flush">
-            <a href="{{ url_for('index') }}" class="list-group-item list-group-item-action bg-light">Home</a>
-            <a href="{{ url_for('balance') }}" class="list-group-item list-group-item-action bg-light">Gebruikers
-                Overzicht</a>
-            <a href="{{ url_for('upgrade') }}" class="list-group-item list-group-item-action bg-light">Opwaarderen</a>
-        </div>
-        <div style="position: absolute; bottom: 0;">
-            <img src="{{ url_for('.static', filename='img/NIX18.svg') }}" style="text-align: center; margin: 1rem;" width="285rem">
         </div>
     </div>
-    <!-- /#sidebar-wrapper -->
 
-    <div id="page-content-wrapper">
-        <div class="container-fluid main" style="height: 100vh;">
-            <div class="row">
-                <div id="loader" style="display: none;"></div>
-                <div class="col">
-                    <script>
-                        window.setTimeout(function () {
-                            $(".alert").fadeTo(500, 0).slideUp(500, function () {
-                                $(this).remove();
-                            });
-                        }, 4000);
-                    </script>
+    <div class="d-flex" id="wrapper" style="position: relative;">
 
-                    {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                    {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible" role="alert">
-                        <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
-                        {{ message }}
-                    </div>
-                    {% endfor %}
-                    {% endif %}
-                    {% endwith %}
+        <!-- Sidebar -->
+        <div class="bg-light border-right" id="sidebar-wrapper">
+            <div class="sidebar-heading">
+                <a href="{{ url_for('index') }}"><img src="{{ url_for('.static', filename='img/logo.png') }}"
+                                                      class="sidebar-logo" alt=""></a>
+                <div class="sidebar-tikker-name">
+                    Tikker
+                </div>
+                <div class="sidebar-tikker-version">
+                    v1.1.0
+                </div>
+                <div class="sidebar-menubuttons">
+                    <a href="{{ url_for('admin') }}" class="btn btn-green">Admin</a>
+                    <button type="button" class="btn btn-yellow" data-toggle="modal" data-target="#about">Over</button>
                 </div>
             </div>
-            <div class="row" style="align-items: center">
-                <div class="col">
 
-                    <div>
-                        {%- for breadcrumb in breadcrumbs -%}
-                        <a href="{{ breadcrumb.url }}">{{ breadcrumb.text }}</a>
-                        {{ '/ ' if not loop.last }}
-                        {%- endfor -%}
-                    </div>
-                    <h1>{{ h1 }}</h1>
-                </div>
-                <!--<div class="col-auto"><a class="btn btn-block btn-grey" id="darklight" onclick="toggleDarkLight()">Dark/Light</a></div>-->
-                <div class="col-auto"><div id="clock"></div></div>
+            <div class="list-group list-group-flush">
+                <a href="{{ url_for('index') }}" class="list-group-item list-group-item-action bg-light">Home</a>
+                <a href="{{ url_for('balance') }}" class="list-group-item list-group-item-action bg-light">Gebruikersoverzicht</a>
+                <a href="{{ url_for('upgrade') }}"
+                   class="list-group-item list-group-item-action bg-light">Opwaarderen</a>
             </div>
-            <div class="row">
-                <div class="col">
-                    {% block app_content %}{% endblock %}
+            <div style="position: absolute; bottom: 0;">
+                <img src="{{ url_for('.static', filename='img/NIX18.svg') }}" style="text-align: center; margin: 1rem;"
+                     width="285rem">
+            </div>
+        </div>
+        <!-- /#sidebar-wrapper -->
+
+        <div id="page-content-wrapper">
+            <div class="container-fluid main" style="height: 100vh;">
+                <div class="row">
+                    <div id="loader" style="display: none;"></div>
+                    <div class="col">
+                        <script>
+                            window.setTimeout(function () {
+                                $(".alert").fadeTo(500, 0).slideUp(500, function () {
+                                    $(this).remove();
+                                });
+                            }, 4000);
+                        </script>
+
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                        {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible" role="alert">
+                            <a href="#" class="close" data-dismiss="alert" aria-label="close">&times;</a>
+                            {{ message }}
+                        </div>
+                        {% endfor %}
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+                <div class="row" style="align-items: center">
+                    <div class="col">
+
+                        <div>
+                            {%- for breadcrumb in breadcrumbs -%}
+                            <a href="{{ breadcrumb.url }}">{{ breadcrumb.text }}</a>
+                            {{ '/ ' if not loop.last }}
+                            {%- endfor -%}
+                        </div>
+                        <h1>{{ h1 }}</h1>
+                    </div>
+                    <!--<div class="col-auto"><a class="btn btn-block btn-grey" id="darklight" onclick="toggleDarkLight()">Dark/Light</a></div>-->
+                    <div class="col-auto">
+                        <div id="clock"></div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        {% block app_content %}{% endblock %}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
+    {% endblock %}

@@ -6,6 +6,16 @@
         <div class="col-md-6">
             <h2>Alle producten</h2>
             <table>
+                <colgroup>
+                    <col>
+                    <col style="background-color: lightgrey">
+                    <col>
+                    <col style="background-color: lightgrey">
+                    <col>
+                    <col style="background-color: lightgrey">
+                    <col>
+                    <col>
+                </colgroup>
                 <tr>
                     <th>ID</th>
                     <th>Pos</th>
@@ -16,7 +26,7 @@
                     <th></th>
                     <th></th>
                 </tr>
-                {% for d in Product.query.all() %}
+                {% for d in Product.query.order_by(Product.order.asc()).all() %}
                 <tr>
                 {% if d.purchaseable is sameas false %}
                     <td style="text-decoration: line-through;">{{ d.id }}</td>

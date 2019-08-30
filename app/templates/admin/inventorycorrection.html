@@ -6,6 +6,9 @@
 <script type="text/javascript" src="{{url_for('.static', filename='js/invcorr.js')}}"></script>
 <script>
     init({{products|tojson}}, {{inventories|tojson}}, {{usergroup_ids|tojson}});
+    $(window).on('load',function(){
+        $('#startModal').modal('show');
+    });
 </script>
 {% endblock %}
 
@@ -30,7 +33,7 @@
     <div class="row">
         <div class="col">
             <div class="progress">
-                <div class="progress-bar progress-bar-animated progress-bar-striped" role="progressbar" style="width: 0%" aria-valuenow="00" aria-valuemin="0" aria-valuemax="100" id="progress"></div>
+                <div class="progress-bar progress-bar-green progress-bar-animated progress-bar-striped" role="progressbar" id="progress" style="width: 0%" ></div>
             </div>
         </div>
     </div>

@@ -1,6 +1,6 @@
 var products = [];
 var index = -1;
-var max = products.length;
+var max;
 var inventories = [];
 var usergroup_ids = {};
 var result = [];
@@ -9,6 +9,8 @@ function init(pr, inv, g_ids) {
     products = pr;
     inventories = inv;
     usergroup_ids = g_ids;
+    max = products.length;
+
     updatePage();
 }
 
@@ -49,13 +51,9 @@ async function updatePage() {
         document.getElementById("curr_inv").innerHTML = p['stock'];
         document.getElementById("real_inv").value = p['stock'];
 
-        var percentage = parseInt((index + 1) * 100 / max);
-        //var progress = document.getElementById("progress");
-        //progress.style.width = percentage.toString() + "%";
-        //progress.attr('aria-valuenow', percentage);
-        var progress = $("#progress-bar");
-        progress.css("width", percentage + "%");
-        progress.attr("aria-valuenow", percentage);
+        var percentage = Math.round(index * 100 / max);
+        var progress = document.getElementById("progress");
+        progress.style.width = percentage.toString() + "%";
 
         product_id = p['id'];
         var invs = inventories.filter(getInv);
