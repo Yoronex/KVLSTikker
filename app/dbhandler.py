@@ -96,6 +96,8 @@ class dbhandler():
                 data[1] = int(data[1])
                 if Product.query.get(data[1]) is None or Product.query.get(data[1]).purchaseable is False:
                     return "Product met ID {} bestaat niet of is niet beschikbaar!".format(str(data[1])), "danger"
+                if Recipe.query.filter(Recipe.product_id == data[1]).count() > 0:
+                    return "Ingrediënt met ID {} bestaat zelf ook uit ingredienten!".format(str(data[1])), "danger"
                 result_recipe[data[1]] = data[0]
             if len(result_recipe) <= 1:
                 return "Een recept kan niet uit één type product bestaan!"
@@ -279,8 +281,6 @@ class dbhandler():
 
     def editdrink_image(self, product_id, image, hoverimage):
         product = Product.query.get(product_id)
-        print(image)
-        print(hoverimage)
         if image != "":
             s_filename, s_file_extension = os.path.splitext(secure_filename(image.filename))
             if s_file_extension[1:] not in app.config["ALLOWED_EXTENSIONS"]:
@@ -485,6 +485,8 @@ class dbhandler():
         for i in range(0, len(inv_use)):
             if new_inv.quantity == 0:
                 break
+            pur = Purchase.query.get(inv_use[i].purchase_id)
+            User = User.query.get(pur.user_id)
             profitgroup = Usergroup.query.get(User.query.get(Purchase.query.get(inv_use[i].purchase_id).user_id).profitgroup_id)
             if inv_use[i].quantity > new_inv.quantity:
                 new_inv_use = Inventory_usage(purchase_id=inv_use[i].purchase_id, inventory_id=new_inv.id,

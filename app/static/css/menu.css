@@ -9,6 +9,7 @@ Sidebar source: https://startbootstrap.com/templates/simple-sidebar/
     -moz-transition: margin .25s ease-out;
     -o-transition: margin .25s ease-out;
     transition: margin .25s ease-out;
+    position: fixed;
 }
 
 #sidebar-wrapper .sidebar-heading {
@@ -69,6 +70,10 @@ Sidebar source: https://startbootstrap.com/templates/simple-sidebar/
 
 #page-content-wrapper {
     min-width: 100vw;
+    margin-left: 0;
+    -webkit-transition: margin .25s ease-out;
+    -moz-transition: margin .25s ease-out;
+    -o-transition: margin .25s ease-out;
 }
 
 #wrapper.toggled #sidebar-wrapper {
@@ -83,6 +88,7 @@ Sidebar source: https://startbootstrap.com/templates/simple-sidebar/
     #page-content-wrapper {
         min-width: 0;
         width: 100%;
+        margin-left: 20rem;
     }
 
     #wrapper.toggled #sidebar-wrapper {

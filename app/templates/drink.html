@@ -43,7 +43,7 @@
         </div>
         <div class="col-xl-3 min-width-460-md">
             {% if shared == false %}
-            <a class="btn btn-block btn-grey" onclick="addToCart('0', 'Gedeeld', '{{ drink.price }}')">Gezamelijk</a>
+            <a class="btn btn-block btn-grey" onclick="addToCart('0', 'Gezamenlijk', '{{ drink.price }}')">Gezamelijk</a>
             {% endif %}
             {% if drink.recipe_input is not none %}
             <div class="img-thumbnail" width="100%" style="font-size: 12pt">
@@ -105,7 +105,7 @@
             <div class="img-thumbnail">
                 <table id="cart" width="100%"></table>
                 <hr>
-                <input type="checkbox" id="round"> Rondje
+                <input {% if shared == true %}type="hidden"{% endif %} type="checkbox" id="round">{% if shared == false %} Rondje{% endif %}
                 <a class="btn btn-block btn-grey" id="submitbutton" onclick="submitCart()" width="90%">Versturen</a>
             </div>
         </div>

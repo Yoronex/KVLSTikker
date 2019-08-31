@@ -199,7 +199,7 @@ def drink(drinkid):
     drink = Product.query.get(drinkid)
     usergroups = get_usergroups_with_users()
     stats = db_handler.get_product_stats(drinkid)
-    return render_template('drink.html', title=drink.name, h1=drink.name + " afrekenen", drink=drink,
+    return render_template('drink.html', title=drink.name, h1="{} aftikken (€ {})".format(drink.name, ('%.2f' % drink.price).replace('.', ',')), drink=drink,
                            usergroups=usergroups, Product=Product,
                            shared=False, stats=stats, User=User), 200
 
@@ -251,7 +251,7 @@ def purchase_together(drinkid, amount):
     drink.price = drink.price * amount
     stats = db_handler.get_product_stats(drinkid)
     return render_template('drink.html', title=drink.name,
-                           h1="Gezamelijk " + str(amount) + " " + drink.name + " afrekenen", drink=drink,
+                           h1="Gezamenlijk " + str(amount) + " " + drink.name + " afrekenen", drink=drink,
                            usergroups=usergroups, Product=Product,
                            shared=True, stats=stats, User=User), 200
 
@@ -376,8 +376,9 @@ def admin_users_delete_exec(userid):
     if (User.query.get(userid).balance != 0.0):
         flash("Deze gebruiker heeft nog geen saldo van € 0!", "danger")
         return redirect(url_for('admin_users'))
-    alert = (db_handler.deluser(userid))
-    flash(alert[0], alert[1])
+    #alert = (db_handler.deluser(userid))
+    #flash(alert[0], alert[1])
+    flash("Wegens enkele ontdekte fouten in Tikker is het verwijderen van gebruikers tijdelijk uitgeschakeld", "danger")
     return redirect(url_for('admin_users'))
 
 
