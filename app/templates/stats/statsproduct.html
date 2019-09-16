@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block scripts %}
-<script src="{{url_for('.static', filename='js/Chart.js')}}"></script>
+<script src="{{url_for('.static', filename='js/Chart.bundle.min.js')}}"></script>
 <script src="{{url_for('.static', filename='js/graph.js')}}"></script>
 <script>
     createBar({{ idsu|tojson }}, {{ valuesu|tojson }}, {{ labelsu|tojson }}, 'user_bar', {{ lefturl|tojson }});
