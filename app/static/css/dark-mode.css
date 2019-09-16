@@ -1,0 +1,60 @@
+.btn-yellow {
+    background-color: #ffd94a;
+    color: #000000 !important;
+    font-size: 20px;
+}
+
+.btn-yellow:hover, .btn-yellow:focus, .btn-yellow:active, .btn-yellow.active, .open>.dropdown-toggle.btn-yellow {
+    color: #000000 !important;
+    background-color: #FFE26F;
+    font-size: 20px;
+}
+
+.btn-green:hover, .btn-green:focus, .btn-green:active, .btn-green.active, .open>.dropdown-toggle.btn-green {
+    color: #000000 !important;
+    background-color: #48A269;
+    font-size: 20px;
+}
+
+.btn-green {
+    background-color: #0b8337;
+    color: black !important;
+    /*text-shadow: -1px 0 grey, 0 1px grey, 1px 0 grey, 0 -1px grey;*/
+    font-size: 20px;
+}
+
+.btn-primary {
+    background-color: #0b8337 !important;
+    color: black !important;
+    border-color: #0b8337 !important;
+}
+
+.btn-grey {
+    background-color: #939393;
+    color: #000000 !important;
+}
+
+.btn-text {
+    text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
+}
+
+.img-thumbnail {
+    background-color: #343a40 !important;
+}
+
+.list-group-item {
+    color: white !important;
+}
+
+body {
+    color: #ffffff;
+    background-color: #212121 !important;
+}
+
+a {
+    color: grey;
+}
+
+.modal {
+    color: black !important;
+}

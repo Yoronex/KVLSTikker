@@ -1,5 +1,21 @@
 {% extends "base.html" %}
 
+{% block scripts %}
+{{ super() }}
+{% if request.cookies.get('confetti') == "True" %}
+<script type="text/javascript" src="{{url_for('.static', filename='js/confetti.js')}}"></script>
+{% endif %}
+
+{% if birthdays|length > 0 and 'birthdays-shown' not in request.cookies %}
+<script>
+    $(window).on('load',function(){
+        $('#birthday_notification').modal('show');
+    });
+</script>
+{% endif %}
+
+{% endblock %}
+
 {% block app_content %}
     <div class="row">
         <div class="col-md-12" style="text-align: center">
@@ -11,6 +27,30 @@
                 </a>
             </div>
         {% endfor %}
+        </div>
+    </div>
+
+    <div class="modal fade" id="birthday_notification" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" style="font-family: standardtext; font-size: 16px">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Hoera! Er is iemand jarig!</h5>
+                </div>
+                <div class="modal-body">
+                    Hoera! De volgende mensen waren afgelopen week jarig! Tijd voor een traktatie!<br>
+                    <ul>
+                        {% for b in birthdays %}
+                        <li>
+                            {{ b['user'].name }} is op {{ b['user'].birthday.strftime('%d %B') }} {{ b['age'] }} jaar geworden!
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-green" data-dismiss="modal" style="font-size: 16px">Tijd voor een rondje!</button>
+                    <button type="button" class="btn btn-yellow" data-dismiss="modal" style="font-size: 16px">Ik heb fituur mee!</button>
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}

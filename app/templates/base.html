@@ -1,5 +1,7 @@
 {% extends 'bootstrap/base.html' %}
 
+{% set version = "1.2.0" %}
+
 {% block title %}
 {% if title %}{{ title }} - KVLS Tikker
 {% else %}KVLS Tikker
@@ -8,6 +10,11 @@
 
 {% block styles %}
 {{super()}}
+{% if request.cookies.get('dark-mode') == 'True' %}
+<link rel="stylesheet" href="{{url_for('.static', filename='css/dark-mode.css')}}">
+{% else %}
+<link rel="stylesheet" href="{{url_for('.static', filename='css/light-mode.css')}}">
+{% endif %}
 <link rel="stylesheet" href="{{url_for('.static', filename='css/styles.css')}}">
 <link rel="stylesheet" href="{{url_for('.static', filename='css/menu.css')}}">
 <link rel="stylesheet" href="{{url_for('.static', filename='css/fonts.css')}}">
@@ -15,29 +22,145 @@
 
 {% block scripts %}
 <script type="text/javascript" src="{{url_for('.static', filename='js/jquery-3.4.1.min.js')}}"></script>
+<script type="text/javascript" src="/bootstrap/static/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="{{url_for('.static', filename='js/clock.js')}}"></script>
 <script type="text/javascript" src="{{url_for('.static', filename='js/darklight.js')}}"></script>
 
 {% endblock %}
 
 {% block content %}
-<body onload="startTime()">
+<body onload="startFunctions()">
 
-<div id="body" class="light-mode">
+<div id="body">
 
-    <div class="modal fade" id="about" tabindex="-1" role="dialog">
-        <div class="modal-dialog" role="document">
+    <div class="modal fade" id="tikker-offline-modal" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" style="font-family: standardtext">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Over Tikker (V1.1.0)</h5>
+                    <h5 class="modal-title">Tikker offline</h5>
+                </div>
+                <div class="modal-body">
+                    De verbinding met Tikker is verloren. In de achtergrond wordt geprobeerd deze verbinding te herstellen.
+                    Mocht dit niet werken, probeer dan Tikker te herstarten!
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="about" tabindex="-1" role="dialog" style="font-family: standardtext">
+        <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Over Tikker (V{{ version }})</h5>
                     <button type="button" class="close" data-dismiss="modal">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
                 <div class="modal-body">
                     Tikker is geschreven door Roy Kakkenberg van de Scouting Kornet van Limburg Olst-Wijhe om bierschulden bij te houden. Het systeem bevat daarnaast een systeem voor het bijhouden van een inventaris, waardoor zelfst winsten per groep bijgehouden kunnen worden. Producten kunnen bestaan uit zichzelf of een mix van meerdere andere producten, waardoor Tikker robuust is als het gaat om inventarissen bijhouden en nieuwe producten toevoegen.
-
+                    <br><br>
                     Bugs kunnen gemeld worden aan Roy. Als het systeem een fout weergeeft, wordt deze automatisch gelogd. Vergeet deze niet door te geven aan Roy, samen met wat je aan het doen was op dat moment!
+                    <br>
+                    <hr>
+                    <h5>Bekende bugs</h5>
+                    <ul>
+                        <li>Momenteel niets! Hoera!</li>
+                    </ul>
+                    <hr>
+                    <h5>Changelog</h5>
+                    <b>Versie {{ version }}</b>:
+                    <ul>
+                        <li>Dark modus toegevoegd
+                            <ul>
+                                <li>Er is een knop in het hoofdmenu om te wisselen tussen Light en Dark mode</li>
+                            </ul>
+                        </li>
+                        <li>Verjaardagen toegevoegd
+                            <ul>
+                                <li>Wanneer iemand jarig is, verschijnt er confetti op de homepage</li>
+                                <li>Confetti kan lokaal aan of uit gezet worden met een knop in het hoofdmenu</li>
+                                <li>De eerste keer dat de homepage geopend wordt, verschijnt er een melding wie jarig is met twee knoppen voor traktaties</li>
+                            </ul>
+                        </li>
+                        <li>Meer statistieken toegevoegd
+                            <ul>
+                                <li>Cirkeldiagram van gekochte producten per gebruiker toegevoegd</li>
+                                <li>Staaf- en Cirkeldiagram van gebruikers per product toegevoegd</li>
+                                <li>Staaf- en Cirkeldiagram van groepen per product toegevoegd</li>
+                            </ul>
+                        </li>
+                        <li>De status van Tikker wordt nu periodiek gecontroleerd (elke 15 seconden)
+                            <ul>
+                                <li>Rechtsbovenin de hoek staat de status van Tikker (online of offline)</li>
+                                <li>Wanneer Tikker offline gaat, verschijnt een popup en wordt het scherm geblokkeerd</li>
+                                <li>De popup verdwijnt wanneer de verbinding met Tikker hersteld is</li>
+                            </ul>
+                        </li>
+                        <li>Opwaarderen heeft nu een nieuw veld die de commissie van Sumup automatisch uitrekent</li>
+                        <li>Hoofdmenu aan de linkerkant scrollt nu niet meer mee met de pagina</li>
+                        <li>Knoppen en invoervelden zijn nu allemaal groen of hebben een oranje gloed
+                            <ul>
+                                <li>Wanneer je met je muis over een knop gaat, krijgt hij een lichtere kleur</li>
+                            </ul>
+                        </li>
+                        <li>Bug gefixt bij het gezamenlijk aftikken, die de aantallen niet aanpaste wanneer iemand uit de winkelwagen verwijderd werd</li>
+                        <li>Bug gefixt die de "verstuur" knop op de Opwaarderen-pagina non-functioneel maakte</li>
+                        <li>Bug gefixt die een error veroorzaakte, wanneer een gebruiker was verwijderd die nog een aankoop op noodinventaris had gedaan</li>
+                        <li>Bug gefixt die namen van producten, personen of groepen in het kruimelpad naar de verkeerde pagina leidde</li>
+                    </ul>
+                    <b>Versie 1.1.1 (2019-08-31)</b>: Bugfixes
+                    <ul>
+                        <li>Bug gefixt die een error veroorzaakte wanneer je een negatieve inventaris ging ophogen</li>
+                        <li>Bug gefixt die de "over" pagina niet deed verschijnen</li>
+                    </ul>
+                    <b>Versie 1.1.0 (2019-08-31)</b>: Inventaris update
+                    <ul>
+                        <li>Inventaris toegevoegd:
+                            <ul>
+                                <li>Elk product heeft een eigen inventaris</li>
+                                <li>Een product dat uit meerdere producten bestaat (bijvoorbeeld een mix), deelt de inventaris met de ingrediënten</li>
+                                <li>Inventaris kan negatief worden</li>
+                            </ul>
+                        </li>
+                        <li>Inventariscorrectie toegevoegd om niet of dubbel afgetikte producten te corrigeren in de inventaris
+                            <ul>
+                                <li>Per product kan gekozen worden welke groep opdraait voor de kosten (of de opbrengst)</li>
+                            </ul>
+                        </li>
+                        <li>Winst per groep toegevoegd:
+                            <ul>
+                                <li>Per verkocht product wordt de prijs bijgeschreven en kosten afgetrokken</li>
+                                <li>Winst kan uitgekeerd worden met een verificatiecode</li>
+                            </ul>
+                        </li>
+                        <li>
+                            <ul>
+                                <li>Afbeeldingen op het hoofdmenu hebben nu een nieuwe afbeelding als je met je muis over ze heen beweegt</li>
+                                <li>Ondersteuning voor .png, .bmp en .gif afbeeldingen toegevoegd</li>
+                            </ul>
+                        </li>
+                        <li>Elke keer bij opstarten wordt een backup gemaakt van de database</li>
+                        <li>Foutmeldingen worden opgeslagen in een tekstbestand voor reproducering</li>
+                        <li>Afsluitknop toegevoegd aan het administratorpaneel</li>
+                        <li>Enkele statistieken toegevoegd:
+                            <ul>
+                                <li>Per product kan nu de hoeveelheid en het alcoholpercentage opgegeven worden</li>
+                                <li>Statistieken toegevoegd bij elke productaankooppagina</li>
+                                <li>Enkele statistieken toegevoegd aan het administratorpaneel</li>
+                                <li>Staafdiagram van gekochte producten toegevoegd aan gebruikersoverzicht van een gebruiker</li>
+                            </ul>
+                        </li>
+                        <li>URL's zijn nu allemaal donkergrijs in plaats van blauw</li>
+                        <li>NIX18 logo in de linkerhoek toegevoegd</li>
+                    </ul>
+                    <b>Versie 1.0.0 (2019-03-07)</b>: Initiële versie
+                    <ul>
+                        <li>Betaalscherm toegevoegd</li>
+                        <li>Administratorpaneel toegevoegd</li>
+                        <li>Beheer van gebruikers, groepen, producten en transacties toegevoegd</li>
+                        <li>Homepagina met afbeeldingen voor producten toegevoegd</li>
+                    </ul>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-grey" data-dismiss="modal">Sluiten</button>
@@ -49,15 +172,14 @@
     <div class="d-flex" id="wrapper" style="position: relative;">
 
         <!-- Sidebar -->
-        <div class="bg-light border-right" id="sidebar-wrapper">
+        <div class="{% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %} border-right" id="sidebar-wrapper">
             <div class="sidebar-heading">
-                <a href="{{ url_for('index') }}"><img src="{{ url_for('.static', filename='img/logo.png') }}"
-                                                      class="sidebar-logo" alt=""></a>
+                <a href="{{ url_for('index') }}"><img src="{% if request.cookies.get('dark-mode') == 'True' %}{{ url_for('.static', filename='img/logo-dark.png') }}{% else %}{{ url_for('.static', filename='img/logo.png') }}{% endif %}" class="sidebar-logo" alt=""></a>
                 <div class="sidebar-tikker-name">
                     Tikker
                 </div>
                 <div class="sidebar-tikker-version">
-                    v1.1.0
+                    v1.2.0
                 </div>
                 <div class="sidebar-menubuttons">
                     <a href="{{ url_for('admin') }}" class="btn btn-green">Admin</a>
@@ -65,11 +187,25 @@
                 </div>
             </div>
 
-            <div class="list-group list-group-flush">
-                <a href="{{ url_for('index') }}" class="list-group-item list-group-item-action bg-light">Home</a>
-                <a href="{{ url_for('balance') }}" class="list-group-item list-group-item-action bg-light">Gebruikersoverzicht</a>
-                <a href="{{ url_for('upgrade') }}"
-                   class="list-group-item list-group-item-action bg-light">Opwaarderen</a>
+            <div class="list-group list-group-flush" style="font-family: standardtext">
+                <a href="{{ url_for('index') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Home</a>
+                <a href="{{ url_for('balance') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Gebruikersoverzicht</a>
+                <a href="{{ url_for('stats') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Statistieken</a>
+                <a href="{{ url_for('upgrade') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Opwaarderen</a>
+                <a onclick="toggle_confetti()" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}" style="cursor:pointer; color: #495057;" >Confetti
+                    {% if request.cookies.get('confetti') == 'False' %}
+                    aan
+                    {% else %}
+                    uit
+                    {% endif %}
+                </a>
+                <a onclick="toggle_darkmode()" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}" style="cursor:pointer; color: #495057;" >
+                    {% if request.cookies.get('dark-mode') == 'True' %}
+                    Light Mode
+                    {% else %}
+                    Dark Mode
+                    {% endif %}
+                </a>
             </div>
             <div style="position: absolute; bottom: 0;">
                 <img src="{{ url_for('.static', filename='img/NIX18.svg') }}" style="text-align: center; margin: 1rem;"
@@ -116,7 +252,16 @@
                     </div>
                     <!--<div class="col-auto"><a class="btn btn-block btn-grey" id="darklight" onclick="toggleDarkLight()">Dark/Light</a></div>-->
                     <div class="col-auto">
-                        <div id="clock"></div>
+                        <div class="container-fluid">
+                            <div class="row server-status">
+                                <span class="status-dot" id="status-dot" style="background-color: green;"></span><div style="color: green;" id="status-text">  Tikker online</div>
+                            </div>
+                            <div class="row">
+                                <div class="col">
+                                    <div id="clock">00:00</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="row">
@@ -127,5 +272,6 @@
             </div>
         </div>
     </div>
+    <canvas id="confetti"></canvas>
 </div>
     {% endblock %}

@@ -1,3 +1,12 @@
+:root {
+    --green:#0b8337;
+    --lightgreen: #48A269;
+    --yellow: #ffd94a;
+    --lightyellow: #FFE26F;
+    --grey: #939393;
+    --urlgrey: darkslategray;
+}
+
 .light-mode {
     background-color: #F1F3FA;
     color: #111111;
@@ -22,7 +31,7 @@
     margin-bottom: 5px;
 }
 
-.btn-primary {
+/*.btn-primary {
     background-color: #0b8337 !important;
     color: white !important;
     border-color: #0b8337 !important;
@@ -34,11 +43,23 @@
     font-size: 20px;
 }
 
+.btn-yellow:hover, .btn-yellow:focus, .btn-yellow:active, .btn-yellow.active, .open>.dropdown-toggle.btn-yellow {
+    color: #000000;
+    background-color: #FFE26F;
+    font-size: 20px;
+}
+
+.btn-green:hover, .btn-green:focus, .btn-green:active, .btn-green.active, .open>.dropdown-toggle.btn-green {
+    color: #ffffff;
+    background-color: #48A269;
+    font-size: 20px;
+}
+
 .btn-green {
     background-color: #0b8337;
     color: white;
     /*text-shadow: -1px 0 grey, 0 1px grey, 1px 0 grey, 0 -1px grey;*/
-    font-size: 20px;
+    /*font-size: 20px;
 }
 
 .btn-grey {
@@ -48,7 +69,7 @@
 
 .btn-text {
     text-shadow: -1px 0 white, 0 1px white, 1px 0 white, 0 -1px white;
-}
+}*/
 
 .footer {
     margin-left: 280px; /* Same as the width of the sidenav */
@@ -59,6 +80,14 @@
     text-align: center;
 }
 
+#confetti {
+    display: block;
+    position: fixed;
+    zindex: 1;
+    top: 0;
+    pointer-events: none;
+}
+
 td {
     padding: 1px 5px;
 }
@@ -67,10 +96,6 @@ th {
     text-align: center;
     padding-right: 3px;
     padding-left: 3px;
-}
-
-a {
-    color: darkslategray;
 }
 
 textarea:focus,
@@ -102,6 +127,7 @@ select:focus,
     height: 230px;
     position: relative;
     display: inline-block;
+    background-color: white;
 }
 
 .front-image .img-top {
@@ -122,8 +148,8 @@ select:focus,
 }
 
 #clock {
-    margin: 5px;
-    font-size: 40px
+    font-size: 40px;
+    text-align: right;
 }
 
 #cartdiv {
@@ -184,11 +210,20 @@ select:focus,
   margin: -75px 0 0 -75px;
   border: 16px solid #f3f3f3;
   border-radius: 50%;
-  border-top: 16px solid #3498db;
+  border-top: 16px solid #0b8337;
   width: 120px;
   height: 120px;
   -webkit-animation: spin 2s linear infinite;
   animation: spin 2s linear infinite;
+}
+
+.status-dot {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-top: 6px;
+    margin-right: 7px;
 }
 
 @-webkit-keyframes spin {
@@ -201,4 +236,6 @@ select:focus,
   100% { transform: rotate(360deg); }
 }
 
-html,body { height:100%; }
+html,body {
+    height:100%;
+}

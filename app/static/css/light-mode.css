@@ -1,0 +1,51 @@
+.btn-yellow {
+    background-color: #ffd94a;
+    color: #000000;
+    font-size: 20px;
+}
+
+.btn-yellow:hover, .btn-yellow:focus, .btn-yellow:active, .btn-yellow.active, .open>.dropdown-toggle.btn-yellow {
+    color: #000000;
+    background-color: #FFE26F;
+    font-size: 20px;
+}
+
+.btn-green:hover, .btn-green:focus, .btn-green:active, .btn-green.active, .open>.dropdown-toggle.btn-green {
+    color: #ffffff;
+    background-color: #48A269;
+    font-size: 20px;
+}
+
+.btn-green {
+    background-color: #0b8337;
+    color: white;
+    /*text-shadow: -1px 0 grey, 0 1px grey, 1px 0 grey, 0 -1px grey;*/
+    font-size: 20px;
+}
+
+.list-group-item {
+    color: #495057 !important;
+}
+
+.btn-primary {
+    background-color: #0b8337 !important;
+    color: white !important;
+    border-color: #0b8337 !important;
+}
+
+.btn-grey {
+    background-color: #939393;
+    color: #000000;
+}
+
+.btn-text {
+    text-shadow: -1px 0 white, 0 1px white, 1px 0 white, 0 -1px white;
+}
+
+body {
+    background-color: #F1F3FA !important
+}
+
+a {
+    color: var(--urlgrey);
+}

@@ -1,7 +1,7 @@
 from typing import Dict, Any
 
 from threading import Thread
-from flask import render_template, flash, redirect, url_for, request, abort, jsonify, json
+from flask import render_template, flash, redirect, url_for, request, abort, jsonify, json, make_response
 from sqlalchemy import and_, or_, func
 from app import app
 from app.dbhandler import dbhandler
@@ -13,11 +13,11 @@ import pandas as pd
 import copy
 import collections
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from dateutil import tz
 
-db_handler = dbhandler()
 
+db_handler = dbhandler()
 
 def is_filled(data):
     if data == None:
@@ -32,18 +32,6 @@ def is_filled(data):
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in app.Config["ALLOWED_EXTENSIONS"]
-
-
-def view_user_dlc(*args, **kwargs):
-    user_id = request.view_args['userid']
-    user = User.query.get(user_id)
-    return [{'text': user.name, 'url': url_for('user', userid=user_id)}]
-
-
-def view_drink_dlc(*args, **kwargs):
-    drink_id = request.view_args['drinkid']
-    product = Product.query.get(drink_id)
-    return [{'text': product.name, 'url': url_for('drink', drinkid=drink_id)}]
 
 
 def query_to_dataframe(query, columns):
@@ -106,6 +94,13 @@ def shutdown_server():
 
 plotcolours = ["#0b8337", "#ffd94a", "#707070"]
 
+birthday = False
+showed_birthdays = True
+birthdays = db_handler.is_birthday()
+if len(birthdays) > 0:
+    birthday = True
+    showed_birthdays = False
+
 
 @app.route('/')
 @app.route('/index')
@@ -113,16 +108,15 @@ plotcolours = ["#0b8337", "#ffd94a", "#707070"]
 @register_breadcrumb(app, '.', 'Home', order=0)
 @register_breadcrumb(app, '.drink', 'Product', order=1)
 def index():
-    return render_template('index.html', title='Home', h1="Kies iets uit!", Product=Product), 200
+    if 'confetti' not in request.cookies and birthday:
+        resp = make_response(redirect(url_for('index')))
+        resp.set_cookie('confetti', str(True))
+        return resp
 
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    form = LoginForm()
-    if form.validate_on_submit():
-        flash('Login requested for user {}'.format(form.username.data))
-        return redirect(url_for('index'))
-    return render_template('login.html', title='Sign In', form=form)
+    resp = make_response(render_template('index.html', title='Home', h1="Kies iets uit!", birthdays=birthdays,
+                           showed_birthdays=showed_birthdays, Product=Product), 200)
+    resp.set_cookie('birthdays-shown', '')
+    return resp
 
 
 @app.route('/upgrade', methods=['GET', 'POST'])
@@ -156,6 +150,12 @@ def users():
     return redirect(url_for('balance'))
 
 
+def view_user_dlc(*args, **kwargs):
+    user_id = request.view_args['userid']
+    user = User.query.get(user_id)
+    return [{'text': user.name, 'url': url_for('user', userid=user_id)}]
+
+
 @app.route('/user/<int:userid>')
 @register_breadcrumb(app, '.user.id', '', dynamic_list_constructor=view_user_dlc, order=2)
 def user(userid):
@@ -171,19 +171,12 @@ def user(userid):
             count[p.product_id] = count[p.product_id] + p.amount
     data = []
     for p_id, amount in count.items():
-        data.append((Product.query.get(p_id).name, int(amount)))
-    data.sort(key=getStatValue, reverse=True)
-    if len(count) < 10:
-        size = len(count)
-    else:
-        size = 10
-
-    values = [data[i][1] for i in range(0, size)]
-    labels = [data[i][0] for i in range(0, size)]
+        data.append((p_id, Product.query.get(p_id).name, int(amount)))
+    ids, values, labels = top10(count, data)
 
     return render_template('user.html', title=user.name, h1="Informatie over " + user.name, user=user,
-                           transactions=transactions, Purchase=Purchase, upgrades=upgrades,
-                           Product=Product, data=values, labels=labels), 200
+                           transactions=transactions, Purchase=Purchase, upgrades=upgrades, Product=Product,
+                           ids=ids, data=values, labels=labels, url_prefix=""), 200
 
 
 @app.route('/purchasehistory')
@@ -191,6 +184,12 @@ def purchasehistory():
     return render_template('purchasehistory.html', title='Aankoophistorie', h1="Aankoophistorie", User=User,
                            Product=Product,
                            Purchase=Purchase), 200
+
+
+def view_drink_dlc(*args, **kwargs):
+    drink_id = request.view_args['drinkid']
+    product = Product.query.get(drink_id)
+    return [{'text': product.name, 'url': url_for('drink', drinkid=drink_id)}]
 
 
 @app.route('/drink/<int:drinkid>', methods=['GET', 'POST'])
@@ -283,23 +282,6 @@ def purchase_from_cart_together(drinkid, amount, cart):
     return redirect(url_for('index'))
 
 
-'''@app.route('/testforms', methods=['GET', 'POST'])
-def test():
-    form = DrinkForm()
-    if form.validate_on_submit():
-        product = Product(name=form.name.data, price=form.price.data, purchaseable=True)
-        db.session.add(product)
-        db.session.commit()
-        image = form.image.data
-        filename = secure_filename(image.filename)
-        flash("filename: {}".format(str(filename)))
-        print(str(filename))
-        filename.save(os.path.join(app.instance_path,'products', filename))
-        flash("Product {} succesvol aangemaakt".format(product.name))
-        return redirect(url_for('admin'))
-    return render_template('testforms.html', form=form)'''
-
-
 ##
 #
 # Admin Panel
@@ -359,7 +341,7 @@ def admin_users_delete(userid):
         abort(403)
     user = User.query.get(userid)
     if user.balance == 0.0:
-        message = "gebruiker " + user.name + " wilt verwijderen? Alle historie gaat hierbij verloren!"
+        message = "gebruiker " + user.name + " wilt verwijderen? Alle historie gaat hierbij verloren! <br><br>Let erop "
         agree_url = url_for("admin_users_delete_exec", userid=userid)
         return_url = url_for("admin_users")
         return render_template("verify.html", title="Bevestigen", message=message, user=user, agree_url=agree_url,
@@ -428,8 +410,14 @@ def admin_drinks():
                            form=form), 200
 
 
+def view_admin_drink_dlc(*args, **kwargs):
+    drink_id = request.view_args['drinkid']
+    product = Product.query.get(drink_id)
+    return [{'text': product.name, 'url': url_for('admin_drinks_edit', drinkid=drink_id)}]
+
+
 @app.route('/admin/drinks/edit/<int:drinkid>', methods=['GET', 'POST'])
-@register_breadcrumb(app, '.admin.drinks.id', '', dynamic_list_constructor=view_drink_dlc, order=3)
+@register_breadcrumb(app, '.admin.drinks.id', '', dynamic_list_constructor=view_admin_drink_dlc, order=3)
 def admin_drinks_edit(drinkid):
     if request.remote_addr != "127.0.0.1":
         abort(403)
@@ -558,6 +546,25 @@ def payout_profit():
                            form=form), 200
 
 
+@app.route('/tog_confetti', methods=['GET'])
+def tog_confetti():
+    resp = redirect(url_for('index'))
+    if 'confetti' in request.cookies:
+        if request.cookies.get('confetti') == str(True):
+            resp.set_cookie('confetti', str(False))
+        else:
+            resp.set_cookie('confetti', str(True))
+    else:
+        resp.set_cookie('confetti', str(True))
+    return resp
+
+
+@app.route('/dark')
+def enable_darkmode():
+    resp = make_response(redirect(url_for('index')))
+    resp.set_cookie("dark-mode", str(True))
+    return resp
+
 @app.route('/force')
 def force_execute():
     db_handler.force_edit()
@@ -570,9 +577,6 @@ def force_execute():
 #
 ##
 
-@app.route('/stats')
-def stats():
-    return None
 
 
 '''
@@ -652,9 +656,42 @@ def stats_user(userid):
 
 '''
 
-def getStatValue(elem):
-    return elem[1]
 
+def getStatValue(elem):
+    return elem[2]
+
+
+def top10(count, data):
+    data.sort(key=getStatValue, reverse=True)
+    if len(count) <= 10:
+        size = len(count)
+    else:
+        size = 9
+
+    ids = [data[i][0] for i in range(0, size)]
+    labels = [data[i][1] for i in range(0, size)]
+    values = [data[i][2] for i in range(0, size)]
+
+    if len(count) - size >= 2:
+        sum = 0
+        for i in range(size, len(count)):
+            sum = sum + data[i][1]
+        ids.append(0)
+        values.append(sum)
+        labels.append("Overig")
+
+    return ids, values, labels
+
+@register_breadcrumb(app, '.stats', 'Statistieken', order=1)
+@register_breadcrumb(app, '.stats.drink', 'Producten', order=2)
+@register_breadcrumb(app, '.stats.user', 'Gebruikers', order=2)
+@register_breadcrumb(app, '.stats.group', 'Groepen', order=2)
+@app.route('/stats')
+def stats():
+    return render_template('/stats/stats.html', title='Statistieken', h1='Statistieken', Product=Product, User=User)
+
+
+@register_breadcrumb(app, '.stats.user.id', '', dynamic_list_constructor=view_user_dlc, order=3)
 @app.route('/stats/user/<int:userid>')
 def stats_user(userid):
     user = User.query.get(userid)
@@ -664,24 +701,121 @@ def stats_user(userid):
             count[p.product_id] = p.amount
         else:
             count[p.product_id] = count[p.product_id] + p.amount
+
+    datat = []
+    for t in user.transactions:
+        datat.append({
+            "x": str(t.timestamp.strftime("%Y-%m-%d %H:%M:%S")),
+            "y": t.newbal
+        })
+
     data = []
     for p_id, amount in count.items():
-        data.append((Product.query.get(p_id).name, int(amount)))
-    data.sort(key=getStatValue, reverse=True)
-    if len(count) < 10:
-        size = len(count)
-    else:
-        size = 10
+        data.append((p_id, Product.query.get(p_id).name, int(amount)))
+    ids, values, labels = top10(count, data)
 
-    values = [data[i][1] for i in range(0, size)]
-    labels = [data[i][0] for i in range(0, size)]
+    return render_template("stats/statsuser.html", title="Statistieken van " + user.name, h1="Statistieken van " + user.name, ids=ids, data=values, labels=labels,
+                           datat=datat), 200
 
-    return render_template("stats/statsuser.html", title="Statistieken van " + user.name, h1="Statistieken van " + user.name, data=values, labels=labels), 200
+
+def view_stats_drink_dlc(*args, **kwargs):
+    drink_id = request.view_args['drinkid']
+    product = Product.query.get(drink_id)
+    return [{'text': product.name, 'url': url_for('stats_drink_redirect', drinkid=drink_id)}]
 
 
 @app.route('/stats/drink/<int:drinkid>')
-def stats_drink(drinkid):
-    return None
+def stats_drink_redirect(drinkid):
+    return redirect(url_for('stats_drink', drinkid=drinkid, begindate=app.config['STATS_BEGINDATE'], enddate=(datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")))
+
+
+@register_breadcrumb(app, '.stats.drink.id', '', dynamic_list_constructor=view_stats_drink_dlc, order=3)
+@app.route('/stats/drink/<int:drinkid>/<string:begindate>/<string:enddate>')
+def stats_drink(drinkid, begindate, enddate):
+    product = Product.query.get(drinkid)
+    count = {}
+    parsedbegin = datetime.strptime(begindate, "%Y-%m-%d")
+    parsedend = datetime.strptime(enddate, "%Y-%m-%d")
+    purchases = Purchase.query.filter(and_(Purchase.product_id == drinkid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend)).all()
+
+    for pur in purchases:
+        if pur.user_id not in count:
+            count[pur.user_id] = pur.amount
+        else:
+            count[pur.user_id] = count[pur.user_id] + pur.amount
+
+    count_groups = {}
+    for u_id, amount in count.items():
+        group = User.query.get(u_id).usergroup_id
+        if group not in count_groups:
+            count_groups[group] = amount
+        else:
+            count_groups[group] = count_groups[group] + amount
+
+    datau = []
+    for u_id, amount in count.items():
+        datau.append((u_id, User.query.get(u_id).name, int(amount)))
+    idsu, valuesu, labelsu = top10(count, datau)
+
+    datag = []
+    for g_id, amount in count_groups.items():
+        datag.append((g_id, Usergroup.query.get(g_id).name, int(amount)))
+    idsg, valuesg, labelsg = top10(count_groups, datag)
+
+    return render_template("stats/statsproduct.html", title='Statistieken over {}'.format(product.name), h1='Statistieken over {}'.format(product.name),
+                           begindate=begindate, enddate=enddate, idsu=idsu, valuesu=valuesu, labelsu=labelsu, idsg=idsg, valuesg=valuesg, labelsg=labelsg,
+                           lefturl="", righturl=url_for("stats_drink_group_redirect", drinkid=drinkid, groupid=0)), 200
+
+
+def view_stats_drink_group_dlc(*args, **kwargs):
+    group_id = request.view_args['groupid']
+    usergroup = Usergroup.query.get(group_id)
+    return [{'text': usergroup.name, 'url': url_for('stats_drink_group_redirect', drinkid=request.view_args['drinkid'], groupid=group_id)}]
+
+
+@app.route('/stats/drink/<int:drinkid>/group/<int:groupid>')
+def stats_drink_group_redirect(drinkid, groupid):
+    return redirect(url_for('stats_drink_group', drinkid=drinkid, groupid=groupid, begindate=app.config['STATS_BEGINDATE'], enddate=(datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")))
+
+
+@register_breadcrumb(app, '.stats.drink.id.group', '', dynamic_list_constructor=view_stats_drink_group_dlc, order=3)
+@app.route('/stats/drink/<int:drinkid>/group/<int:groupid>/<string:begindate>/<string:enddate>')
+def stats_drink_group(drinkid, groupid, begindate, enddate):
+    product = Product.query.get(drinkid)
+    usergroup = Usergroup.query.get(groupid)
+    count = {}
+    parsedbegin = datetime.strptime(begindate, "%Y-%m-%d")
+    parsedend = datetime.strptime(enddate, "%Y-%m-%d")
+    purchases = Purchase.query.filter(and_(Purchase.product_id == drinkid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend)).all()
+
+    for pur in purchases:
+        if User.query.get(pur.user_id).usergroup_id == groupid:
+            if pur.user_id not in count:
+                count[pur.user_id] = pur.amount
+            else:
+                count[pur.user_id] = count[pur.user_id] + pur.amount
+
+    count_groups = {}
+    for u_id, amount in count.items():
+        group = User.query.get(u_id).usergroup_id
+        if group not in count_groups:
+            count_groups[group] = amount
+        else:
+            count_groups[group] = count_groups[group] + amount
+
+    datau = []
+    for u_id, amount in count.items():
+        datau.append((u_id, User.query.get(u_id).name, int(amount)))
+    idsu, valuesu, labelsu = top10(count, datau)
+
+    datag = []
+    for g_id, amount in count_groups.items():
+        datag.append((g_id, Usergroup.query.get(g_id).name, int(amount)))
+    idsg, valuesg, labelsg = top10(count_groups, datag)
+
+    return render_template("stats/statsproduct.html", title='Statistieken over {} voor {}'.format(product.name, usergroup.name), h1='Statistieken over {} voor {}'.format(product.name, usergroup.name),
+                           begindate=begindate, enddate=enddate, idsu=idsu, valuesu=valuesu, labelsu=labelsu, idsg=idsg, valuesg=valuesg, labelsg=labelsg,
+                           lefturl="", righturl=""), 200
 
 
 @app.route('/test/exception')
@@ -743,3 +877,8 @@ def exception_error(error):
 
 
 app.config["BOOTSTRAP_SERVE_LOCAL"] = True
+
+
+@app.route("/api/ping")
+def server_status():
+    return jsonify({"pong": "pong"})
