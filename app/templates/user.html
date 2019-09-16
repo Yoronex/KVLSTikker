@@ -2,20 +2,17 @@
 
 {% block scripts %}
 <script src="{{url_for('.static', filename='js/Chart.js')}}"></script>
-<script src="{{url_for('.static', filename='js/Chart.bundle.js')}}"></script>
-<script src="{{url_for('.static', filename='js/Chart.min.js')}}"></script>
-<script src="{{url_for('.static', filename='js/Chart.bundle.min.js')}}"></script>
 <script src="{{url_for('.static', filename='js/graph.js')}}"></script>
 <script>
-    createBar({{ data|tojson }}, {{ labels|tojson }});
+    createBar({{ ids|tojson }}, {{ data|tojson }}, {{ labels|tojson }}, 'bar', {{ url_prefix|tojson }});
+    createPie({{ ids|tojson }}, {{ data|tojson }}, {{ labels|tojson }}, 'pie', {{ url_prefix|tojson }});
 </script>
 {{ super() }}
 {% endblock %}
 
 {% block styles %}
 {{ super() }}
-<script src="{{url_for('.static', filename='css/Chart.css')}}"></script>
-<script src="{{url_for('.static', filename='css/Chart.min.css')}}"></script>
+<link rel="stylesheet" href="{{url_for('.static', filename='css/Chart.css')}}">
 {% endblock %}
 
 {% block app_content %}
@@ -67,7 +64,10 @@
     </div>
     <div class="col-xl-6">
         <h2>Statistieken</h2>
+        <h3>Verdeling gekochte producten</h3>
+        <h4>Staafdiagram</h4>
         <canvas class="graph" id="bar" width="100%"></canvas>
+        <h4>Cirkeldiagram</h4>
         <canvas class="graph" id="pie" width="100%"></canvas>
     </div>
 </div>

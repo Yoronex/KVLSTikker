@@ -84,7 +84,7 @@ function addToCart(u_id, user_name, p_price, shared) {
         //temp["id"] = user_id;
         //temp["row"] = row;
         cartList[user_id] = row;
-        document.getElementById("submitbutton").style.visibility = "visible";
+        //document.getElementById("submitbutton").style.visibility = "visible";
     }
 }
 
@@ -109,9 +109,9 @@ function removeFromCart(u_id) {
         changeCartAmount(user_id, cartList[user_id], -1)
     }
 
-    if (cartList.length === 0) {
-        document.getElementById("submitbutton").style.visibility = "hidden";
-    }
+    //if (cartList.length === 0) {
+    //    document.getElementById("submitbutton").style.visibility = "hidden";
+    //}
 }
 
 function changeCartPart(user_id, row, amount) {
@@ -135,14 +135,15 @@ function removeFromPart(u_id) {
     var count = parseInt(cartList[user_id].cells[count_loc].innerHTML);
     if (count <= 1) {
         document.getElementById("cart").deleteRow(cartList[user_id].rowIndex);
+        changeCartPart(user_id, cartList[user_id], -1);
         delete cartList[user_id];
     } else {
         changeCartPart(user_id, cartList[user_id], -1)
     }
 
-    if (cartList.length === 0) {
-        document.getElementById("submitbutton").style.visibility = "hidden";
-    }
+    //if (cartList.length === 0) {
+    //    document.getElementById("submitbutton").style.visibility = "hidden";
+    //}
 }
 
 function updateCart() {
@@ -159,6 +160,8 @@ function submitCart() {
         return;
     }
 
+    document.getElementById("loader").style.display = "block";
+
     var output = "/";
     if (document.getElementById('round').checked === true) {
         output = output + "1&"
@@ -173,11 +176,11 @@ function submitCart() {
     }
     output = output.slice(0, -1);
     window.location.href = window.location.href + output;
+    onreadystatechange
 }
 
 
 window.onload = function() {
-    makeSubmitInvisible();
     startTime();
 }
 

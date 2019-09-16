@@ -13,3 +13,4 @@ class Config(object):
     MAX_BACKUPS = 20
     ALLOWED_EXTENSIONS = set(['jpg', 'png', 'bmp', 'gif'])
     ADMIN_PASSWORD = "knotgang"
+    STATS_BEGINDATE = "2019-01-01"

@@ -22,10 +22,6 @@ function getInv(inventory) {
     }
 }
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
 async function updatePage() {
     if (index !== -1) {
         document.getElementById("loader").style.display = "block";

@@ -1,30 +1,30 @@
 {% extends "base.html" %}
 
 {% block scripts %}
-<script src="{{url_for('.static', filename='js/Chart.js')}}"></script>
-<script src="{{url_for('.static', filename='js/Chart.bundle.js')}}"></script>
-<script src="{{url_for('.static', filename='js/Chart.min.js')}}"></script>
 <script src="{{url_for('.static', filename='js/Chart.bundle.min.js')}}"></script>
 <script src="{{url_for('.static', filename='js/graph.js')}}"></script>
 <script>
-    createBar({{ data|tojson }}, {{ labels|tojson }});
+    createBar({{ ids|tojson }}, {{ data|tojson }}, {{ labels|tojson }}, 'bar');
+    createPie({{ ids|tojson }}, {{ data|tojson }}, {{ labels|tojson }}, 'pie');
+    createLine({{ datat|tojson }}, 'balline')
+
 </script>
 {{ super() }}
 {% endblock %}
 
 {% block styles %}
 {{ super() }}
-<script src="{{url_for('.static', filename='css/Chart.css')}}"></script>
-<script src="{{url_for('.static', filename='css/Chart.min.css')}}"></script>
+<link rel="stylesheet" href="{{url_for('.static', filename='css/Chart.css')}}">
 {% endblock %}
 
 {% block app_content %}
     <div class="row">
         <div class="col-6">
             <canvas class="graph" id="bar"></canvas>
+            <canvas class="graph" id="pie"></canvas>
         </div>
         <div class="col-6">
-            <canvas class="graph" id="pie"></canvas>
+            <canvas class="graph" id="line-chart"></canvas>
         </div>
     </div>
 <!--<canvas class="graph" id="myChart"></canvas>-->

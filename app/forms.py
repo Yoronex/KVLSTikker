@@ -84,7 +84,7 @@ class MultiCheckboxField(SelectMultipleField):
 
 class UpgradeBalanceForm(FlaskForm):
     user = SelectField('Naam', validators=[DataRequired()])
-    amount = StringField('Bedrag', validators=[DataRequired()])
+    amount = StringField('Bedrag (in Tikker)', validators=[DataRequired()])
     submit = SubmitField('Versturen')
 
     def __init__(self, *args, **kwargs):

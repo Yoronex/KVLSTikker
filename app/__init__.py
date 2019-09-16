@@ -1,3 +1,4 @@
+import locale
 import logging
 from flask import Flask
 from config import Config
@@ -10,6 +11,7 @@ import os
 import zipfile
 from datetime import datetime
 
+locale.setlocale(locale.LC_ALL, 'nl_NL')
 app = Flask(__name__)
 app.config.from_object(Config)
 
@@ -42,3 +44,11 @@ if not app.debug:
 
     app.logger.setLevel(logging.INFO)
     app.logger.info('Tikker startup')
+
+def get_date_today():
+    str = datetime.now().strftime("%Y-%m-%d")
+    print(str)
+    return str
+
+
+app.jinja_env.globals.update(get_date_today=get_date_today)

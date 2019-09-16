@@ -1,7 +1,7 @@
 from app import app, db, dbhandler
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory, Recipe, Inventory_usage
 from werkzeug.utils import secure_filename
-from datetime import datetime
+from datetime import datetime, date
 import os
 from sqlalchemy import and_, or_
 
@@ -24,7 +24,7 @@ class dbhandler():
         self.remove_existing_file(filename)
         return filename
 
-    def addpurchase(self, drink_id, user_id, quantity, r):
+    def addpurchase(self, drink_id, user_id, quantity, rondje):
         if type(quantity) is float:
             quantity = float(round(quantity * 100)) / 100
         drink = Product.query.get(drink_id)
@@ -47,7 +47,7 @@ class dbhandler():
 
         user.balance = user.balance - float(drink.price) * quantity
         purchase = Purchase(user_id=user.id, timestamp=datetime.now(), product_id=drink.id, price=drink.price,
-                            amount=quantity, round=r)
+                            amount=quantity, round=rondje)
         db.session.add(purchase)
         db.session.commit()
 
@@ -172,15 +172,25 @@ class dbhandler():
 
     def deluser(self, user_id):
         user = User.query.get(user_id)
+        name = user.name
         for t in user.transactions.all():
             db.session.delete(t)
         for u in user.upgrades.all():
             db.session.delete(u)
+        negative_inventory_found = False
         for p in user.purchases.all():
+            for i in Inventory_usage.query.filter(Inventory_usage.purchase_id == p.id).all():
+                if i.amount < 0:
+                    negative_inventory_found = True
             db.session.delete(p)
-        db.session.delete(user)
-        db.session.commit()
-        return "Gebruiker {} verwijderd".format(user.name), "success"
+
+        if negative_inventory_found:
+            db.session.rollback()
+            return "Verwijderen van gebruiker {} mislukt: er staat nog negatieve inventaris op zijn naam!".format(name), "danger"
+        else:
+            db.session.delete(user)
+            db.session.commit()
+            return "Gebruiker {} verwijderd".format(name), "success"
 
     def deltransaction(self, transaction_id):
         transaction = Transaction.query.get(transaction_id)
@@ -486,21 +496,28 @@ class dbhandler():
             if new_inv.quantity == 0:
                 break
             pur = Purchase.query.get(inv_use[i].purchase_id)
-            User = User.query.get(pur.user_id)
-            profitgroup = Usergroup.query.get(User.query.get(Purchase.query.get(inv_use[i].purchase_id).user_id).profitgroup_id)
+            if pur is not None:
+                user = User.query.get(pur.user_id)
+                if user is not None:
+                    profitgroup = Usergroup.query.get(user.profitgroup_id)
+            else:
+                profitgroup = None
+
             if inv_use[i].quantity > new_inv.quantity:
                 new_inv_use = Inventory_usage(purchase_id=inv_use[i].purchase_id, inventory_id=new_inv.id,
                                               quantity=new_inv.quantity)
                 db.session.add(new_inv_use)
                 inv_use[i].quantity = inv_use[i].quantity - new_inv.quantity
-                profitgroup.profit = profitgroup.profit - (new_inv.price_before_profit * new_inv_use.quantity)
+                if profitgroup is not None:
+                    profitgroup.profit = profitgroup.profit - (new_inv.price_before_profit * new_inv_use.quantity)
                 new_inv.quantity = 0
                 old_inv.quantity = old_inv.quantity + new_inv_use.quantity
                 db.session.commit()
                 break
             else:
                 inv_use[i].inventory_id = new_inv.id
-                profitgroup.profit = profitgroup.profit - (new_inv.price_before_profit * inv_use[i].quantity)
+                if profitgroup is not None:
+                    profitgroup.profit = profitgroup.profit - (new_inv.price_before_profit * inv_use[i].quantity)
                 new_inv.quantity = new_inv.quantity - inv_use[i].quantity
                 old_inv.quantity = old_inv.quantity + inv_use[i].quantity
                 db.session.commit()
@@ -630,8 +647,17 @@ class dbhandler():
         db.session.rollback()
 
     def force_edit(self):
-        count = 0
-        for p in Product.query.all():
-            p.order = count
-            count = count + 1
-            db.session.commit()
+        users = [1, 3]
+        print(User.query.filter(User.id.in_(users)).all())
+
+    def is_birthday(self):
+        today = datetime.today()
+        days_in_year = 365.2425
+        birthdays = []
+        for u in User.query.all():
+            bday = datetime(today.year, u.birthday.month, u.birthday.day)
+            diff = (today - bday).days
+            if diff <= 7:
+                age = int((today - u.birthday).days / days_in_year)
+                birthdays.append({"user": u, "age": age})
+        return birthdays

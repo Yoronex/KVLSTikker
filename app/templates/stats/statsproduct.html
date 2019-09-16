@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block scripts %}
+<script src="{{url_for('.static', filename='js/Chart.js')}}"></script>
+<script src="{{url_for('.static', filename='js/graph.js')}}"></script>
+<script>
+    createBar({{ idsu|tojson }}, {{ valuesu|tojson }}, {{ labelsu|tojson }}, 'user_bar', {{ lefturl|tojson }});
+    createPie({{ idsu|tojson }}, {{ valuesu|tojson }}, {{ labelsu|tojson }}, 'user_pie', {{ lefturl|tojson }});
+    createBar({{ idsg|tojson }}, {{ valuesg|tojson }}, {{ labelsg|tojson }}, 'group_bar', {{ righturl|tojson }});
+    createPie({{ idsg|tojson }}, {{ valuesg|tojson }}, {{ labelsg|tojson }}, 'group_pie', {{ righturl|tojson }});
+</script>
+{{ super() }}
+{% endblock %}
+
+{% block styles %}
+{{ super() }}
+<link rel="stylesheet" href="{{url_for('.static', filename='css/Chart.css')}}">
+{% endblock %}
+
+{% block app_content %}
+Vanaf <input type="date" id="begindate" value="{{ begindate }}"> to <input type="date" id="enddate" value="{{ enddate }}"> <a class="btn btn-grey" id="submitbutton" onclick="changeDate()">Verstuur</a>
+    <div class="row">
+        <div class="col-6">
+            <h2>Gebruikers</h2>
+            <canvas class="graph" id="user_bar"></canvas>
+            <canvas class="graph" id="user_pie"></canvas>
+        </div>
+        <div class="col-6">
+            <h2>Groepen</h2>
+            <canvas class="graph" id="group_bar"></canvas>
+            <canvas class="graph" id="group_pie"></canvas>
+        </div>
+    </div>
+<!--<canvas class="graph" id="myChart"></canvas>-->
+{% endblock %}

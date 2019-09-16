@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<div class="col">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col" style="text-align: center">Producten</div>
+            <div class="col" style="text-align: center">Gebruikers</div>
+            <div class="w-100"></div>
+            {% set outer_loop = 0 %}
+            <div class="col">
+                <table width="100%" cellpadding="30">
+                    {% for p in Product.query.filter(Product.purchaseable == true).all() %}
+                    <tr>
+                        {% if (loop.index + outer_loop) % 2 == 0 %}
+                        <td width="100%"><a class="btn btn-block btn-green" onclick="showLoadingBar()" href="/stats/drink/{{ p.id }}">{{ p.name }}</a></td>
+                        {% else %}
+                        <td width="100%"><a class="btn btn-block btn-yellow" onclick="showLoadingBar()"  href="/stats/drink/{{ p.id }}">{{ p.name }}</a></td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                    {% set outer_loop = outer_loop + 1 %}
+                </table>
+            </div>
+            <div class="col">
+                <table width="100%" cellpadding="30">
+                    {% for u in User.query.all() %}
+                    <tr>
+                        {% if (loop.index + outer_loop) % 2 == 0 %}
+                        <td width="100%"><a class="btn btn-block btn-green" onclick="showLoadingBar()" href="{{ url_for('user', userid=u.id) }}">{{ u.name }}</a></td>
+                        {% else %}
+                        <td width="100%"><a class="btn btn-block btn-yellow" onclick="showLoadingBar()" href="{{ url_for('user', userid=u.id) }}">{{ u.name }}</a></td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                    {% set outer_loop = outer_loop + 1 %}
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
