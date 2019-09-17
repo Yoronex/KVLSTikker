@@ -64,11 +64,12 @@
     </div>
     <div class="col-xl-6">
         <h2>Statistieken</h2>
+        <p style="font-size: 14px"><i>Voor meer en uitgebreidere statistieken, <a href="{{ url_for('stats_user_redirect', userid=user.id) }}">klik hier om naar de statistieken te gaan.</a></i></p>
         <h3>Verdeling gekochte producten</h3>
         <h4>Staafdiagram</h4>
-        <canvas class="graph" id="bar" width="100%"></canvas>
+        <canvas class="graph" id="bar"></canvas>
         <h4>Cirkeldiagram</h4>
-        <canvas class="graph" id="pie" width="100%"></canvas>
+        <canvas class="graph" id="pie"></canvas>
     </div>
 </div>
 {% endblock %}

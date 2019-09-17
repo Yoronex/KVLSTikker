@@ -691,19 +691,34 @@ def stats():
     return render_template('/stats/stats.html', title='Statistieken', h1='Statistieken', Product=Product, User=User)
 
 
-@register_breadcrumb(app, '.stats.user.id', '', dynamic_list_constructor=view_user_dlc, order=3)
 @app.route('/stats/user/<int:userid>')
-def stats_user(userid):
+def stats_user_redirect(userid):
+    return redirect(url_for('stats_user', userid=userid, begindate=app.config['STATS_BEGINDATE'], enddate=(datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")))
+
+
+def getIDnumber(elem):
+    return elem[0]
+
+
+@register_breadcrumb(app, '.stats.user.id', '', dynamic_list_constructor=view_user_dlc, order=3)
+@app.route('/stats/user/<int:userid>/<string:begindate>/<string:enddate>')
+def stats_user(userid, begindate, enddate):
     user = User.query.get(userid)
     count = {}
-    for p in user.purchases:
+    parsedbegin = datetime.strptime(begindate, "%Y-%m-%d")
+    parsedend = datetime.strptime(enddate, "%Y-%m-%d")
+    purchases = Purchase.query.filter(and_(Purchase.user_id == userid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend)).all()
+    transactions = Transaction.query.filter(and_(Transaction.user_id == userid, Transaction.timestamp >= parsedbegin, Transaction.timestamp <= parsedend)).all()
+
+
+    for p in purchases:
         if p.product_id not in count:
             count[p.product_id] = p.amount
         else:
             count[p.product_id] = count[p.product_id] + p.amount
 
     datat = []
-    for t in user.transactions:
+    for t in transactions:
         datat.append({
             "x": str(t.timestamp.strftime("%Y-%m-%d %H:%M:%S")),
             "y": t.newbal
@@ -714,8 +729,27 @@ def stats_user(userid):
         data.append((p_id, Product.query.get(p_id).name, int(amount)))
     ids, values, labels = top10(count, data)
 
-    return render_template("stats/statsuser.html", title="Statistieken van " + user.name, h1="Statistieken van " + user.name, ids=ids, data=values, labels=labels,
-                           datat=datat), 200
+    countw = {}
+    for date in (parsedbegin + timedelta(n) for n in range(0, (parsedend - parsedbegin).days)):
+        countw[int(date.strftime('%V'))] = 0
+
+    for t in transactions:
+        if t.balchange <= 0:
+            if int(t.timestamp.strftime('%V')) not in countw:
+                countw[int(t.timestamp.strftime('%V'))] = -t.balchange
+            else:
+                countw[int(t.timestamp.strftime('%V'))] = countw[int(t.timestamp.strftime('%V'))] - t.balchange
+    dataw = []
+    for week, amount in countw.items():
+        dataw.append((week, "Week {}".format(week), amount))
+    dataw.sort(key=getIDnumber, reverse=False)
+    idw = [dataw[i][0] for i in range(0, len(dataw))]
+    labelw = [dataw[i][1] for i in range(0, len(dataw))]
+    valuew = [dataw[i][2] for i in range(0, len(dataw))]
+
+
+    return render_template("stats/statsuser.html", title="Statistieken van " + user.name, h1="Statistieken van " + user.name, ids=ids, data=values, labels=labels, idw=idw, labelw=labelw, valuew=valuew,
+                           datat=datat, lefturl="", righturl="", begindate=begindate, enddate=enddate), 200
 
 
 def view_stats_drink_dlc(*args, **kwargs):

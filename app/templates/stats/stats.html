@@ -13,9 +13,9 @@
                     {% for p in Product.query.filter(Product.purchaseable == true).all() %}
                     <tr>
                         {% if (loop.index + outer_loop) % 2 == 0 %}
-                        <td width="100%"><a class="btn btn-block btn-green" onclick="showLoadingBar()" href="/stats/drink/{{ p.id }}">{{ p.name }}</a></td>
+                        <td width="100%"><a class="btn btn-block btn-green" onclick="showLoadingBar()" href="{{ url_for('stats_drink_redirect', drinkid=p.id) }}">{{ p.name }}</a></td>
                         {% else %}
-                        <td width="100%"><a class="btn btn-block btn-yellow" onclick="showLoadingBar()"  href="/stats/drink/{{ p.id }}">{{ p.name }}</a></td>
+                        <td width="100%"><a class="btn btn-block btn-yellow" onclick="showLoadingBar()"  href="{{ url_for('stats_drink_redirect', drinkid=p.id) }}">{{ p.name }}</a></td>
                         {% endif %}
                     </tr>
                     {% endfor %}
