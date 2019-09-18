@@ -25,7 +25,12 @@
 <script type="text/javascript" src="/bootstrap/static/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="{{url_for('.static', filename='js/clock.js')}}"></script>
 <script type="text/javascript" src="{{url_for('.static', filename='js/darklight.js')}}"></script>
-
+<script>
+    $("#menu-toggle").click(function(e) {
+        e.preventDefault();
+        $("#wrapper").toggleClass("toggled");
+    });
+</script>
 {% endblock %}
 
 {% block content %}
@@ -86,6 +91,7 @@
                         <li>Meer statistieken toegevoegd
                             <ul>
                                 <li>Cirkeldiagram van gekochte producten per gebruiker toegevoegd</li>
+                                <li>Lijn- en staafdiagrammen toegevoegd over saldo per gebruiker</li>
                                 <li>Staaf- en Cirkeldiagram van gebruikers per product toegevoegd</li>
                                 <li>Staaf- en Cirkeldiagram van groepen per product toegevoegd</li>
                             </ul>
@@ -104,6 +110,7 @@
                                 <li>Wanneer je met je muis over een knop gaat, krijgt hij een lichtere kleur</li>
                             </ul>
                         </li>
+                        <li>Knop toegevoegd naast kruimelpad om het hoofdmenu te verbergen of tevoorschijn te halen.</li>
                         <li>Bug gefixt bij het gezamenlijk aftikken, die de aantallen niet aanpaste wanneer iemand uit de winkelwagen verwijderd werd</li>
                         <li>Bug gefixt die de "verstuur" knop op de Opwaarderen-pagina non-functioneel maakte</li>
                         <li>Bug gefixt die een error veroorzaakte, wanneer een gebruiker was verwijderd die nog een aankoop op noodinventaris had gedaan</li>
@@ -241,8 +248,8 @@
                 </div>
                 <div class="row" style="align-items: center">
                     <div class="col">
-
                         <div>
+                            <img id="menu-toggle" src="{{ url_for('.static', filename='img/menu.svg') }}" style="margin-right: 5px;">
                             {%- for breadcrumb in breadcrumbs -%}
                             <a href="{{ breadcrumb.url }}">{{ breadcrumb.text }}</a>
                             {{ '/ ' if not loop.last }}
