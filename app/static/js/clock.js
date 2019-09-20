@@ -95,19 +95,26 @@ function pingTikker() {
 
     xhr.onload = function() {
         circle.style.backgroundColor = 'green';
+        circle.classList.add("pulsation");
         status_text.style.color = 'green';
         status_text.innerHTML = "Tikker online";
         if (alreadyoffline) {
             $('#tikker-offline-modal').modal('hide');
+            alreadyoffline = false;
+            circle.style.backgroundColor = 'green';
+            circle.classList.add("pulsation");
+            status_text.style.color = 'green';
+            status_text.innerHTML = "Tikker online";
         }
     };
     xhr.ontimeout = function(e) {
-        circle.style.backgroundColor = 'red';
-        status_text.style.color = 'red';
-        status_text.innerHTML = "Tikker offline";
         if (!alreadyoffline) {
             $('#tikker-offline-modal').modal('show');
             alreadyoffline = true;
+            circle.style.backgroundColor = 'red';
+            circle.classList.remove("pulsation");
+            status_text.style.color = 'red';
+            status_text.innerHTML = "Tikker offline";
         }
     };
 
