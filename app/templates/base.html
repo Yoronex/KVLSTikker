@@ -3,21 +3,22 @@
 {% set version = "1.2.0" %}
 
 {% block title %}
-{% if title %}{{ title }} - KVLS Tikker
-{% else %}KVLS Tikker
+{% if title %}Tikker - {{ title }}
+{% else %}Tikker
 {% endif %}
 {% endblock %}
 
 {% block styles %}
-{{super()}}
-{% if request.cookies.get('dark-mode') == 'True' %}
-<link rel="stylesheet" href="{{url_for('.static', filename='css/dark-mode.css')}}">
-{% else %}
-<link rel="stylesheet" href="{{url_for('.static', filename='css/light-mode.css')}}">
-{% endif %}
-<link rel="stylesheet" href="{{url_for('.static', filename='css/styles.css')}}">
-<link rel="stylesheet" href="{{url_for('.static', filename='css/menu.css')}}">
-<link rel="stylesheet" href="{{url_for('.static', filename='css/fonts.css')}}">
+    {{super()}}
+    {% if request.cookies.get('dark-mode') == 'True' %}
+    <link rel="stylesheet" href="{{url_for('.static', filename='css/dark-mode.css')}}">
+    {% else %}
+    <link rel="stylesheet" href="{{url_for('.static', filename='css/light-mode.css')}}">
+    {% endif %}
+    <link rel="stylesheet" href="{{url_for('.static', filename='css/styles.css')}}">
+    <link rel="stylesheet" href="{{url_for('.static', filename='css/menu.css')}}">
+    <link rel="stylesheet" href="{{url_for('.static', filename='css/fonts.css')}}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
 {% endblock %}
 
 {% block scripts %}
