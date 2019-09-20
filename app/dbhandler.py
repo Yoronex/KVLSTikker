@@ -1,9 +1,9 @@
 from app import app, db, dbhandler
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory, Recipe, Inventory_usage
 from werkzeug.utils import secure_filename
-from datetime import datetime, date
+from datetime import datetime
 import os
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
 
 
 class dbhandler():
@@ -418,74 +418,6 @@ class dbhandler():
             self.fix_neg_inv(n, new_inv)
             if new_inv.quantity == 0:
                 break
-        #if old_inv is not None and old_inv.quantity < 0:
-        #    self.fix_neg_inv(old_inv, new_inv)
-            '''
-            purchases = Purchase.query.filter(
-                or_(Purchase.product_id == product_id,
-                    and_(Recipe.ingredient_id == product_id, Recipe.product_id == Purchase.product_id)
-                )
-            ).all()
-            filtered_purchases = []
-            i = 0
-            amount = 0
-
-            if inventory.quantity >= -float(quantity):
-                goal = 0
-            else:
-                goal = -(inventory.quantity + quantity)
-
-            product = Product.query.get(product_id)
-            while amount < -inventory.quantity:
-                i = i - 1
-                t = purchases[i]
-                if Recipe.query.filter(Recipe.product_id == t.product_id, Recipe.ingredient_id == product.id).count() == 0:
-                    amount = amount + t.amount
-                else:
-                    temp = Recipe.query.filter(Recipe.product_id == t.product_id, Recipe.ingredient_id == product.id).all()[0]
-                    amount = amount + t.amount * temp.quantity
-                filtered_purchases.append(t)
-
-            #profit = product.price - price_before_profit
-            old_quantity = -inventory.quantity
-            j = 0
-
-            while amount > goal:
-                j = j - 1
-
-                t = filtered_purchases[j]
-                if Recipe.query.filter(Recipe.product_id == t.product_id, Recipe.ingredient_id == product.id).count() == 0:
-                    amount = amount - t.amount
-                else:
-                    temp = Recipe.query.filter(Recipe.product_id == t.product_id, Recipe.ingredient_id == product.id).all()[0]
-                    amount = amount - t.amount * temp.quantity
-
-                profitgroup = Usergroup.query.get(User.query.get(filtered_purchases[j].user_id).profitgroup_id)
-                if amount >= goal:
-                    profitgroup.profit = profitgroup.profit - (old_quantity - amount) * price_before_profit
-                    i_u = Inventory_usage(purchase_id=t.id, inventory_id=inventory.id, quantity=old_quantity - amount)
-                    db.session.add(i_u)
-                    db.session.commit()
-                    old_quantity = amount
-                else:
-                    profitgroup.profit = profitgroup.profit - (filtered_purchases[j].amount - goal) * price_before_profit
-                    i_u = Inventory_usage(purchase_id=t.id, inventory_id=inventory.id, quantity=filtered_purchases[j].amount)
-                    db.session.add(i_u)
-                    db.session.commit()
-                profitgroup = None
-
-            if inventory.quantity + quantity < 0:
-                inventory.quantity = inventory.quantity + quantity
-            elif inventory.quantity + quantity == 0:
-                inventory.quantity = 0
-            else:
-                quantity = quantity + inventory.quantity
-                inventory.quantity = 0
-                new_inventory = Inventory(product_id=product_id, quantity=quantity + inventory.quantity,
-                                          price_before_profit=price_before_profit, note=note)
-                db.session.add(new_inventory)
-            db.session.commit()
-            '''
 
         product = Product.query.get(p_id)
         return "{} {} toegevoegd aan inventaris!".format(str(quantity), product.name), "success"

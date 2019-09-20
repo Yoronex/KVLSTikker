@@ -1,30 +1,26 @@
-from typing import Dict, Any
-
-from threading import Thread
 from flask import render_template, flash, redirect, url_for, request, abort, jsonify, json, make_response
-from sqlalchemy import and_, or_, func
+from sqlalchemy import and_
 from app import app
 from app.dbhandler import dbhandler
-from app.forms import LoginForm, UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm, \
+from app.forms import UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm, \
     ChangeDrinkForm, ChangeDrinkImageForm, AddInventoryForm, PayOutProfitForm
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory
-from flask_breadcrumbs import Breadcrumbs, register_breadcrumb
+from flask_breadcrumbs import register_breadcrumb
 import pandas as pd
 import copy
-import collections
 
 from datetime import datetime, timedelta
 from dateutil import tz
 
-
 db_handler = dbhandler()
 
+
 def is_filled(data):
-    if data == None:
+    if data is None:
         return False
     if data == '':
         return False
-    if data == []:
+    if not data:
         return False
     return True
 
@@ -114,7 +110,7 @@ def index():
         return resp
 
     resp = make_response(render_template('index.html', title='Home', h1="Kies iets uit!", birthdays=birthdays,
-                           showed_birthdays=showed_birthdays, Product=Product), 200)
+                                         showed_birthdays=showed_birthdays, Product=Product), 200)
     resp.set_cookie('birthdays-shown', '')
     return resp
 
@@ -198,7 +194,9 @@ def drink(drinkid):
     drink = Product.query.get(drinkid)
     usergroups = get_usergroups_with_users()
     stats = db_handler.get_product_stats(drinkid)
-    return render_template('drink.html', title=drink.name, h1="{} aftikken (€ {})".format(drink.name, ('%.2f' % drink.price).replace('.', ',')), drink=drink,
+    return render_template('drink.html', title=drink.name,
+                           h1="{} aftikken (€ {})".format(drink.name, ('%.2f' % drink.price).replace('.', ',')),
+                           drink=drink,
                            usergroups=usergroups, Product=Product,
                            shared=False, stats=stats, User=User), 200
 
@@ -358,8 +356,8 @@ def admin_users_delete_exec(userid):
     if (User.query.get(userid).balance != 0.0):
         flash("Deze gebruiker heeft nog geen saldo van € 0!", "danger")
         return redirect(url_for('admin_users'))
-    #alert = (db_handler.deluser(userid))
-    #flash(alert[0], alert[1])
+    # alert = (db_handler.deluser(userid))
+    # flash(alert[0], alert[1])
     flash("Wegens enkele ontdekte fouten in Tikker is het verwijderen van gebruikers tijdelijk uitgeschakeld", "danger")
     return redirect(url_for('admin_users'))
 
@@ -400,8 +398,10 @@ def admin_drinks():
     form = DrinkForm()
     if request.method == "POST":
         if form.validate_on_submit():
-            alert = (db_handler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), int(form.pos.data), form.image.data,
-                                         form.hoverimage.data, form.recipe.data, form.inventory_warning.data, form.alcohol.data, form.volume.data, form.unit.data))
+            alert = (db_handler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), int(form.pos.data),
+                                         form.image.data,
+                                         form.hoverimage.data, form.recipe.data, form.inventory_warning.data,
+                                         form.alcohol.data, form.volume.data, form.unit.data))
             flash(alert[0], alert[1])
             return redirect(url_for('admin_drinks'))
         else:
@@ -430,8 +430,10 @@ def admin_drinks_edit(drinkid):
             recipe = recipe + str(value) + "x" + str(key) + ", "
 
     if form.submit1.data and form.validate_on_submit():
-        alert = (db_handler.editdrink_attr(drinkid, form.name.data, float(form.price.data.replace(",", ".")), int(form.pos.data),
-                                           form.purchaseable.data, form.recipe.data, form.inventory_warning.data, form.alcohol.data, form.volume.data, form.unit.data))
+        alert = (db_handler.editdrink_attr(drinkid, form.name.data, float(form.price.data.replace(",", ".")),
+                                           int(form.pos.data),
+                                           form.purchaseable.data, form.recipe.data, form.inventory_warning.data,
+                                           form.alcohol.data, form.volume.data, form.unit.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_drinks'))
     if form2.submit2.data and form2.validate_on_submit():
@@ -528,7 +530,8 @@ def admin_correct_inventory():
     inventories = [i.serialize for i in Inventory.query.filter(Inventory.quantity != 0).all()]
     usergroup_ids = {g.id: g.name for g in Usergroup.query.all()}
     return render_template("admin/inventorycorrection.html", title="Inventaris correctie", h1="Inventaris correctie",
-                           Product=Product, products=products, Usergroup=Usergroup, inventories=inventories, usergroup_ids=usergroup_ids)
+                           Product=Product, products=products, Usergroup=Usergroup, inventories=inventories,
+                           usergroup_ids=usergroup_ids)
 
 
 @register_breadcrumb(app, '.admin.profit', 'Winst uitkeren', order=2)
@@ -565,6 +568,7 @@ def enable_darkmode():
     resp.set_cookie("dark-mode", str(True))
     return resp
 
+
 @app.route('/force')
 def force_execute():
     db_handler.force_edit()
@@ -576,85 +580,6 @@ def force_execute():
 # Statistieken
 #
 ##
-
-
-
-'''
-@app.route('/stats/user/<int:userid>')
-def stats_user(userid):
-    user = User.query.get(userid)
-    filenames = []
-
-    def count_plot(df):
-        products = []
-        for p in Product.query.all():
-            products.append(p.id)
-
-        countDrinks = dict.fromkeys(products)
-        for d in countDrinks:
-            countDrinks[d] = 0
-
-        for index, row in df.iterrows():
-            countDrinks[int(row["product_id"])] = countDrinks[int(row["product_id"])] + row["amount"]
-
-        return countDrinks
-
-    def barplot_drinks(df):
-        D = count_plot(df)
-
-        fig1 = plt.figure()
-        ax1 = plt.gca()
-        bars = ax1.bar(range(len(D)), list(D.values()), align='center', color=plotcolours)
-        ax1.set_xticks(range(len(D.values())))
-        ax1.set_xticklabels([Product.query.get(x).name for x in D.keys()])
-        yint = range(int(min(D.values())), int(max(D.values()) + 1))
-        ax1.set_yticks(yint)
-        ax1.set_title("Aantal bestelde producten")
-        fig1.savefig('app/static/graphs/plot-bar-user-{}.png'.format(userid), transparent=True)
-
-    def piechart_drinks(df):
-        D = count_plot(df)
-
-        fig = plt.figure()
-        ax = plt.gca()
-        pies = ax.pie(list(D.values()), colors=plotcolours, explode=[0.02] * len(D.values()),
-                      labels=[Product.query.get(x).name for x in D.keys()], autopct=make_autopct(list(D.values())))
-        ax.set_title("Aantal bestelde producten")
-        fig.savefig('app/static/graphs/plot-pie-user-{}.png'.format(userid), transparent=True)
-
-    def barchart_drinkspermonth():
-        df1 = query_to_dataframe(user.transactions.filter(Transaction.upgrade_id == None).all(),
-                                 ["timestamp", "balchange"])
-        df1_1 = df1.groupby(pd.Grouper(key="timestamp", freq="M")).sum()
-        df2 = query_to_dataframe(user.transactions.filter(Transaction.purchase_id == None).all(),
-                                 ["timestamp", "balchange"])
-        df2_1 = df2.groupby(pd.Grouper(key='timestamp', freq='M')).sum()
-
-        fig = plt.figure()
-        ax = plt.gca()
-        bars1 = ax.bar(range(len(df1_1)), abs(df1_1['balchange']), align='center', color=plotcolours[0])
-        bars2 = ax.bar(range(len(df2_1)))
-
-        fig.savefig('app/static/graphs/plot-barmonth-user-{}.png'.format(userid), transparent=True)
-
-    def linechart_money(df):
-        df = query_to_dataframe(user.transactions.all(), ["timestamp", "newbal", "balchange"])
-
-    thread1 = Thread(target=barplot_drinks,
-                     args=(query_to_dataframe(user.purchases.all(), ["product_id", "amount", "price"]),))
-    thread2 = Thread(target=piechart_drinks,
-                     args=(query_to_dataframe(user.purchases.all(), ["product_id", "amount", "price"]),))
-    thread1.start()
-    thread2.start()
-    thread1.join()
-    filenames.append("graphs/plot-bar-user-{}.png".format(userid))
-    thread2.join()
-    filenames.append("graphs/plot-pie-user-{}.png".format(userid))
-
-    return render_template('stats/statsuser.html', title="Statistieken voor {}".format(user.name), user=user,
-                           filenames=filenames)
-
-'''
 
 
 def getStatValue(elem):
@@ -682,6 +607,7 @@ def top10(count, data):
 
     return ids, values, labels
 
+
 @register_breadcrumb(app, '.stats', 'Statistieken', order=1)
 @register_breadcrumb(app, '.stats.drink', 'Producten', order=2)
 @register_breadcrumb(app, '.stats.user', 'Gebruikers', order=2)
@@ -693,7 +619,8 @@ def stats():
 
 @app.route('/stats/user/<int:userid>')
 def stats_user_redirect(userid):
-    return redirect(url_for('stats_user', userid=userid, begindate=app.config['STATS_BEGINDATE'], enddate=(datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")))
+    return redirect(url_for('stats_user', userid=userid, begindate=app.config['STATS_BEGINDATE'],
+                            enddate=(datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")))
 
 
 def getIDnumber(elem):
@@ -707,9 +634,10 @@ def stats_user(userid, begindate, enddate):
     count = {}
     parsedbegin = datetime.strptime(begindate, "%Y-%m-%d")
     parsedend = datetime.strptime(enddate, "%Y-%m-%d")
-    purchases = Purchase.query.filter(and_(Purchase.user_id == userid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend)).all()
-    transactions = Transaction.query.filter(and_(Transaction.user_id == userid, Transaction.timestamp >= parsedbegin, Transaction.timestamp <= parsedend)).all()
-
+    purchases = Purchase.query.filter(
+        and_(Purchase.user_id == userid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend)).all()
+    transactions = Transaction.query.filter(and_(Transaction.user_id == userid, Transaction.timestamp >= parsedbegin,
+                                                 Transaction.timestamp <= parsedend)).all()
 
     for p in purchases:
         if p.product_id not in count:
@@ -747,8 +675,9 @@ def stats_user(userid, begindate, enddate):
     labelw = [dataw[i][1] for i in range(0, len(dataw))]
     valuew = [dataw[i][2] for i in range(0, len(dataw))]
 
-
-    return render_template("stats/statsuser.html", title="Statistieken van " + user.name, h1="Statistieken van " + user.name, ids=ids, data=values, labels=labels, idw=idw, labelw=labelw, valuew=valuew,
+    return render_template("stats/statsuser.html", title="Statistieken van " + user.name,
+                           h1="Statistieken van " + user.name, ids=ids, data=values, labels=labels, idw=idw,
+                           labelw=labelw, valuew=valuew,
                            datat=datat, lefturl="", righturl="", begindate=begindate, enddate=enddate), 200
 
 
@@ -760,7 +689,8 @@ def view_stats_drink_dlc(*args, **kwargs):
 
 @app.route('/stats/drink/<int:drinkid>')
 def stats_drink_redirect(drinkid):
-    return redirect(url_for('stats_drink', drinkid=drinkid, begindate=app.config['STATS_BEGINDATE'], enddate=(datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")))
+    return redirect(url_for('stats_drink', drinkid=drinkid, begindate=app.config['STATS_BEGINDATE'],
+                            enddate=(datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")))
 
 
 @register_breadcrumb(app, '.stats.drink.id', '', dynamic_list_constructor=view_stats_drink_dlc, order=3)
@@ -770,7 +700,8 @@ def stats_drink(drinkid, begindate, enddate):
     count = {}
     parsedbegin = datetime.strptime(begindate, "%Y-%m-%d")
     parsedend = datetime.strptime(enddate, "%Y-%m-%d")
-    purchases = Purchase.query.filter(and_(Purchase.product_id == drinkid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend)).all()
+    purchases = Purchase.query.filter(
+        and_(Purchase.product_id == drinkid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend)).all()
 
     for pur in purchases:
         if pur.user_id not in count:
@@ -796,20 +727,25 @@ def stats_drink(drinkid, begindate, enddate):
         datag.append((g_id, Usergroup.query.get(g_id).name, int(amount)))
     idsg, valuesg, labelsg = top10(count_groups, datag)
 
-    return render_template("stats/statsproduct.html", title='Statistieken over {}'.format(product.name), h1='Statistieken over {}'.format(product.name),
-                           begindate=begindate, enddate=enddate, idsu=idsu, valuesu=valuesu, labelsu=labelsu, idsg=idsg, valuesg=valuesg, labelsg=labelsg,
+    return render_template("stats/statsproduct.html", title='Statistieken over {}'.format(product.name),
+                           h1='Statistieken over {}'.format(product.name),
+                           begindate=begindate, enddate=enddate, idsu=idsu, valuesu=valuesu, labelsu=labelsu, idsg=idsg,
+                           valuesg=valuesg, labelsg=labelsg,
                            lefturl="", righturl=url_for("stats_drink_group_redirect", drinkid=drinkid, groupid=0)), 200
 
 
 def view_stats_drink_group_dlc(*args, **kwargs):
     group_id = request.view_args['groupid']
     usergroup = Usergroup.query.get(group_id)
-    return [{'text': usergroup.name, 'url': url_for('stats_drink_group_redirect', drinkid=request.view_args['drinkid'], groupid=group_id)}]
+    return [{'text': usergroup.name,
+             'url': url_for('stats_drink_group_redirect', drinkid=request.view_args['drinkid'], groupid=group_id)}]
 
 
 @app.route('/stats/drink/<int:drinkid>/group/<int:groupid>')
 def stats_drink_group_redirect(drinkid, groupid):
-    return redirect(url_for('stats_drink_group', drinkid=drinkid, groupid=groupid, begindate=app.config['STATS_BEGINDATE'], enddate=(datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")))
+    return redirect(
+        url_for('stats_drink_group', drinkid=drinkid, groupid=groupid, begindate=app.config['STATS_BEGINDATE'],
+                enddate=(datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")))
 
 
 @register_breadcrumb(app, '.stats.drink.id.group', '', dynamic_list_constructor=view_stats_drink_group_dlc, order=3)
@@ -820,7 +756,8 @@ def stats_drink_group(drinkid, groupid, begindate, enddate):
     count = {}
     parsedbegin = datetime.strptime(begindate, "%Y-%m-%d")
     parsedend = datetime.strptime(enddate, "%Y-%m-%d")
-    purchases = Purchase.query.filter(and_(Purchase.product_id == drinkid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend)).all()
+    purchases = Purchase.query.filter(
+        and_(Purchase.product_id == drinkid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend)).all()
 
     for pur in purchases:
         if User.query.get(pur.user_id).usergroup_id == groupid:
@@ -847,8 +784,11 @@ def stats_drink_group(drinkid, groupid, begindate, enddate):
         datag.append((g_id, Usergroup.query.get(g_id).name, int(amount)))
     idsg, valuesg, labelsg = top10(count_groups, datag)
 
-    return render_template("stats/statsproduct.html", title='Statistieken over {} voor {}'.format(product.name, usergroup.name), h1='Statistieken over {} voor {}'.format(product.name, usergroup.name),
-                           begindate=begindate, enddate=enddate, idsu=idsu, valuesu=valuesu, labelsu=labelsu, idsg=idsg, valuesg=valuesg, labelsg=labelsg,
+    return render_template("stats/statsproduct.html",
+                           title='Statistieken over {} voor {}'.format(product.name, usergroup.name),
+                           h1='Statistieken over {} voor {}'.format(product.name, usergroup.name),
+                           begindate=begindate, enddate=enddate, idsu=idsu, valuesu=valuesu, labelsu=labelsu, idsg=idsg,
+                           valuesg=valuesg, labelsg=labelsg,
                            lefturl="", righturl=""), 200
 
 
@@ -864,7 +804,8 @@ def shutdown():
         abort(403)
     shutdown_server()
     app.logger.info('Tikker shutting down')
-    return render_template('error.html', title="Tikker wordt afgesloten...", h1="Uitschakelen", message="Tikker wordt nu afgesloten. Je kan dit venster sluiten.", gif_url="")
+    return render_template('error.html', title="Tikker wordt afgesloten...", h1="Uitschakelen",
+                           message="Tikker wordt nu afgesloten. Je kan dit venster sluiten.", gif_url="")
 
 
 @app.route('/error/403')

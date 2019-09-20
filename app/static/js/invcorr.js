@@ -25,7 +25,7 @@ function getInv(inventory) {
 async function updatePage() {
     if (index !== -1) {
         document.getElementById("loader").style.display = "block";
-        await sleep(500);
+        sleep(500);
         addToResult();
     }
 
@@ -68,7 +68,7 @@ async function updatePage() {
             cell3.innerHTML = parseInt(invs[i]['quantity']);
             var cell4 = row.insertCell(3);
             if (invs[i]['price_before_profit'] === null) {
-                cell4.innerHTML = `<span style="color: red;font-weight:bold;">--</span>`
+                cell4.innerHTML = "<span style='color: red;font-weight:bold;'>--</span>"
             } else {
                 cell4.innerHTML = invs[i]['price_before_profit'].toFixed(2);
             }
@@ -85,7 +85,7 @@ async function updatePage() {
         var url = window.location.href;
         var param = JSON.stringify(result);
         http.open('POST', url, true);
-        http.setRequestHeader('Content-type', 'application/json;charset=UTF-8')
+        http.setRequestHeader('Content-type', 'application/json;charset=UTF-8');
 
         http.onreadystatechange = function () {
             if (http.readyState === 4 && http.status === 200) {
