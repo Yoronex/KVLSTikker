@@ -324,7 +324,7 @@ def admin_users():
         abort(403)
     form = UserRegistrationForm()
     if form.validate_on_submit():
-        alert = (db_handler.adduser(form.name.data, form.group.data, form.profitgroup.data, form.birthday.data))
+        alert = (db_handler.adduser(form.name.data, form.email.data, form.group.data, form.profitgroup.data, form.birthday.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_users'))
     print(form.errors)

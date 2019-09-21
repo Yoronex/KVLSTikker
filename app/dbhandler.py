@@ -158,8 +158,8 @@ class dbhandler():
 
         return "Product {} succesvol aangemaakt".format(product.name), "success"
 
-    def adduser(self, name, group, profitgroup, birthday):
-        user = User(name=name, usergroup_id=group, profitgroup_id=profitgroup, birthday=birthday)
+    def adduser(self, name, email, group, profitgroup, birthday):
+        user = User(name=name, email=email, usergroup_id=group, profitgroup_id=profitgroup, birthday=birthday)
         db.session.add(user)
         db.session.commit()
         return "Gebruiker {} succesvol geregistreerd".format(user.name), "success"
