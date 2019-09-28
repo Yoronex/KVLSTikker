@@ -589,7 +589,7 @@ class dbhandler():
         for u in User.query.all():
             bday = datetime(today.year, u.birthday.month, u.birthday.day)
             diff = (today - bday).days
-            if diff <= 7:
+            if 0 <= diff <= 7:
                 age = int((today - u.birthday).days / days_in_year)
                 birthdays.append({"user": u, "age": age})
         return birthdays

@@ -600,7 +600,7 @@ def top10(count, data):
     if len(count) - size >= 2:
         sum = 0
         for i in range(size, len(count)):
-            sum = sum + data[i][1]
+            sum = sum + data[i][2]
         ids.append(0)
         values.append(sum)
         labels.append("Overig")
@@ -635,7 +635,7 @@ def stats_user(userid, begindate, enddate):
     parsedbegin = datetime.strptime(begindate, "%Y-%m-%d")
     parsedend = datetime.strptime(enddate, "%Y-%m-%d")
     purchases = Purchase.query.filter(
-        and_(Purchase.user_id == userid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend)).all()
+        and_(Purchase.user_id == userid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend, Purchase.round == False)).all()
     transactions = Transaction.query.filter(and_(Transaction.user_id == userid, Transaction.timestamp >= parsedbegin,
                                                  Transaction.timestamp <= parsedend)).all()
 
@@ -701,7 +701,7 @@ def stats_drink(drinkid, begindate, enddate):
     parsedbegin = datetime.strptime(begindate, "%Y-%m-%d")
     parsedend = datetime.strptime(enddate, "%Y-%m-%d")
     purchases = Purchase.query.filter(
-        and_(Purchase.product_id == drinkid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend)).all()
+        and_(Purchase.product_id == drinkid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend, Purchase.round == False)).all()
 
     for pur in purchases:
         if pur.user_id not in count:
@@ -757,7 +757,7 @@ def stats_drink_group(drinkid, groupid, begindate, enddate):
     parsedbegin = datetime.strptime(begindate, "%Y-%m-%d")
     parsedend = datetime.strptime(enddate, "%Y-%m-%d")
     purchases = Purchase.query.filter(
-        and_(Purchase.product_id == drinkid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend)).all()
+        and_(Purchase.product_id == drinkid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend, Purchase.round == False)).all()
 
     for pur in purchases:
         if User.query.get(pur.user_id).usergroup_id == groupid:
