@@ -85,6 +85,7 @@ class MultiCheckboxField(SelectMultipleField):
 
 class UpgradeBalanceForm(FlaskForm):
     user = SelectField('Naam', validators=[DataRequired()])
+    description = SelectField('Beschrijving', validators=[DataRequired()], choices=[("Opwaardering", "Opwaardering"), ("Vergoeding diner", "Vergoeding diner")])
     amount = StringField('Bedrag (in Tikker)', validators=[DataRequired()])
     submit = SubmitField('Versturen')
 

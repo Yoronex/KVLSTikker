@@ -65,8 +65,8 @@ class dbhandler():
 
         return "{}x {} voor {} verwerkt".format(quantity, drink.name, user.name), "success"
 
-    def addbalance(self, user_id, amount):
-        upgrade = Upgrade(user_id=user_id, timestamp=datetime.now(), amount=amount)
+    def addbalance(self, user_id, description, amount):
+        upgrade = Upgrade(user_id=user_id, description=description, timestamp=datetime.now(), amount=amount)
         db.session.add(upgrade)
         db.session.commit()
         user = User.query.get(upgrade.user_id)

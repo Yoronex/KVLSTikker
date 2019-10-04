@@ -126,7 +126,7 @@ def upgrade():
         if amount < 0.0:
             flash("Opwaardering kan niet negatief zijn!", "danger")
             return render_template('upgrade.html', title='Opwaarderen', form=form)
-        alert = (db_handler.addbalance(form.user.data, amount))
+        alert = (db_handler.addbalance(form.user.data, form.description.data, amount))
         flash(alert[0], alert[1])
         return redirect(url_for('index'))
     return render_template('upgrade.html', title='Opwaarderen', h1="Opwaarderen", form=form)
@@ -172,7 +172,7 @@ def user(userid):
 
     return render_template('user.html', title=user.name, h1="Informatie over " + user.name, user=user,
                            transactions=transactions, Purchase=Purchase, upgrades=upgrades, Product=Product,
-                           ids=ids, data=values, labels=labels, url_prefix=""), 200
+                           Upgrade=Upgrade, ids=ids, data=values, labels=labels, url_prefix=""), 200
 
 
 @app.route('/purchasehistory')
@@ -369,7 +369,7 @@ def admin_transactions():
         abort(403)
     transactions = reversed(Transaction.query.all())
     return render_template('admin/mantransactions.html', title="Transactiebeheer", h1="Alle transacties", User=User,
-                           transactions=transactions, Purchase=Purchase,
+                           transactions=transactions, Purchase=Purchase, Upgrade=Upgrade,
                            Product=Product), 200
 
 

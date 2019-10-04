@@ -47,6 +47,7 @@ class Upgrade(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     transactions = db.relationship('Transaction', backref='upgrade', lazy='dynamic')
     amount = db.Column(db.Float)
+    description = db.Column(db.String)
 
     def __repr__(self):
         return '<Upgrade {}>'.format(self.amount)

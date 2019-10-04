@@ -24,6 +24,7 @@
     {{ wtf.form_errors(form, hiddens="only") }}
 
     {{ wtf.form_field(form.user) }}
+    {{ wtf.form_field(form.description) }}
     {{ wtf.form_field(form.amount, onchange="changeNormalInput()") }}
     <label class="form-control-label" for="amount_sumup">Bedrag (te betalen met Sumup)</label>
     <input type="text" id="amount_sumup" class="form-control" name="amount_sumup" onchange="changeSumupInput()">
