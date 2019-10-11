@@ -57,7 +57,7 @@ def is_18min(u):
         today = datetime.today()
         days_in_year = 365.2425
         age = int((today - u.birthday).days / days_in_year)
-        if age < 20:
+        if age < 18:
             return True
         else:
             return False

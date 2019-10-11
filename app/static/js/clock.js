@@ -9,6 +9,7 @@ function startTime() {
     var h = today.getHours();
     var m = today.getMinutes();
     var s = today.getSeconds();
+    h = checkTime(h);
     m = checkTime(m);
     if (s % 2 == 0) {
         document.getElementById('clock').innerHTML = h + ":" + m;

@@ -53,6 +53,22 @@
         </div>
     </div>
 
+    <div class="modal fade" id="shutdown-modal" tabindex="-1" role="dialog" style="font-family: standardtext;">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Tikker afsluiten</h5>
+                </div>
+                <div class="modal-body">
+                    Weet je zeker dat je Tikker wilt afsluiten?
+                </div>
+                <div class="modal-footer">
+                    <a href="/shutdown" type="button" class="btn btn-danger">Afsluiten</a>
+                    <button type="button" class="btn btn-success" data-dismiss="modal">Terug</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="modal fade" id="about" tabindex="-1" role="dialog" style="font-family: standardtext">
         <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -75,10 +91,15 @@
                     </ul>
                     <hr>
                     <h5>Changelog</h5>
+                    <b>Versie 1.2.4 (11/10/2019)</b>: Kleine toevoegingen
+                    <ul>
+                        <li>Afsluiten-knop verplaatst van Administratorpaneel naar hoofdmenu. De knop werkt alleen op de host-computer</li>
+                    </ul>
                     <b>Versie 1.2.3 (04/10/2019)</b>: Kleine toevoegingen
                     <ul>
                         <li>Beschrijving van een opwaardering toegevoegd</li>
                         <li>Bij de aankooppagina van een product staat nu ook de afbeelding van dat product</li>
+                        <il>Bug gefixt die 18 plussers ook 18- maakte op de verkooppagina</il>
                     </ul>
                     <b>Versie 1.2.2 (28/09/2019)</b>: Bugfixes
                     <ul>
@@ -191,7 +212,7 @@
                     </ul>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-grey" data-dismiss="modal">Sluiten</button>
+                    <button type="button" class="btn btn-grey" data-dismiss="modal">Terug</button>
                 </div>
             </div>
         </div>
@@ -212,6 +233,7 @@
                 <div class="sidebar-menubuttons">
                     <a href="{{ url_for('admin') }}" class="btn btn-green">Admin</a>
                     <button type="button" class="btn btn-yellow" data-toggle="modal" data-target="#about">Over</button>
+                    <button type="button" class="btn btn-green" data-toggle="modal" data-target="#shutdown-modal">Afsluiten</button>
                 </div>
             </div>
 
