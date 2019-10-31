@@ -8,6 +8,10 @@ from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction,
 from flask_breadcrumbs import register_breadcrumb
 import pandas as pd
 import copy
+import collections
+import spotipy
+from spotipy import oauth2
+import spotipy.util as util
 
 from datetime import datetime, timedelta
 from dateutil import tz
@@ -857,3 +861,49 @@ app.config["BOOTSTRAP_SERVE_LOCAL"] = True
 @app.route("/api/ping")
 def server_status():
     return jsonify({"pong": "pong"})
+
+
+########################
+##                    ##
+##   Big-Screen API   ##
+##                    ##
+########################
+
+
+spotify_token = None
+spotify = None
+SPOTIPY_CLIENT_ID = 'e81cc50c967a4c64a8073d678f7b6503'
+SPOTIPY_CLIENT_SECRET = 'c8d84aec8a6d4197b5eca4991ba7694b'
+SPOTIPY_REDIRECT_URI = 'http://127.0.0.1:5000/spotifylogin'
+SCOPE = 'user-read-playback-state user-modify-playback-state user-read-currently-playing'
+CACHE = '.spotipyoauthcache'
+sp_oauth = oauth2.SpotifyOAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, scope=SCOPE, cache_path=CACHE)
+
+
+@app.route("/spotifylogin")
+def login_to_spotify():
+
+    access_token = ""
+
+    token_info = sp_oauth.get_cached_token()
+
+    if token_info:
+        print("Found cached token!")
+        access_token = token_info['access_token']
+    else:
+        url = request.url
+        code = sp_oauth.parse_response_code(url)
+        if code:
+            print("Found Spotify auth code in Request URL! Trying to get valid access token...")
+            token_info = sp_oauth.get_access_token(code)
+            access_token = token_info['access_token']
+
+    if access_token:
+        print("Access token available! Trying to get user information...")
+        sp = spotipy.Spotify(access_token)
+        results = sp.current_user()
+        flash("Ingelogd op Spotify als {}".format(results['display_name']), "success")
+        return redirect(url_for('index'))
+
+    else:
+        return redirect(sp_oauth.get_authorize_url())
