@@ -46,7 +46,7 @@
                     Product.query.get(Purchase.query.get(t.purchase_id).product_id).name }}
                 </td>
                 {% else %}
-                <td>Opwaardering</td>
+                <td>{{ Upgrade.query.get(t.upgrade_id).description }}</td>
                 {% endif %}
                 {% if t.balchange < 0 %}
                 <td><span style="color: red;font-weight:bold;">€{{ '%.2f' % t.balchange }}</span></td>

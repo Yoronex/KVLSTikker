@@ -32,7 +32,7 @@
             this.colorIncrementer++;
             return this.colorOptions[this.colorIndex];
         }
-    }
+    };
 
     function confettiParticle(color) {
         this.x = Math.random() * W; // x-coordinate

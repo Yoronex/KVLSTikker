@@ -12,7 +12,7 @@ var decrease_button_loc = 0;
 var name_loc = 1;
 var count_loc = 2;
 var price_loc = 3;
-var total = 0
+var total = 0;
 
 
 function makeSubmitInvisible() {
@@ -182,5 +182,5 @@ function submitCart() {
 
 window.onload = function() {
     startTime();
-}
+};
 

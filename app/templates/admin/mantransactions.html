@@ -29,7 +29,7 @@
             {% if t.purchase_id is not none %}
             <td>{{ Purchase.query.get(t.purchase_id).amount }}x {{ Product.query.get(Purchase.query.get(t.purchase_id).product_id).name }} (ID: {{ t.purchase_id }})</td>
             {% else %}
-            <td>Opwaardering (ID: {{ t.upgrade_id }})</td>
+            <td>{{ Upgrade.query.get(t.upgrade_id).description }} (ID: {{ t.upgrade_id }})</td>
             {% endif %}
             {% if t.balchange < 0 %}
             <td><span style="color: red;font-weight:bold;">€ {{ '%.2f' % t.balchange }}</span></td>

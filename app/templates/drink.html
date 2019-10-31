@@ -23,15 +23,16 @@
                     <div class="col">
                         <table width="100%" cellpadding="30">
                             {% for u in g.users.all() %}
+                            {% set underage = is_18min(u) and (drink.recipe_input is not none or drink.alcohol > 0.01) %}
                             <tr>
                                 {% if (loop.index + outer_loop.index) % 2 == 0 %}
-                                <td width="100%"><a class="btn btn-block btn-green"
+                                <td width="100%"><a class="btn btn-block btn-green" {% if underage %}style="opacity: 0.5;"{% endif %}
                                                     onclick="addToCart('{{ u.id }}', '{{ u.name }}', '{{ drink.price }}', '{{ shared }}')">{{
-                                    u.name }}</a></td>
+                                        u.name }}{% if underage %} <span style="color: red;">(18-)</span>{% endif %}</a></td>
                                 {% else %}
-                                <td width="100%"><a class="btn btn-block btn-yellow"
+                                <td width="100%"><a class="btn btn-block btn-yellow" {% if underage %}style="opacity: 0.5;"{% endif %}
                                                     onclick="addToCart('{{ u.id }}', '{{ u.name }}', '{{ drink.price }}', '{{ shared }}')">{{
-                                    u.name }}</a></td>
+                                        u.name }}{% if underage %} <span style="color: red;">(18-)</span>{% endif %}</a></td>
                                 {% endif %}
                             </tr>
                             {% endfor %}
@@ -45,6 +46,11 @@
             {% if shared == false %}
             <a class="btn btn-block btn-grey" onclick="addToCart('0', 'Gezamenlijk', '{{ drink.price }}')">Gezamelijk</a>
             {% endif %}
+
+            <div class="img-thumbnail" width="100%" style="font-size: 12pt;">
+                <img class="front-image" src="{{ url_for('.static', filename='products/{}'.format(drink.image) ) }}" style="max-width:100%;max-height:100%; display: block; margin: 0 auto;">
+            </div>
+
             {% if drink.recipe_input is not none %}
             <div class="img-thumbnail" width="100%" style="font-size: 12pt">
                 <table style="margin-left:auto;margin-right:auto;">

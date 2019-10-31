@@ -11,7 +11,8 @@ import os
 import zipfile
 from datetime import datetime
 
-locale.setlocale(locale.LC_ALL, 'nl_NL')
+# locale.setlocale(locale.LC_ALL, 'nl_NL')
+locale.setlocale(locale.LC_ALL, 'nld_nld')
 app = Flask(__name__)
 app.config.from_object(Config)
 
@@ -45,10 +46,22 @@ if not app.debug:
     app.logger.setLevel(logging.INFO)
     app.logger.info('Tikker startup')
 
+
 def get_date_today():
     str = datetime.now().strftime("%Y-%m-%d")
     print(str)
     return str
 
 
+def is_18min(u):
+        today = datetime.today()
+        days_in_year = 365.2425
+        age = int((today - u.birthday).days / days_in_year)
+        if age < 18:
+            return True
+        else:
+            return False
+
+
 app.jinja_env.globals.update(get_date_today=get_date_today)
+app.jinja_env.globals.update(is_18min=is_18min)

@@ -21,7 +21,7 @@ class User(db.Model):
     transactions = db.relationship('Transaction', backref='user', lazy='dynamic')
     profitgroup_id = db.Column(db.Integer, db.ForeignKey('usergroup.id'))
     birthday = db.Column(db.DateTime)
-
+    email = db.Column(db.String)
 
     #usergroup = db.relationship('Usergroup', foreign_keys=[usergroup_id])
     #profitgroup = db.relationship('Usergroup', foreign_keys=[profitgroup_id])
@@ -47,6 +47,7 @@ class Upgrade(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     transactions = db.relationship('Transaction', backref='upgrade', lazy='dynamic')
     amount = db.Column(db.Float)
+    description = db.Column(db.String)
 
     def __repr__(self):
         return '<Upgrade {}>'.format(self.amount)
@@ -76,6 +77,7 @@ class Product(db.Model):
     alcohol = db.Column(db.Float, nullable=True)  # percentage as float between 0 and 1
     inventory_warning = db.Column(db.Integer, nullable=True)
     order = db.Column(db.Integer)
+    default_quantity = db.Column(db.Integer)
 
     def __repr__(self):
         return '<Product {} voor {}>'.format(self.name, self.price)

@@ -1,23 +1,24 @@
 {% extends 'bootstrap/base.html' %}
 
-{% set version = "1.2.0" %}
+{% set version = "1.2.3" %}
 
 {% block title %}
-{% if title %}{{ title }} - KVLS Tikker
-{% else %}KVLS Tikker
+{% if title %}Tikker - {{ title }}
+{% else %}Tikker
 {% endif %}
 {% endblock %}
 
 {% block styles %}
-{{super()}}
-{% if request.cookies.get('dark-mode') == 'True' %}
-<link rel="stylesheet" href="{{url_for('.static', filename='css/dark-mode.css')}}">
-{% else %}
-<link rel="stylesheet" href="{{url_for('.static', filename='css/light-mode.css')}}">
-{% endif %}
-<link rel="stylesheet" href="{{url_for('.static', filename='css/styles.css')}}">
-<link rel="stylesheet" href="{{url_for('.static', filename='css/menu.css')}}">
-<link rel="stylesheet" href="{{url_for('.static', filename='css/fonts.css')}}">
+    {{super()}}
+    {% if request.cookies.get('dark-mode') == 'True' %}
+    <link rel="stylesheet" href="{{url_for('.static', filename='css/dark-mode.css')}}">
+    {% else %}
+    <link rel="stylesheet" href="{{url_for('.static', filename='css/light-mode.css')}}">
+    {% endif %}
+    <link rel="stylesheet" href="{{url_for('.static', filename='css/styles.css')}}">
+    <link rel="stylesheet" href="{{url_for('.static', filename='css/menu.css')}}">
+    <link rel="stylesheet" href="{{url_for('.static', filename='css/fonts.css')}}">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
 {% endblock %}
 
 {% block scripts %}
@@ -52,6 +53,22 @@
         </div>
     </div>
 
+    <div class="modal fade" id="shutdown-modal" tabindex="-1" role="dialog" style="font-family: standardtext;">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Tikker afsluiten</h5>
+                </div>
+                <div class="modal-body">
+                    Weet je zeker dat je Tikker wilt afsluiten?
+                </div>
+                <div class="modal-footer">
+                    <a href="/shutdown" type="button" class="btn btn-danger">Afsluiten</a>
+                    <button type="button" class="btn btn-success" data-dismiss="modal">Terug</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="modal fade" id="about" tabindex="-1" role="dialog" style="font-family: standardtext">
         <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -70,11 +87,36 @@
                     <hr>
                     <h5>Bekende bugs</h5>
                     <ul>
-                        <li>Momenteel niets! Hoera!</li>
+                        <li><i>Totaal gedronken</i> bij een drank aftikken telt geen rondjes mee</li>
                     </ul>
                     <hr>
                     <h5>Changelog</h5>
-                    <b>Versie {{ version }} (18/09/2019)</b>: Statistieken en puntjes-op-de-i update
+                    <b>Versie 1.2.4 (11/10/2019)</b>: Kleine toevoegingen
+                    <ul>
+                        <li>Afsluiten-knop verplaatst van Administratorpaneel naar hoofdmenu. De knop werkt alleen op de host-computer</li>
+                    </ul>
+                    <b>Versie 1.2.3 (04/10/2019)</b>: Kleine toevoegingen
+                    <ul>
+                        <li>Beschrijving van een opwaardering toegevoegd</li>
+                        <li>Bij de aankooppagina van een product staat nu ook de afbeelding van dat product</li>
+                        <il>Bug gefixt die 18 plussers ook 18- maakte op de verkooppagina</il>
+                    </ul>
+                    <b>Versie 1.2.2 (28/09/2019)</b>: Bugfixes
+                    <ul>
+                        <li>Bij de statistieken worden rondjes niet meer meegeteld</li>
+                        <li>Menuknop is nu wit in plaats van zwart in Dark mode</li>
+                        <li>Bug gefixt die ervoor zorgde dat mensen die nog jarig moesten worden dit jaar nu al jarig waren volgens Tikker</li>
+                        <li>Wanneer non-alcoholische of mixdranken worden afgetikt, worden de namen van minderjarigen half transparant en staat er (18-) bij de naam</li>
+                        <li>Bug gefixt bij de Statistieken die bij meer dan 10 producten/mensen een error veroorzaakte</li>
+                    </ul>
+                    <b>Versie 1.2.1 (21/09/2019)</b>: Kleine toevoegingen en bugfixes
+                    <ul>
+                        <li>Het groene Tikker-online bolletje is nu pulserend</li>
+                        <li>Email van gebruiker toegevoegd</li>
+                        <li>Favicon toegevoegd</li>
+                        <li>Bug gefixt die ervoor zorgde dat sommige scripts niet meer werkten</li>
+                    </ul>
+                    <b>Versie 1.2.0 (18/09/2019)</b>: Statistieken en puntjes-op-de-i update
                     <ul>
                         <li>Dark modus toegevoegd
                             <ul>
@@ -170,7 +212,7 @@
                     </ul>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-grey" data-dismiss="modal">Sluiten</button>
+                    <button type="button" class="btn btn-grey" data-dismiss="modal">Terug</button>
                 </div>
             </div>
         </div>
@@ -186,11 +228,12 @@
                     Tikker
                 </div>
                 <div class="sidebar-tikker-version">
-                    v1.2.0
+                    V{{ version }}
                 </div>
                 <div class="sidebar-menubuttons">
                     <a href="{{ url_for('admin') }}" class="btn btn-green">Admin</a>
                     <button type="button" class="btn btn-yellow" data-toggle="modal" data-target="#about">Over</button>
+                    <button type="button" class="btn btn-green" data-toggle="modal" data-target="#shutdown-modal">Afsluiten</button>
                 </div>
             </div>
 
@@ -249,7 +292,7 @@
                 <div class="row" style="align-items: center">
                     <div class="col">
                         <div>
-                            <img id="menu-toggle" src="{{ url_for('.static', filename='img/menu.svg') }}" style="margin-right: 5px;">
+                            <img id="menu-toggle" src="{% if request.cookies.get('dark-mode') == 'True' %}{{ url_for('.static', filename='img/menu-dark.svg') }}{% else %}{{ url_for('.static', filename='img/menu.svg') }}{% endif %}" style="margin-right: 5px;" width="32px" height="32px">
                             {%- for breadcrumb in breadcrumbs -%}
                             <a href="{{ breadcrumb.url }}">{{ breadcrumb.text }}</a>
                             {{ '/ ' if not loop.last }}
