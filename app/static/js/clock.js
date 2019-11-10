@@ -12,9 +12,13 @@ function startTime() {
     h = checkTime(h);
     m = checkTime(m);
     if (s % 2 == 0) {
-        document.getElementById('clock').innerHTML = h + ":" + m;
+        document.getElementById('clock-hour').innerHTML = h;
+        document.getElementById('clock-middle').innerHTML = ":";
+        document.getElementById('clock-minute').innerHTML = m;
     } else {
-        document.getElementById('clock').innerHTML = h + " " + m;
+        document.getElementById('clock-hour').innerHTML = h;
+        document.getElementById('clock-middle').innerHTML = "";
+        document.getElementById('clock-minute').innerHTML = m;
     }
     var t = setTimeout(startTime, 500);
 }

@@ -6,3 +6,5 @@ flask_breadcrumbs==0.4.0
 flask_bootstrap4==4.0.2
 flask_migrate==2.2.1
 flask_sqlalchemy==2.3.2
+flask_socketio==4.2.1
+flask_cors==3.0.8

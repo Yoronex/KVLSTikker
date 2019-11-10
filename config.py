@@ -10,6 +10,7 @@ class Config(object):
     UPLOAD_FOLDER = os.path.join(basedir, 'app/static/products')
     LOG_FOLDER = os.path.join(basedir, 'logs')
     BACKUP_FOLDER = os.path.join(basedir, 'backup')
+    ALBUM_COVER_FOLDER = os.path.join(basedir, 'app/static/covers')
     MAX_BACKUPS = 20
     ALLOWED_EXTENSIONS = set(['jpg', 'png', 'bmp', 'gif'])
     ADMIN_PASSWORD = "knotgang"

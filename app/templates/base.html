@@ -240,7 +240,7 @@
             <div class="list-group list-group-flush" style="font-family: standardtext">
                 <a href="{{ url_for('index') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Home</a>
                 <a href="{{ url_for('balance') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Gebruikersoverzicht</a>
-                <a href="{{ url_for('stats') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Statistieken</a>
+                <a href="{{ url_for('stats_home') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Statistieken</a>
                 <a href="{{ url_for('upgrade') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Opwaarderen</a>
                 <a onclick="toggle_confetti()" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}" style="cursor:pointer; color: #495057;" >Confetti
                     {% if request.cookies.get('confetti') == 'False' %}
@@ -304,11 +304,15 @@
                     <div class="col-auto">
                         <div class="container-fluid">
                             <div class="row server-status">
-                                <span class="status-dot pulsation" id="status-dot" style="background-color: green;"></span><div style="color: green;" id="status-text">  Tikker online</div>
+                                <span class="status-dot pulsation" id="status-dot" style="background-color: green;"></span><div style="color: green;" id="status-text">Tikker online</div>
                             </div>
                             <div class="row">
                                 <div class="col">
-                                    <div id="clock">00:00</div>
+                                    <div id="clock">
+                                        <span id="clock-hour" style="display: inline-block; margin-left: -8px; margin-right: -8px;"></span>
+                                        <span id="clock-middle" style="display: inline-block; width: 8px;"></span>
+                                        <span id="clock-minute" style="display: inline-block; margin-left: -8px; margin-right: -8px;"></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
