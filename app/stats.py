@@ -76,7 +76,7 @@ def balance_over_time_user(userid, parsedbegin, parsedend):
     return datat, idw, labelw, valuew
 
 
-def most_sold_products_per_user(userid, parsedbegin, parsedend):
+def most_bought_products_per_user(userid, parsedbegin, parsedend):
     count = {}
 
     purchases = Purchase.query.filter(and_(Purchase.user_id == userid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend, Purchase.round == False)).all()
@@ -95,7 +95,7 @@ def most_sold_products_per_user(userid, parsedbegin, parsedend):
     return ids, values, labels
 
 
-def most_sold_products_by_groups(drinkid, parsedbegin, parsedend):
+def most_bought_of_one_product_by_groups(drinkid, parsedbegin, parsedend):
     count = {}
     purchases = Purchase.query.filter(
         and_(Purchase.product_id == drinkid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend, Purchase.round == False)).all()
@@ -122,7 +122,7 @@ def most_sold_products_by_groups(drinkid, parsedbegin, parsedend):
     return idsg, valuesg, labelsg
 
 
-def most_sold_products_by_users(drinkid, parsedbegin, parsedend):
+def most_bought_of_one_product_by_users(drinkid, parsedbegin, parsedend):
     count = {}
     purchases = Purchase.query.filter(
         and_(Purchase.product_id == drinkid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend, Purchase.round == False)).all()
@@ -141,12 +141,12 @@ def most_sold_products_by_users(drinkid, parsedbegin, parsedend):
     return idsu, valuesu, labelsu
 
 
-def most_sold_products_by_users_today(drinkid, parsedend):
+def most_bought_of_one_product_by_users_today(drinkid, parsedend):
     parsedbegin = get_yesterday_for_today(parsedend)
-    return most_sold_products_by_users(drinkid, parsedbegin, parsedend)
+    return most_bought_of_one_product_by_users(drinkid, parsedbegin, parsedend)
 
 
-def most_sold_products_by_groups_from_group(drinkid, groupid, parsedbegin, parsedend):
+def most_bought_of_one_product_by_groups_from_group(drinkid, groupid, parsedbegin, parsedend):
     count = {}
     purchases = Purchase.query.filter(and_(Purchase.product_id == drinkid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend, Purchase.round == False)).all()
 
@@ -174,7 +174,7 @@ def most_sold_products_by_groups_from_group(drinkid, groupid, parsedbegin, parse
     return idsg, valuesg, labelsg
 
 
-def most_sold_products_by_users_from_group(drinkid, groupid, parsedbegin, parsedend):
+def most_bought_of_one_product_by_users_from_group(drinkid, groupid, parsedbegin, parsedend):
     count = {}
     purchases = Purchase.query.filter(and_(Purchase.product_id == drinkid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend, Purchase.round == False)).all()
 

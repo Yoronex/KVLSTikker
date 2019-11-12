@@ -1,7 +1,6 @@
 from flask import render_template, flash, redirect, url_for, request, abort, jsonify, json, make_response
 from sqlalchemy import and_
-from app import app, stats, socket, spotify, socketio
-from app.dbhandler import dbhandler
+from app import app, stats, socket, spotify, socketio, dbhandler
 from app.forms import UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm, \
     ChangeDrinkForm, ChangeDrinkImageForm, AddInventoryForm, PayOutProfitForm
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory
@@ -16,8 +15,6 @@ import math
 
 from datetime import datetime, timedelta
 from dateutil import tz
-
-db_handler = dbhandler()
 
 
 def is_filled(data):
@@ -99,7 +96,7 @@ plotcolours = ["#0b8337", "#ffd94a", "#707070"]
 
 birthday = False
 showed_birthdays = True
-birthdays = db_handler.is_birthday()
+birthdays = dbhandler.is_birthday()
 if len(birthdays) > 0:
     birthday = True
     showed_birthdays = False
@@ -133,7 +130,7 @@ def upgrade():
         if amount < 0.0:
             flash("Opwaardering kan niet negatief zijn!", "danger")
             return render_template('upgrade.html', title='Opwaarderen', form=form)
-        alert = (db_handler.addbalance(form.user.data, form.description.data, amount))
+        alert = (dbhandler.addbalance(form.user.data, form.description.data, amount))
         flash(alert[0], alert[1])
         return redirect(url_for('index'))
     return render_template('upgrade.html', title='Opwaarderen', h1="Opwaarderen", form=form)
@@ -200,7 +197,7 @@ def view_drink_dlc(*args, **kwargs):
 def drink(drinkid):
     drink = Product.query.get(drinkid)
     usergroups = get_usergroups_with_users()
-    statsdict = db_handler.get_product_stats(drinkid)
+    statsdict = dbhandler.get_product_stats(drinkid)
     return render_template('drink.html', title=drink.name,
                            h1="{} aftikken (€ {})".format(drink.name, ('%.2f' % drink.price).replace('.', ',')),
                            drink=drink,
@@ -211,7 +208,7 @@ def drink(drinkid):
 @app.route('/drink/<int:drinkid>/<int:userid>')
 def purchase(drinkid, userid):
     quantity = 1
-    alert = (db_handler.addpurchase(drinkid, userid, quantity))
+    alert = (dbhandler.addpurchase(drinkid, userid, quantity))
     flash("{}x {} voor {} verwerkt".format(alert[0], alert[1], alert[2]), alert[3])
     return redirect(url_for('index'))
 
@@ -236,7 +233,7 @@ def purchase_from_cart(drink_id, cart):
             shared = True
             amount = data[1]
         else:
-            alert = (db_handler.addpurchase(drink_id, int(data[0]), int(data[1]), r))
+            alert = (dbhandler.addpurchase(drink_id, int(data[0]), int(data[1]), r))
 
             if alert[3] == "success":
                 q = alert[0]
@@ -274,7 +271,7 @@ def purchase_together(drinkid, amount):
     drink = copy.deepcopy(Product.query.get(drinkid))
     usergroups = get_usergroups_with_users()
     drink.price = drink.price * amount
-    statsdict = db_handler.get_product_stats(drinkid)
+    statsdict = dbhandler.get_product_stats(drinkid)
     return render_template('drink.html', title=drink.name,
                            h1="Gezamenlijk " + str(amount) + " " + drink.name + " afrekenen", drink=drink,
                            usergroups=usergroups, Product=Product,
@@ -299,7 +296,7 @@ def purchase_from_cart_together(drinkid, amount, cart):
 
     for order in split[1:len(split)]:
         data = order.split('a')
-        alert = db_handler.addpurchase(drinkid, int(data[0]), float(int(data[1])) * amount / denominator, r)
+        alert = dbhandler.addpurchase(drinkid, int(data[0]), float(int(data[1])) * amount / denominator, r)
 
         if alert[3] == "success":
             q = alert[0]
@@ -338,7 +335,7 @@ def admin():
 
     products = []
     for p in Product.query.filter(and_(Product.recipe_input == None), (Product.purchaseable == True)).all():
-        result = db_handler.get_inventory_stock(p.id)
+        result = dbhandler.get_inventory_stock(p.id)
         result[0]['name'] = p.name
         products.append(result[0])
 
@@ -368,7 +365,7 @@ def admin_users():
         abort(403)
     form = UserRegistrationForm()
     if form.validate_on_submit():
-        alert = (db_handler.adduser(form.name.data, form.email.data, form.group.data, form.profitgroup.data,
+        alert = (dbhandler.adduser(form.name.data, form.email.data, form.group.data, form.profitgroup.data,
                                     form.birthday.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_users'))
@@ -401,7 +398,7 @@ def admin_users_delete_exec(userid):
     if (User.query.get(userid).balance != 0.0):
         flash("Deze gebruiker heeft nog geen saldo van € 0!", "danger")
         return redirect(url_for('admin_users'))
-    # alert = (db_handler.deluser(userid))
+    # alert = (dbhandler.deluser(userid))
     # flash(alert[0], alert[1])
     flash("Wegens enkele ontdekte fouten in Tikker is het verwijderen van gebruikers tijdelijk uitgeschakeld", "danger")
     return redirect(url_for('admin_users'))
@@ -432,7 +429,7 @@ def admin_transactions_delete(tranid):
 def admin_transactions_delete_exec(tranid):
     if request.remote_addr != "127.0.0.1":
         abort(403)
-    alert = (db_handler.deltransaction(tranid))
+    alert = (dbhandler.deltransaction(tranid))
     flash(alert[0], alert[1])
     return redirect(url_for('admin_transactions'))
 
@@ -443,7 +440,7 @@ def admin_drinks():
     form = DrinkForm()
     if request.method == "POST":
         if form.validate_on_submit():
-            alert = (db_handler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), int(form.pos.data),
+            alert = (dbhandler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), int(form.pos.data),
                                          form.image.data,
                                          form.hoverimage.data, form.recipe.data, form.inventory_warning.data,
                                          form.alcohol.data, form.volume.data, form.unit.data))
@@ -475,14 +472,14 @@ def admin_drinks_edit(drinkid):
             recipe = recipe + str(value) + "x" + str(key) + ", "
 
     if form.submit1.data and form.validate_on_submit():
-        alert = (db_handler.editdrink_attr(drinkid, form.name.data, float(form.price.data.replace(",", ".")),
+        alert = (dbhandler.editdrink_attr(drinkid, form.name.data, float(form.price.data.replace(",", ".")),
                                            int(form.pos.data),
                                            form.purchaseable.data, form.recipe.data, form.inventory_warning.data,
                                            form.alcohol.data, form.volume.data, form.unit.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_drinks'))
     if form2.submit2.data and form2.validate_on_submit():
-        alert = (db_handler.editdrink_image(drinkid, form2.image.data, form2.hoverimage.data))
+        alert = (dbhandler.editdrink_image(drinkid, form2.image.data, form2.hoverimage.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_drinks'))
     return render_template('admin/editdrink.html', title="{} bewerken".format(product.name),
@@ -494,7 +491,7 @@ def admin_drinks_edit(drinkid):
 def admin_drinks_delete(drinkid):
     if request.remote_addr != "127.0.0.1":
         abort(403)
-    alert = (db_handler.deldrink(drinkid))
+    alert = (dbhandler.deldrink(drinkid))
     flash(alert[0], alert[1])
     return redirect(url_for('admin_drinks'))
 
@@ -506,7 +503,7 @@ def admin_usergroups():
         abort(403)
     form = UserGroupRegistrationForm()
     if form.validate_on_submit():
-        alert = (db_handler.addusergroup(form.name.data))
+        alert = (dbhandler.addusergroup(form.name.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_usergroups'))
     return render_template("admin/manusergroups.html", title="Groepen", h1="Groepenbeheer", form=form,
@@ -537,7 +534,7 @@ def admin_usergroups_delete_exec(usergroupid):
     if len(Usergroup.query.get(usergroupid).users.all()) != 0:
         flash("Deze groep heeft nog gebruikers! Verwijder deze eerst.", "danger")
         return redirect(url_for('admin_usergroups'))
-    alert = (db_handler.delusergroup(usergroupid))
+    alert = (dbhandler.delusergroup(usergroupid))
     flash(alert[0], alert[1])
     return redirect(url_for('admin_usergroups'))
 
@@ -549,7 +546,7 @@ def admin_inventory():
         abort(403)
     form = AddInventoryForm()
     if form.validate_on_submit():
-        alert = (db_handler.add_inventory(int(form.product.data), int(form.quantity.data),
+        alert = (dbhandler.add_inventory(int(form.product.data), int(form.quantity.data),
                                           float(form.purchase_price.data.replace(",", ".")), form.note.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_inventory'))
@@ -564,10 +561,10 @@ def admin_inventory():
 def admin_correct_inventory():
     products = [p.serialize for p in Product.query.filter(Product.recipe_input == None).all()]
     for p in products:
-        p['stock'] = db_handler.calcStock(p['id'])
+        p['stock'] = dbhandler.calcStock(p['id'])
 
     if request.method == 'POST':
-        result = db_handler.correct_inventory(request.get_json())
+        result = dbhandler.correct_inventory(request.get_json())
         if type(result) is tuple:
             flash(result[0], result[1])
         return redirect(url_for('admin'), code=302)
@@ -586,7 +583,7 @@ def payout_profit():
         abort(403)
     form = PayOutProfitForm()
     if form.validate_on_submit():
-        alert = db_handler.payout_profit(int(form.usergroup.data), float(form.amount.data.replace(",", ".")),
+        alert = dbhandler.payout_profit(int(form.usergroup.data), float(form.amount.data.replace(",", ".")),
                                          form.verification.data)
         flash(alert[0], alert[1])
         return redirect(url_for('payout_profit'))
@@ -616,7 +613,7 @@ def enable_darkmode():
 
 @app.route('/force')
 def force_execute():
-    db_handler.force_edit()
+    dbhandler.force_edit()
     return "succes"
 
 
@@ -659,7 +656,7 @@ def top10(count, data):
 @register_breadcrumb(app, '.stats.group', 'Groepen', order=2)
 @app.route('/stats')
 def stats_home():
-    return render_template('/stats/stats.html', title='Statistieken', h1='Statistieken', Product=Product, User=User)
+    return render_template('stats/stats.html', title='Statistieken', h1='Statistieken', Product=Product, User=User)
 
 
 @app.route('/stats/user/<int:userid>')
@@ -676,7 +673,7 @@ def stats_user(userid, begindate, enddate):
     parsedend = datetime.strptime(enddate, "%Y-%m-%d")
 
     datat, idw, labelw, valuew = stats.balance_over_time_user(userid, parsedbegin, parsedend)
-    ids, values, labels = stats.most_sold_products_per_user(userid, parsedbegin, parsedend)
+    ids, values, labels = stats.most_bought_products_per_user(userid, parsedbegin, parsedend)
 
     return render_template("stats/statsuser.html", title="Statistieken van " + user.name,
                            h1="Statistieken van " + user.name, ids=ids, data=values, labels=labels, idw=idw,
@@ -703,8 +700,8 @@ def stats_drink(drinkid, begindate, enddate):
     parsedbegin = datetime.strptime(begindate, "%Y-%m-%d")
     parsedend = datetime.strptime(enddate, "%Y-%m-%d")
 
-    idsg, valuesg, labelsg = stats.most_sold_products_by_groups(drinkid, parsedbegin, parsedend)
-    idsu, valuesu, labelsu = stats.most_sold_products_by_users(drinkid, parsedbegin, parsedend)
+    idsg, valuesg, labelsg = stats.most_bought_of_one_product_by_groups(drinkid, parsedbegin, parsedend)
+    idsu, valuesu, labelsu = stats.most_bought_of_one_product_by_users(drinkid, parsedbegin, parsedend)
 
     return render_template("stats/statsproduct.html", title='Statistieken over {}'.format(product.name),
                            h1='Statistieken over {}'.format(product.name),
@@ -735,8 +732,8 @@ def stats_drink_group(drinkid, groupid, begindate, enddate):
     parsedbegin = datetime.strptime(begindate, "%Y-%m-%d")
     parsedend = datetime.strptime(enddate, "%Y-%m-%d")
 
-    idsu, valuesu, labelsu = stats.most_sold_products_by_users_from_group(drinkid, groupid, parsedbegin, parsedend)
-    idsg, valuesg, labelsg = stats.most_sold_products_by_groups_from_group(drinkid, groupid, parsedbegin, parsedend)
+    idsu, valuesu, labelsu = stats.most_bought_of_one_product_by_users_from_group(drinkid, groupid, parsedbegin, parsedend)
+    idsg, valuesg, labelsg = stats.most_bought_of_one_product_by_groups_from_group(drinkid, groupid, parsedbegin, parsedend)
 
     return render_template("stats/statsproduct.html",
                            title='Statistieken over {} voor {}'.format(product.name, usergroup.name),
@@ -748,8 +745,7 @@ def stats_drink_group(drinkid, groupid, begindate, enddate):
 
 @app.route('/test/exception')
 def throw_exception():
-    len(None)
-    return
+    raise Exception
 
 
 @app.route('/shutdown', methods=['GET', 'POST'])
@@ -801,7 +797,7 @@ def not_found_error(error):
 def exception_error(error):
     message = "Achter de schermen is iets helemaal fout gegaan! Om dit probleem in de toekomst niet meer te zien, stuur aub berichtje naar Roy met wat je aan het doen was in Tikker toen deze foutmelding verscheen, zodat hij opgelost kan worden!"
     gif = url_for('.static', filename='img/500.mp4')
-    db_handler.rollback()
+    dbhandler.rollback()
     return render_template('error.html', title="500", h1="Error 500", message=message, gif_url=gif), 500
 
 
