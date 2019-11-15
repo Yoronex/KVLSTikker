@@ -1,9 +1,33 @@
 from app import app, db, dbhandler
-from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory, Recipe, Inventory_usage
+from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory, Recipe, Inventory_usage, Setting, Quote
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import os
 from sqlalchemy import and_
+
+
+settings = {}
+
+
+def initialize_settings():
+    global settings
+    default_settings = {'dinner_product_id': None}
+    sses = Setting.query.all()
+    settings_keys = []
+    for s in sses:
+        settings_keys.append(s.key)
+
+    for k in default_settings.keys():
+        if k not in settings_keys:
+            s = Setting(key=k)
+            db.session.add(s)
+            db.session.commit()
+
+    for s in Setting.query.all():
+        settings[s.key] = s.value
+
+
+initialize_settings()
 
 
 def remove_existing_file(filename):
@@ -296,6 +320,12 @@ def editdrink_attr(product_id, name, price, order, purchaseable, recipe, invento
     product.unit = unit
     db.session.commit()
     return "Product {} (ID: {}) succesvol aangepast!".format(product.name, product.id), "success"
+
+
+def editdrink_price(product_id, price):
+    product = Product.query.get(product_id)
+    product.price = price
+    db.session.commit()
 
 
 def editdrink_image(product_id, image, hoverimage):

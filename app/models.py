@@ -150,11 +150,11 @@ class Inventory(db.Model):
 
 
 class Setting(db.Model):
-    setting = db.Column(db.String, primary_key=True)
+    key = db.Column(db.String, primary_key=True)
     value = db.Column(db.String)
 
 
 class Quote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, index=True, nullable=False)
-    quote = db.Column(db.String)
+    value = db.Column(db.String)

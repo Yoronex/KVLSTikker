@@ -1,3 +1,7 @@
+window.onload = function() {
+  startFunctions();
+};
+
 function startFunctions() {
     startTime();
     pingTikker();

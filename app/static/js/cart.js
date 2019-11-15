@@ -1,6 +1,6 @@
 var cartList = [];   //Orders all users in a cart
-
-var prod_price;
+var prod_price = 0;
+var dinner = false;
 
 /*
 Table layout
@@ -14,17 +14,21 @@ var count_loc = 2;
 var price_loc = 3;
 var total = 0;
 
+function initCart(p_price) {
+    console.log("price: " + p_price);
+    prod_price = p_price;
+}
 
 function makeSubmitInvisible() {
     document.getElementById("submitbutton").style.visibility = "hidden";
 }
 
-function addToCart(u_id, user_name, p_price, shared) {
+function addToCart(u_id, user_name, shared) {
     total = total + 1;
     shared = (shared == 'True');
 
     if(shared == false) {
-        prod_price = p_price;
+        //prod_price = p_price;
         var user_id = parseInt(u_id);
         if (user_id in cartList) {
             changeCartAmount(user_id, cartList[user_id], 1);
@@ -54,7 +58,7 @@ function addToCart(u_id, user_name, p_price, shared) {
         cartList[user_id] = row;
         document.getElementById("submitbutton").style.visibility = "visible";
     } else {
-        prod_price = p_price;
+        //prod_price = p_price;
         var user_id = parseInt(u_id);
         if (user_id in cartList) {
             changeCartPart(user_id, cartList[user_id], 1);
@@ -151,7 +155,7 @@ function updateCart() {
         var row = cartList[key];
         var count = parseInt(row.cells[count_loc].innerHTML);
         row.cells[count_loc].innerHTML = count.toString() + "/" + total.toString();
-        row.cells[price_loc].innerHTML = "€" + parseFloat(Math.round((parseFloat(prod_price) * count / total)* 100) / 100).toFixed(2).toString();
+        row.cells[price_loc].innerHTML = "€" + parseFloat(Math.ceil((parseFloat(prod_price) * count / total)* 100) / 100).toFixed(2).toString();
     }
 }
 
@@ -175,12 +179,22 @@ function submitCart() {
         output = output + "&";
     }
     output = output.slice(0, -1);
+    if (dinner) {
+        let price = document.getElementById('total-spent').value;
+        price = parseFloat(price.replace(',', '.'));
+        if (isNaN(price)) {
+            hideLoadingBar();
+            return;
+        }
+        const comments = document.getElementById('comments').value;
+        output = output + encodeURI( `?price=${price}&comments=${comments}`)
+    }
     window.location.href = window.location.href + output;
-    onreadystatechange
 }
 
-
-window.onload = function() {
-    startTime();
-};
-
+function changePrice() {
+    let field = document.getElementById("total-spent");
+    let s = parseFloat(field.value.replace(',', '.'));
+    prod_price = s;
+    updateCart();
+}

@@ -195,6 +195,12 @@ def view_drink_dlc(*args, **kwargs):
 @app.route('/drink/<int:drinkid>', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.drink.id', '', dynamic_list_constructor=view_drink_dlc, order=2)
 def drink(drinkid):
+    dinnerid = dbhandler.settings['dinner_product_id']
+    if dinnerid is None:
+        raise ValueError
+    elif int(dinnerid) == drinkid:
+        return redirect(url_for('drink_dinner'))
+
     drink = Product.query.get(drinkid)
     usergroups = get_usergroups_with_users()
     statsdict = dbhandler.get_product_stats(drinkid)
@@ -203,6 +209,44 @@ def drink(drinkid):
                            drink=drink,
                            usergroups=usergroups, Product=Product,
                            shared=False, stats=statsdict, User=User), 200
+
+
+@app.route('/drink/dinner')
+def drink_dinner():
+    drinkid = dbhandler.settings['dinner_product_id']
+    if drinkid is None:
+        raise ValueError
+
+    drink = Product.query.get(int(drinkid))
+    usergroups = get_usergroups_with_users()
+    return render_template('drink_dinner.html', title=drink.name, h1="{} aftikken".format(drink.name), drink=drink,
+                           usergroups=usergroups, Product=Product, shared=False, User=User), 200
+
+
+@app.route('/drink/dinner/<string:cart>')
+def purchase_dinner_from_cart(cart):
+    drinkid = dbhandler.settings['dinner_product_id']
+    if drinkid is None:
+        raise ValueError
+    drink = Product.query.get(int(drinkid))
+
+    amount = 0
+    split = cart.split('&')
+    if len(split) == 0:
+        abort(500)
+    if split[0] != "0":
+        raise ValueError
+
+    for order in split[1:len(split)]:
+        data = order.split('a')
+        if data[0] != '0':
+            amount = amount + int(data[1])
+
+    price_pp = math.ceil(float(request.args['price']) * 100 / amount) / 100
+    dbhandler.add_inventory(drinkid, amount, price_pp, request.args['comments'])
+    dbhandler.editdrink_price(drinkid, price_pp)
+
+    return redirect(url_for('purchase_from_cart_together', drinkid=drinkid, amount=amount, cart=cart))
 
 
 @app.route('/drink/<int:drinkid>/<int:userid>')
