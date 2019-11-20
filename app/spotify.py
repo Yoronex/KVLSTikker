@@ -1,5 +1,5 @@
 from app import app
-from spotipy import Spotify, oauth2
+from spotipy import Spotify, oauth2, SpotifyException
 from flask import render_template, redirect, url_for, flash
 import os
 import wget
@@ -75,16 +75,25 @@ def current_playback():
     if sp is None:
         return None
 
-    # Sometimes throws "spotipy.client.SpotifyException The access token expired"
+    #  Sometimes throws "spotipy.client.SpotifyException The access token expired"
     try:
         results = sp.current_playback()
-    except "spotipy.client.SpotifyException":
+    except SpotifyException:
         print("SpotifyException caught!")
         if renew() is False:
             print("Had to log out :(")
             return None
         else:
             print("Successfully relogged!")
+
+    try:
+        results = sp.current_playback()
+    except SpotifyException:
+        logout()
+        return
+
+    if results is None:
+        return results
 
     if results['item']['album']['id'] + ".jpg" not in os.listdir(app.config['ALBUM_COVER_FOLDER']):
         wget.download(results['item']['album']['images'][0]["url"],

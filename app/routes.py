@@ -132,6 +132,9 @@ def upgrade():
             return render_template('upgrade.html', title='Opwaarderen', form=form)
         alert = (dbhandler.addbalance(form.user.data, form.description.data, amount))
         flash(alert[0], alert[1])
+
+        socket.update_stats()
+
         return redirect(url_for('index'))
     return render_template('upgrade.html', title='Opwaarderen', h1="Opwaarderen", form=form)
 
@@ -192,6 +195,16 @@ def view_drink_dlc(*args, **kwargs):
     return [{'text': product.name, 'url': url_for('drink', drinkid=drink_id)}]
 
 
+def view_dinner_dlc(*args, **kwargs):
+    dinnerid = dbhandler.settings['dinner_product_id']
+    if dinnerid is not None:
+        product = Product.query.get(int(dinnerid))
+        return [{'text': product.name, 'url': url_for('drink', drinkid=dinnerid)}]
+    else:
+        raise ValueError
+
+
+
 @app.route('/drink/<int:drinkid>', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.drink.id', '', dynamic_list_constructor=view_drink_dlc, order=2)
 def drink(drinkid):
@@ -212,6 +225,7 @@ def drink(drinkid):
 
 
 @app.route('/drink/dinner')
+@register_breadcrumb(app, '.drink.dinner', '', dynamic_list_constructor=view_dinner_dlc, order=2)
 def drink_dinner():
     drinkid = dbhandler.settings['dinner_product_id']
     if drinkid is None:
@@ -296,12 +310,15 @@ def purchase_from_cart(drink_id, cart):
 
     #for key, value in final_alert.items():
     #    flash(value, key)
+
     final_flash = ""
     for front, end in success_messages.items():
         final_flash = final_flash + str(front) + " " + end + ", "
     if final_flash != "":
         socket.send_transaction(final_flash[:-2])
         flash(final_flash[:-2] + " verwerkt", "success")
+
+    socket.update_stats()
 
     if not shared:
         return redirect(url_for('index'))
@@ -328,6 +345,7 @@ def purchase_from_cart_together(drinkid, amount, cart):
     final_alert = {}
     success_messages = {}
     denominator = 0
+
     split = cart.split('&')
     if len(split) == 0:
         abort(500)
@@ -361,6 +379,8 @@ def purchase_from_cart_together(drinkid, amount, cart):
     if final_flash != "":
         socket.send_transaction(final_flash[:-2])
         flash(final_flash[:-2] + " verwerkt", "success")
+
+    socket.update_stats()
 
     return redirect(url_for('index'))
 
@@ -412,6 +432,9 @@ def admin_users():
         alert = (dbhandler.adduser(form.name.data, form.email.data, form.group.data, form.profitgroup.data,
                                     form.birthday.data))
         flash(alert[0], alert[1])
+
+        socket.update_stats()
+
         return redirect(url_for('admin_users'))
     print(form.errors)
     return render_template("admin/manusers.html", title="Gebruikersbeheer", h1="Gebruikersbeheer",
@@ -445,6 +468,9 @@ def admin_users_delete_exec(userid):
     # alert = (dbhandler.deluser(userid))
     # flash(alert[0], alert[1])
     flash("Wegens enkele ontdekte fouten in Tikker is het verwijderen van gebruikers tijdelijk uitgeschakeld", "danger")
+
+    socket.update_stats()
+
     return redirect(url_for('admin_users'))
 
 
@@ -484,11 +510,14 @@ def admin_drinks():
     form = DrinkForm()
     if request.method == "POST":
         if form.validate_on_submit():
-            alert = (dbhandler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), int(form.pos.data),
+            alert = (dbhandler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), int(form.pos.data) + 1,
                                          form.image.data,
                                          form.hoverimage.data, form.recipe.data, form.inventory_warning.data,
                                          form.alcohol.data, form.volume.data, form.unit.data))
             flash(alert[0], alert[1])
+
+            socket.update_stats()
+
             return redirect(url_for('admin_drinks'))
         else:
             flash(form.errors, "danger")
@@ -517,10 +546,13 @@ def admin_drinks_edit(drinkid):
 
     if form.submit1.data and form.validate_on_submit():
         alert = (dbhandler.editdrink_attr(drinkid, form.name.data, float(form.price.data.replace(",", ".")),
-                                           int(form.pos.data),
+                                           int(form.pos.data) + 1,
                                            form.purchaseable.data, form.recipe.data, form.inventory_warning.data,
                                            form.alcohol.data, form.volume.data, form.unit.data))
         flash(alert[0], alert[1])
+
+        socket.update_stats()
+
         return redirect(url_for('admin_drinks'))
     if form2.submit2.data and form2.validate_on_submit():
         alert = (dbhandler.editdrink_image(drinkid, form2.image.data, form2.hoverimage.data))
@@ -633,6 +665,30 @@ def payout_profit():
         return redirect(url_for('payout_profit'))
     return render_template("admin/manprofit.html", title="Winst uitkeren", h1="Winst uitkeren", Usergroup=Usergroup,
                            form=form), 200
+
+
+@app.route('/admin/recalcmax')
+def recalculate_max_stats():
+    transactions = Transaction.query.all()
+    begindate = datetime(year=2019, month=7, day=1, hour=12, minute=0, second=0)
+    for t in transactions:
+        begindate2 = stats.get_yesterday_for_today(t.timestamp)
+        if begindate2 != begindate:
+            begindate = begindate2
+            stats.reset_daily_stats()
+        stats.update_daily_stats("euros", t.balchange)
+
+        if t.purchase_id is not None:
+            p = Purchase.query.get(t.purchase_id)
+            if p.round:
+                stats.update_daily_stats("rounds", 1)
+            stats.update_daily_stats_drinker(p.user_id)
+            stats.update_daily_stats_product(p.product_id, p.amount)
+            stats.update_daily_stats("purchases", 1)
+    stats.update_daily_stats("products", Product.query.filter(Product.purchaseable == True).count())
+    stats.update_daily_stats("users", User.query.count())
+    socket.update_stats()
+    return redirect(url_for("index"))
 
 
 @app.route('/tog_confetti', methods=['GET'])
@@ -900,3 +956,23 @@ def api_total_alcohol():
     return jsonify({"ids": ids,
                     "values": values,
                     "labels": labels})
+
+
+@app.route('/testaddquotes')
+def test_add_quotes():
+    quotes = ['Roy: Kathelijn belde, er wordt te laf gezopen!',
+              'Als ik zou willen dat je het begreep, had ik het wel beter uitgelegd.',
+              'Het enige wat je met liegen bereikt is niet geloofd worden als je de waarheid spreekt.',
+              'Logica brengt je van A naar B. Verbeelding brengt je overal.',
+              'Een mens heeft twee oren en één mond om twee keer zoveel te luisteren dan te praten.',
+              'De aarde biedt voldoende om ieders behoefte te bevredigen maar niet ieders hebzucht.']
+    for q in quotes:
+        dbhandler.addquote(q)
+
+    return redirect(url_for('index'))
+
+
+@app.route('/testinterrupt')
+def test_interrupt():
+    socket.send_interrupt({"name": "Message", "data": "Dit is een interrupt"})
+    return redirect(url_for('index'))

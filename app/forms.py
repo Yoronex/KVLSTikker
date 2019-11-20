@@ -65,8 +65,8 @@ class DrinkForm(FlaskForm):
 
     def __init__(self, *args, **kwargs):
         super(DrinkForm, self).__init__(*args, **kwargs)
-        positions = [("0", "Vooraan")]
-        count = 0
+        positions = []
+        count = -1
         for p in Product.query.order_by(Product.order.asc()).all():
             count = count + 1
             suffix = ""
@@ -111,8 +111,8 @@ class ChangeDrinkForm(FlaskForm):
 
     def __init__(self, *args, **kwargs):
         super(ChangeDrinkForm, self).__init__(*args, **kwargs)
-        positions = [("0", "Vooraan")]
-        count = 0
+        positions = []
+        count = -1
         for p in Product.query.order_by(Product.order.asc()).all():
             count = count + 1
             suffix = ""

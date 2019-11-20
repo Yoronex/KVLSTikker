@@ -1,7 +1,20 @@
 {% extends "base.html" %}
 {% import 'bootstrap/wtf.html' as wtf %}
 
+{% block scripts %}
+    {{ super() }}
+    <script>
+    window.onload = function() {
+        document.getElementById('pos').value = {{ product.order - 1}};
+        console.log({% if product.purchaseable %}true{% else %}false{% endif %});
+        document.getElementById('purchaseable').checked = {% if product.purchaseable %}true{% else %}false{% endif %};
+
+    };
+    </script>
+{% endblock %}
+
 {% block app_content %}
+    <button onclick="printField()">Button</button>
     <div class="row">
         <div class="col-md-6">
             <h2>Pas huidige data aan</h2>
@@ -11,8 +24,8 @@
 
                 {{ wtf.form_field(form.name, value=product.name) }}
                 {{ wtf.form_field(form.price, value=('%.2f' % product.price)) }}
-                {{ wtf.form_field(form.pos, value=form.pos.choices[product.order + 1]) }}
-                {{ wtf.form_field(form.purchaseable, value=product.purchaseable) }}
+                {{ wtf.form_field(form.pos) }}
+                {{ wtf.form_field(form.purchaseable, value='on') }}
                 {% if recipe != "" %}
                 {{ wtf.form_field(form.recipe, value=recipe) }}
                 {% else %}

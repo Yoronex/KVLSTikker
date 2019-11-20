@@ -1,7 +1,8 @@
-from app import app, db, dbhandler
+from app import app, db, stats
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory, Recipe, Inventory_usage, Setting, Quote
 from werkzeug.utils import secure_filename
 from datetime import datetime
+from random import randrange
 import os
 from sqlalchemy import and_
 
@@ -82,6 +83,12 @@ def addpurchase(drink_id, user_id, quantity, rondje):
     db.session.add(transaction)
     db.session.commit()
 
+    stats.update_daily_stats_product(drink_id, quantity)
+    stats.update_daily_stats('euros', balchange)
+    stats.update_daily_stats('purchases', 1)
+    if rondje:
+        stats.update_daily_stats('rounds', 1)
+
     # return "{}x {} voor {} verwerkt".format(quantity, drink.name, user.name), "success"
     return quantity, drink.name, user.name, "success"
 
@@ -97,6 +104,9 @@ def addbalance(user_id, description, amount):
                               newbal=user.balance)
     db.session.add(transaction)
     db.session.commit()
+
+    stats.update_daily_stats('euros', upgrade.amount)
+
     return "Gebruiker {} heeft succesvol opgewaardeerd met €{}".format(user.name,
                                                                        str("%.2f" % upgrade.amount).replace(".",
                                                                                                             ",")), "success"
@@ -146,8 +156,8 @@ def adddrink(name, price, order, image, hoverimage, recipe, inventory_warning, a
         p_ord = Product.query.filter(Product.order >= order).all()
         for i in range(0, len(p_ord)):
             p_ord[i].order = p_ord[i].order + 1
-    elif order > amount_of_prod:
-        order = amount_of_prod
+    elif order >= amount_of_prod:
+        order = amount_of_prod + 1
 
     if result_recipe is not None:
         product = Product(name=name, price=price, order=order, purchaseable=True, image="", hoverimage="",
@@ -180,6 +190,8 @@ def adddrink(name, price, order, image, hoverimage, recipe, inventory_warning, a
         hoverimage.save(os.path.join(app.config["UPLOAD_FOLDER"], product.hoverimage))
     db.session.commit()
 
+    stats.update_daily_stats('products', 1)
+
     return "Product {} succesvol aangemaakt".format(product.name), "success"
 
 
@@ -187,6 +199,9 @@ def adduser(name, email, group, profitgroup, birthday):
     user = User(name=name, email=email, usergroup_id=group, profitgroup_id=profitgroup, birthday=birthday)
     db.session.add(user)
     db.session.commit()
+
+    stats.update_daily_stats('users', 1)
+
     return "Gebruiker {} succesvol geregistreerd".format(user.name), "success"
 
 
@@ -195,6 +210,12 @@ def addusergroup(name):
     db.session.add(usergroup)
     db.session.commit()
     return "Groep {} succesvol aangemaakt".format(usergroup.name), "success"
+
+
+def addquote(q):
+    quote = Quote(timestamp=datetime.now(), value=q)
+    db.session.add(quote)
+    db.session.commit()
 
 
 def deluser(user_id):
@@ -218,6 +239,9 @@ def deluser(user_id):
     else:
         db.session.delete(user)
         db.session.commit()
+
+        stats.update_daily_stats('users', -1)
+
         return "Gebruiker {} verwijderd".format(name), "success"
 
 
@@ -296,6 +320,8 @@ def editdrink_attr(product_id, name, price, order, purchaseable, recipe, invento
         for key, val in result_recipe:
             db.session.add(Recipe(product_id=product.id, ingredient_id=key, quantity=val))
 
+    purchaseable_old = product.purchaseable
+
     product.name = name
     product.price = price
     if order > Product.query.count():
@@ -319,6 +345,12 @@ def editdrink_attr(product_id, name, price, order, purchaseable, recipe, invento
     product.volume = int(float(volume))
     product.unit = unit
     db.session.commit()
+
+    if purchaseable_old is True and purchaseable is False:
+        stats.update_daily_stats('products', -1)
+    elif purchaseable_old is False and purchaseable is True:
+        stats.update_daily_stats('products', 1)
+
     return "Product {} (ID: {}) succesvol aangepast!".format(product.name, product.id), "success"
 
 

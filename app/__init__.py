@@ -56,7 +56,6 @@ if not app.debug:
 
 def get_date_today():
     str = datetime.now().strftime("%Y-%m-%d")
-    print(str)
     return str
 
 
