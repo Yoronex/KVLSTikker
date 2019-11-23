@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% set shared = 'True' %}
+
+{% block scripts %}
+    <script src="{{url_for('.static', filename='js/cart.js')}}"></script>
+    <script>
+        initCart(0);
+        dinner = true;
+    </script>
+{{super()}}
+{% endblock %}
+
+{% block app_content %}
+<body data-minus-img="{{ url_for('static', filename='img/minus.png') }}">
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl">
+            {%  include 'userlistbuttons.html' %}
+        </div>
+        <div class="col-xl-3 min-width-460-md">
+
+            <div class="img-thumbnail" width="100%" style="font-size: 12pt;">
+                <img class="front-image" src="{{ url_for('.static', filename='products/{}'.format(drink.image) ) }}" style="max-width:100%;max-height:100%; display: block; margin: 0 auto;">
+            </div>
+
+            {% if drink.recipe_input is not none %}
+            <div class="img-thumbnail" width="100%" style="font-size: 12pt">
+                <table style="margin-left:auto;margin-right:auto;">
+                    <tr>
+                        <th colspan="2">Recept voor {{ drink.name }}</th>
+                    </tr>
+                    {% for key, value in drink.recipe_input.items() %}
+                    <tr>
+                        <td style="text-align: right">{{ Product.query.get(key).name }}:</td>
+                        <td style="text-align: left">{{ value }}x</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            {% endif %}
+
+            <div class="img-thumbnail" width="100%" style="font-size: 12pt; text-align: center">
+                <h4>Inkoopkosten</h4>
+                <p>Vul in het bovenste vak de totaal gemaakte kosten in. Vul in het onderste vak de datum in en wie wat hebben gekookt.</p>
+                <p style="color: red">LET OP: Doe dit zorgvuldig! Aftikken van het diner kan niet ongedaan gemaakt worden!</p>
+                <form>
+                    <label class="form-control-label" for="total_spent">Totaal bedrag (€)</label>
+                    <input type="text" id="total-spent" class="form-control" name="total-spent" onchange="changePrice()">
+                    <br>
+                    <label class="form-control-label" for="comments">Opmerkingen</label>
+                    <input type="text" id="comments" class="form-control" name="comments">
+                </form>
+            </div>
+
+            <div class="img-thumbnail">
+                <table id="cart" width="100%"></table>
+                <hr>
+                <input type="hidden" type="checkbox" id="round">
+                <btn class="btn btn-block btn-grey" id="submitbutton" onclick="submitCart()" width="90%">Versturen</btn>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

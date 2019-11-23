@@ -53,20 +53,21 @@ class UserGroupRegistrationForm(FlaskForm):
 class DrinkForm(FlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
     price = StringField('Prijs', validators=[DataRequired()])
+    category = SelectField('Categorie', choices=[("", ""), ("Bieren", "Bieren"), ("Mixjes", "Mixjes"), ("Shots", "Shots")])
     pos = SelectField('Positie', validators=[DataRequired()])
     image = FileField('Afbeelding (statisch)', validators=[DataRequired()])
     hoverimage = FileField('Afbeelding (hover)')
     recipe = StringField('Recept')
     inventory_warning = IntegerField('Inventaris waarschuwing', default=0)
-    alcohol = StringField('Alcoholpercentage')
+    alcohol = StringField('Alcoholpercentage (in %)')
     volume = StringField('Hoeveelheid (in milliliters)')
     unit = StringField('Hoeveelheid (e.g. 1 flesje, 1 shotje, etc)')
     submit_drink = SubmitField('Verstuur')
 
     def __init__(self, *args, **kwargs):
         super(DrinkForm, self).__init__(*args, **kwargs)
-        positions = [("0", "Vooraan")]
-        count = 0
+        positions = []
+        count = -1
         for p in Product.query.order_by(Product.order.asc()).all():
             count = count + 1
             suffix = ""
@@ -85,7 +86,7 @@ class MultiCheckboxField(SelectMultipleField):
 
 class UpgradeBalanceForm(FlaskForm):
     user = SelectField('Naam', validators=[DataRequired()])
-    description = SelectField('Beschrijving', validators=[DataRequired()], choices=[("Opwaardering", "Opwaardering"), ("Vergoeding diner", "Vergoeding diner")])
+    description = SelectField('Beschrijving', validators=[DataRequired()], choices=[("Opwaardering", "Opwaardering"), ("Vergoeding inkoop", "Vergoeding inkoop"), ("Vergoeding diner", "Vergoeding diner")])
     amount = StringField('Bedrag (in Tikker)', validators=[DataRequired()])
     submit = SubmitField('Versturen')
 
@@ -100,19 +101,20 @@ class UpgradeBalanceForm(FlaskForm):
 class ChangeDrinkForm(FlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
     price = StringField('Prijs', validators=[DataRequired()])
+    category = SelectField('Categorie', choices=[("", ""), ("Bieren", "Bieren"), ("Mixjes", "Mixjes"), ("Shots", "Shots")])
     pos = SelectField('Positie', validators=[DataRequired()])
     purchaseable = BooleanField('Beschikbaar', default=True)
     recipe = StringField('Recept')
     inventory_warning = IntegerField('Inventaris waarschuwing')
-    alcohol = StringField('Alcoholpercentage', default=0)
+    alcohol = StringField('Alcoholpercentage (in %)', default=0)
     volume = StringField('Hoeveelheid (in milliliters)', default=0)
     unit = StringField('Hoeveelheid (e.g. 1 flesje, 1 shotje, etc)')
     submit1 = SubmitField('Versturen')
 
     def __init__(self, *args, **kwargs):
         super(ChangeDrinkForm, self).__init__(*args, **kwargs)
-        positions = [("0", "Vooraan")]
-        count = 0
+        positions = []
+        count = -1
         for p in Product.query.order_by(Product.order.asc()).all():
             count = count + 1
             suffix = ""
@@ -157,3 +159,13 @@ class PayOutProfitForm(FlaskForm):
         for u in Usergroup.query.all():
             usergroups.append((str(u.id), u.name))
         self.usergroup.choices = usergroups
+
+
+class AddQuoteForm(FlaskForm):
+    quote = TextAreaField('Quote', validators=[DataRequired()])
+    submit_quote = SubmitField('Verstuur')
+
+
+class SlideInterruptForm(FlaskForm):
+    interrupt = TextAreaField('Bericht', validators=[DataRequired()])
+    submit_interrupt = SubmitField('Verstuur')

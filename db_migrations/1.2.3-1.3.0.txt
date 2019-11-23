@@ -1,0 +1,11 @@
+ALTER TABLE product
+ADD category VARCHAR;
+CREATE TABLE setting (
+    key VARCHAR NOT NULL PRIMARY KEY,
+    value VARCHAR
+);
+CREATE TABLE quote (
+    id INTEGER NOT NULL PRIMARY KEY,
+    timestamp DATETIME NOT NULL,
+    value VARCHAR
+);

@@ -2,6 +2,8 @@ import locale
 import logging
 from flask import Flask
 from config import Config
+from flask_socketio import SocketIO
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_bootstrap import Bootstrap
@@ -15,6 +17,11 @@ from datetime import datetime
 locale.setlocale(locale.LC_ALL, 'nld_nld')
 app = Flask(__name__)
 app.config.from_object(Config)
+cors = CORS(app, resources={r"/api/*": {"origins": "*"}, r"/socket.io/*": {"origins": "*"}})
+socketio = SocketIO(app, cors_allowed_origins="*")  # Needs to be changed later for Tikker BigScreen
+
+if not os.path.exists(app.config['ALBUM_COVER_FOLDER']):
+    os.makedirs(app.config['ALBUM_COVER_FOLDER'])
 
 if not os.path.exists(app.config['BACKUP_FOLDER']):
     os.makedirs(app.config['BACKUP_FOLDER'])
@@ -49,7 +56,6 @@ if not app.debug:
 
 def get_date_today():
     str = datetime.now().strftime("%Y-%m-%d")
-    print(str)
     return str
 
 

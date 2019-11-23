@@ -1,6 +1,24 @@
 {% extends "base.html" %}
 {% import 'bootstrap/wtf.html' as wtf %}
 
+{% block scripts %}
+    {{ super() }}
+    <script>
+    window.onload = function() {
+        document.getElementById('pos').value = {{ product.order - 1}};
+        document.getElementById('purchaseable').checked = {% if product.purchaseable %}true{% else %}false{% endif %};
+
+        let category;
+        {% if product.category is none %}
+            category = "";
+        {% else %}
+            category = '{{ product.category }}';
+        {% endif %}
+        document.getElementById('category').value = category;
+    };
+    </script>
+{% endblock %}
+
 {% block app_content %}
     <div class="row">
         <div class="col-md-6">
@@ -11,13 +29,14 @@
 
                 {{ wtf.form_field(form.name, value=product.name) }}
                 {{ wtf.form_field(form.price, value=('%.2f' % product.price)) }}
-                {{ wtf.form_field(form.pos, value=form.pos.choices[product.order + 1]) }}
-                {{ wtf.form_field(form.purchaseable, value=product.purchaseable) }}
+                {{ wtf.form_field(form.category) }}
+                {{ wtf.form_field(form.pos) }}
+                {{ wtf.form_field(form.purchaseable, value='on') }}
                 {% if recipe != "" %}
                 {{ wtf.form_field(form.recipe, value=recipe) }}
                 {% else %}
                 {{ wtf.form_field(form.inventory_warning, value=product.inventory_warning) }}
-                {{ wtf.form_field(form.alcohol, value=product.alcohol) }}
+                {{ wtf.form_field(form.alcohol, value=product.alcohol * 100) }}
                 {{ wtf.form_field(form.volume, value=product.volume) }}
                 {{ wtf.form_field(form.unit, value=product.unit) }}
                 {% endif %}

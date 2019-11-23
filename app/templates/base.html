@@ -1,6 +1,6 @@
 {% extends 'bootstrap/base.html' %}
 
-{% set version = "1.2.3" %}
+{% set version = "1.3.0" %}
 
 {% block title %}
 {% if title %}Tikker - {{ title }}
@@ -35,7 +35,7 @@
 {% endblock %}
 
 {% block content %}
-<body onload="startFunctions()">
+<!--<body onload="startFunctions()">-->
 
 <div id="body">
 
@@ -91,9 +91,24 @@
                     </ul>
                     <hr>
                     <h5>Changelog</h5>
-                    <b>Versie 1.2.4 (11/10/2019)</b>: Kleine toevoegingen
+                    <b>Versie 1.3.0</b>: Tikker Bigscreen en meer...
                     <ul>
+                        <li>Ondersteuning toevoegd voor Tikker BigScreen</li>
+                        <ul>
+                            <li>Actuele statistieken aan de linkerkant</li>
+                            <li>Integratie met Spotify</li>
+                            <li>Notificatie wanneer iets wordt afgetikt</li>
+                            <li>Diavoorstelling met grafieken en getallen, zoals schulden, producten en meest gedronken</li>
+                        </ul>
+                        <li>Speciale pagina toegevoegd voor het Stam opkomstdiner, zodat handmatig inventaris toevoegen niet meer hoeft</li>
+                        <li>Productcategorieën toegevoegd</li>
                         <li>Afsluiten-knop verplaatst van Administratorpaneel naar hoofdmenu. De knop werkt alleen op de host-computer</li>
+                        <li>Opwaarderen-knop verplaats van hoofdmenu naar Administratorpaneel</li>
+                        <li>"Vergoeding inkoop" toegevoegd als beschrijving van een opwaardering</li>
+                        <li>Bug gefixt die soms 'confetti uit' liet zien, terwijl de confetti al uit was</li>
+                        <li>Bug gefixt die de nieuwe positie van een product verkeerd verwerkte</li>
+                        <li>Bug gefixt die de huidige positie van een product altijd op vooraan zette</li>
+                        <li>Bug gefixt die het vakje beschikbaar altijd aanvinkte bij het bewerken van onbeschikbare producten </li>
                     </ul>
                     <b>Versie 1.2.3 (04/10/2019)</b>: Kleine toevoegingen
                     <ul>
@@ -240,13 +255,12 @@
             <div class="list-group list-group-flush" style="font-family: standardtext">
                 <a href="{{ url_for('index') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Home</a>
                 <a href="{{ url_for('balance') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Gebruikersoverzicht</a>
-                <a href="{{ url_for('stats') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Statistieken</a>
-                <a href="{{ url_for('upgrade') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Opwaarderen</a>
+                <a href="{{ url_for('stats_home') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Statistieken</a>
                 <a onclick="toggle_confetti()" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}" style="cursor:pointer; color: #495057;" >Confetti
-                    {% if request.cookies.get('confetti') == 'False' %}
-                    aan
-                    {% else %}
+                    {% if request.cookies.get('confetti') == 'True' %}
                     uit
+                    {% else %}
+                    aan
                     {% endif %}
                 </a>
                 <a onclick="toggle_darkmode()" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}" style="cursor:pointer; color: #495057;" >
@@ -304,11 +318,15 @@
                     <div class="col-auto">
                         <div class="container-fluid">
                             <div class="row server-status">
-                                <span class="status-dot pulsation" id="status-dot" style="background-color: green;"></span><div style="color: green;" id="status-text">  Tikker online</div>
+                                <span class="status-dot pulsation" id="status-dot" style="background-color: green;"></span><div style="color: green;" id="status-text">Tikker online</div>
                             </div>
                             <div class="row">
                                 <div class="col">
-                                    <div id="clock">00:00</div>
+                                    <div id="clock">
+                                        <span id="clock-hour" style="display: inline-block; margin-left: -8px; margin-right: -8px;"></span>
+                                        <span id="clock-middle" style="display: inline-block; width: 8px;"></span>
+                                        <span id="clock-minute" style="display: inline-block; margin-left: -8px; margin-right: -8px;"></span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

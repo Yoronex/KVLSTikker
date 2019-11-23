@@ -78,6 +78,7 @@ class Product(db.Model):
     inventory_warning = db.Column(db.Integer, nullable=True)
     order = db.Column(db.Integer)
     default_quantity = db.Column(db.Integer)
+    category = db.Column(db.String)
 
     def __repr__(self):
         return '<Product {} voor {}>'.format(self.name, self.price)
@@ -147,3 +148,13 @@ class Inventory(db.Model):
             'note': self.note
         }
 
+
+class Setting(db.Model):
+    key = db.Column(db.String, primary_key=True)
+    value = db.Column(db.String)
+
+
+class Quote(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, index=True, nullable=False)
+    value = db.Column(db.String)
