@@ -93,7 +93,7 @@ def init_max_stats():
             if s.key == "max-stats-euros":
                 max_stats[s.key] = float(s.value)
             else:
-                max_stats[s.key] = int(s.value)
+                max_stats[s.key] = int(float(s.value))
 
 
 def reset_daily_stats():

@@ -164,3 +164,8 @@ class PayOutProfitForm(FlaskForm):
 class AddQuoteForm(FlaskForm):
     quote = TextAreaField('Quote', validators=[DataRequired()])
     submit_quote = SubmitField('Verstuur')
+
+
+class SlideInterruptForm(FlaskForm):
+    interrupt = TextAreaField('Bericht', validators=[DataRequired()])
+    submit_interrupt = SubmitField('Verstuur')

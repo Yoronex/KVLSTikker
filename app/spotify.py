@@ -10,7 +10,7 @@ sp = None
 current_user = ""
 SPOTIPY_CLIENT_ID = 'e81cc50c967a4c64a8073d678f7b6503'
 SPOTIPY_CLIENT_SECRET = 'c8d84aec8a6d4197b5eca4991ba7694b'
-SPOTIPY_REDIRECT_URI = 'http://127.0.0.1:5000/spotifylogin'
+SPOTIPY_REDIRECT_URI = 'http://127.0.0.1:5000/api/spotify/login'
 SCOPE = 'user-read-playback-state user-modify-playback-state user-read-currently-playing'
 CACHE = '.spotipyoauthcache'
 sp_oauth = oauth2.SpotifyOAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, scope=SCOPE, cache_path=CACHE)
@@ -48,7 +48,7 @@ def login(request):
         results = sp.current_user()
         current_user = results['display_name']
         flash("Ingelogd op Spotify als {}".format(results['display_name']), "success")
-        return redirect(url_for('index'))
+        return redirect(url_for('bigscreen'))
 
     else:
         return redirect(sp_oauth.get_authorize_url())

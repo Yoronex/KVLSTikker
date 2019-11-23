@@ -2,7 +2,7 @@ from flask import render_template, flash, redirect, url_for, request, abort, jso
 from sqlalchemy import and_
 from app import app, stats, socket, spotify, socketio, dbhandler
 from app.forms import UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm, \
-    ChangeDrinkForm, ChangeDrinkImageForm, AddInventoryForm, PayOutProfitForm
+    ChangeDrinkForm, ChangeDrinkImageForm, AddInventoryForm, PayOutProfitForm, AddQuoteForm, SlideInterruptForm
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory
 from flask_breadcrumbs import register_breadcrumb
 import copy
@@ -908,17 +908,35 @@ def server_status():
 ########################
 
 
-@app.route("/spotifylogin")
+@app.route("/admin/bigscreen", methods=['GET', 'POST'])
+def bigscreen():
+    form_quote = AddQuoteForm()
+    form_interrupt = SlideInterruptForm()
+
+    if form_quote.submit_quote.data and form_quote.validate_on_submit():
+        dbhandler.addquote(form_quote.quote.data)
+
+        return redirect(url_for('bigscreen'))
+    if form_interrupt.submit_interrupt.data and form_interrupt.validate_on_submit():
+        socket.send_interrupt({"name": "Message", "data": form_interrupt.interrupt.data})
+
+        return redirect(url_for('bigscreen'))
+
+    return render_template('admin/bigscreen.html', title="BigScreen Beheer", h1="BigScreen Beheer", form_quote=form_quote,
+                           form_interrupt=form_interrupt, spusername=spotify.current_user), 200
+
+
+@app.route("/api/spotify/login")
 def api_spotify_login():
     return spotify.login(request)
 
 
-@app.route('/spotify/logout')
+@app.route('/api/spotify/logout')
 def api_spotify_logout():
     current_user = spotify.current_user
     spotify.logout()
     flash("Spotify gebruiker {} uitgelogd".format(current_user), "success")
-    return redirect(url_for('index'))
+    return redirect(url_for('bigscreen'))
 
 
 @app.route('/api/spotify/covers/<string:id>')
