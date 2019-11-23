@@ -53,6 +53,7 @@ class UserGroupRegistrationForm(FlaskForm):
 class DrinkForm(FlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
     price = StringField('Prijs', validators=[DataRequired()])
+    category = SelectField('Categorie', choices=[("", ""), ("Bieren", "Bieren"), ("Mixjes", "Mixjes"), ("Shots", "Shots")])
     pos = SelectField('Positie', validators=[DataRequired()])
     image = FileField('Afbeelding (statisch)', validators=[DataRequired()])
     hoverimage = FileField('Afbeelding (hover)')
@@ -85,7 +86,7 @@ class MultiCheckboxField(SelectMultipleField):
 
 class UpgradeBalanceForm(FlaskForm):
     user = SelectField('Naam', validators=[DataRequired()])
-    description = SelectField('Beschrijving', validators=[DataRequired()], choices=[("Opwaardering", "Opwaardering"), ("Vergoeding diner", "Vergoeding diner")])
+    description = SelectField('Beschrijving', validators=[DataRequired()], choices=[("Opwaardering", "Opwaardering"), ("Vergoeding inkoop", "Vergoeding inkoop"), ("Vergoeding diner", "Vergoeding diner")])
     amount = StringField('Bedrag (in Tikker)', validators=[DataRequired()])
     submit = SubmitField('Versturen')
 
@@ -100,6 +101,7 @@ class UpgradeBalanceForm(FlaskForm):
 class ChangeDrinkForm(FlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
     price = StringField('Prijs', validators=[DataRequired()])
+    category = SelectField('Categorie', choices=[("", ""), ("Bieren", "Bieren"), ("Mixjes", "Mixjes"), ("Shots", "Shots")])
     pos = SelectField('Positie', validators=[DataRequired()])
     purchaseable = BooleanField('Beschikbaar', default=True)
     recipe = StringField('Recept')
@@ -157,3 +159,8 @@ class PayOutProfitForm(FlaskForm):
         for u in Usergroup.query.all():
             usergroups.append((str(u.id), u.name))
         self.usergroup.choices = usergroups
+
+
+class AddQuoteForm(FlaskForm):
+    quote = TextAreaField('Quote', validators=[DataRequired()])
+    submit_quote = SubmitField('Verstuur')

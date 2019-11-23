@@ -5,7 +5,6 @@ from app.forms import UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistr
     ChangeDrinkForm, ChangeDrinkImageForm, AddInventoryForm, PayOutProfitForm
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory
 from flask_breadcrumbs import register_breadcrumb
-import pandas as pd
 import copy
 import collections
 from spotipy import oauth2
@@ -30,13 +29,6 @@ def is_filled(data):
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in app.Config["ALLOWED_EXTENSIONS"]
-
-
-def query_to_dataframe(query, columns):
-    nestedDict = {}
-    for q in query:
-        nestedDict[q.id] = q.__dict__
-    return pd.DataFrame.from_dict(nestedDict, orient="index", columns=columns)
 
 
 def make_autopct(values):
@@ -510,7 +502,7 @@ def admin_drinks():
     form = DrinkForm()
     if request.method == "POST":
         if form.validate_on_submit():
-            alert = (dbhandler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), int(form.pos.data) + 1,
+            alert = (dbhandler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), form.category.data, int(form.pos.data) + 1,
                                          form.image.data,
                                          form.hoverimage.data, form.recipe.data, form.inventory_warning.data,
                                          form.alcohol.data, form.volume.data, form.unit.data))
@@ -546,7 +538,7 @@ def admin_drinks_edit(drinkid):
 
     if form.submit1.data and form.validate_on_submit():
         alert = (dbhandler.editdrink_attr(drinkid, form.name.data, float(form.price.data.replace(",", ".")),
-                                           int(form.pos.data) + 1,
+                                           form.category.data, int(form.pos.data) + 1,
                                            form.purchaseable.data, form.recipe.data, form.inventory_warning.data,
                                            form.alcohol.data, form.volume.data, form.unit.data))
         flash(alert[0], alert[1])
@@ -941,7 +933,7 @@ def api_spotify_currently_playing():
 
 @app.route('/api/spotify/me')
 def api_spotify_user():
-    return jsonify(spotify.current_user())
+    return jsonify(spotify.me())
 
 
 @app.route('/api/total_alcohol')

@@ -19,7 +19,6 @@ def test_disconnect():
 
 @socketio.on('init', namespace='/test')
 def init_bigscreen(msg):
-    print(msg)
     slide_name = msg['slide_name']
     slide = get_slide_data(slide_name)
     spotify_data = get_spotify_data()
@@ -39,7 +38,7 @@ def update_spotify_request():
 
 def get_spotify_data():
     if spotify.sp is not None:
-        return {'data': spotify.current_playback(), 'logged in': True}
+        return {'data': spotify.current_playback(), 'logged in': True, "user": spotify.current_user}
     else:
         return {'logged in': False}
 
@@ -71,8 +70,8 @@ def get_slide_data(name):
     elif name == "Quote":
         quotes = Quote.query.all()
         q = quotes[randrange(len(quotes))]
-        emit('slide_data', {"name": name,
-                            "data": q.value})
+        return q.value
+
     elif name == "Debt":
         unames = []
         udebt = []

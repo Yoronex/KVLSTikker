@@ -62,9 +62,9 @@ def init_daily_stats():
 
         if category == "Bieren":
             daily_stats["beers"] += p.amount
-        elif category == "Mix":
+        elif category == "Mixjes":
             daily_stats["mixes"] += p.amount
-        elif category == "Shotjes":
+        elif category == "Shots":
             daily_stats["shots"] += p.amount
 
 
@@ -121,9 +121,9 @@ def update_daily_stats_product(drinkid, amount):
     category = Product.query.get(drinkid).category
     if category == "Bieren":
         update_daily_stats("beers", amount)
-    elif category == "Mix":
+    elif category == "Mixjes":
         update_daily_stats("mixes", amount)
-    elif category == "Shotjes":
+    elif category == "Shots":
         update_daily_stats("shots", amount)
 
 

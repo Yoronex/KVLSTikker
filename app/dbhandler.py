@@ -137,7 +137,7 @@ def parse_recipe(recipe):
     return None
 
 
-def adddrink(name, price, order, image, hoverimage, recipe, inventory_warning, alcohol, volume, unit):
+def adddrink(name, price, category, order, image, hoverimage, recipe, inventory_warning, alcohol, volume, unit):
     result_recipe = parse_recipe(recipe)
     if type(result_recipe) is tuple:
         return result_recipe
@@ -160,14 +160,14 @@ def adddrink(name, price, order, image, hoverimage, recipe, inventory_warning, a
         order = amount_of_prod + 1
 
     if result_recipe is not None:
-        product = Product(name=name, price=price, order=order, purchaseable=True, image="", hoverimage="",
+        product = Product(name=name, price=price, category=category, order=order, purchaseable=True, image="", hoverimage="",
                           recipe_input=result_recipe)
     else:
         if volume is "":
             volume = "0"
         if alcohol is "":
             alcohol = "0"
-        product = Product(name=name, price=price, order=order, purchaseable=True, image="", hoverimage="",
+        product = Product(name=name, price=price, category=category, order=order, purchaseable=True, image="", hoverimage="",
                           inventory_warning=inventory_warning, volume=int(float(volume)), unit=unit,
                           alcohol=float(alcohol.replace(",", ".").replace("%", "").replace(" ", "")) / 100)
     db.session.add(product)
@@ -307,7 +307,7 @@ def delusergroup(usergroup_id):
     return "Groep {} verwijderd".format(usergroup.name), "success"
 
 
-def editdrink_attr(product_id, name, price, order, purchaseable, recipe, inventory_warning, alcohol, volume, unit):
+def editdrink_attr(product_id, name, price, category, order, purchaseable, recipe, inventory_warning, alcohol, volume, unit):
     result_recipe = parse_recipe(recipe)
     if type(result_recipe) is tuple:
         return result_recipe
@@ -324,6 +324,7 @@ def editdrink_attr(product_id, name, price, order, purchaseable, recipe, invento
 
     product.name = name
     product.price = price
+    product.category = category
     if order > Product.query.count():
         order = Product.query.count()
     if order < product.order:

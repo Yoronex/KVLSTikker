@@ -54,6 +54,10 @@ def login(request):
         return redirect(sp_oauth.get_authorize_url())
 
 
+def me():
+    return sp.current_user()
+
+
 def renew():
     global sp
 
@@ -96,7 +100,7 @@ def current_playback():
         return results
 
     if results['item']['album']['id'] + ".jpg" not in os.listdir(app.config['ALBUM_COVER_FOLDER']):
-        wget.download(results['item']['album']['images'][0]["url"],
+        wget.download(results['item']['album']['images'][1]["url"],
                       app.config['ALBUM_COVER_FOLDER'] + "/" + results['item']['album']['id'] + ".jpg")
 
     return results
