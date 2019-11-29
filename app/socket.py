@@ -3,9 +3,14 @@ from flask_socketio import emit
 from datetime import datetime
 from sqlalchemy import and_
 from random import randrange
-from app.models import Product, Quote, User
+from app.models import Product, Quote, User, Purchase
 
 import copy
+
+most_drank = 0
+second_most_drank = 0
+third_most_drank = 0
+
 
 @socketio.on('connect', namespace='/test')
 def test_connect():
@@ -52,15 +57,33 @@ def update_slide_data(msg):
 
 
 def get_slide_data(name):
+    global third_most_drank, second_most_drank, most_drank
+
     if name == "DrankTonight":
         data = stats.most_bought_products_by_users_today(datetime.now())
+        if len(data[0]) >= 3:
+            third_most_drank = data[0][2]
+        if len(data[0]) >= 2:
+            second_most_drank = data[0][1]
+        if len(data[0]) >= 1:
+            most_drank = data[0][0]
+
         return {'labels': data[2],
                 'values': data[1]}
+
+    if name == "MostDrank1":
+        return most_drank_data(most_drank)
+
+    if name == "MostDrank2":
+        return most_drank_data(second_most_drank)
+
+    if name == "MostDrank3":
+        return most_drank_data(third_most_drank)
 
     elif name == "PriceList":
         pnames = []
         prices = []
-        products = Product.query.filter(and_(Product.purchaseable == True)).order_by(Product.order.asc()).all()
+        products = Product.query.filter(and_(Product.purchaseable == True, Product.id != dbhandler.settings['dinner_product_id'])).order_by(Product.order.asc()).all()
         for p in products:
             pnames.append(p.name)
             prices.append("€ {}".format(('%.2f' % p.price).replace('.', ',')))
@@ -82,7 +105,61 @@ def get_slide_data(name):
         return {'names': unames,
                 'amount': udebt}
 
-    return {}
+    elif name == "Title":
+        if dbhandler.settings['beer_product_id'] is not None and dbhandler.settings['flugel_product_id'] is not None:
+            enddate = datetime.now()
+            begindate = stats.get_yesterday_for_today(enddate)
+
+            idsb, valuesb, namesb = stats.most_bought_of_one_product_by_users(dbhandler.settings['beer_product_id'], begindate, enddate)
+            idsf, valuesf, namesf = stats.most_bought_of_one_product_by_users(dbhandler.settings['flugel_product_id'], begindate, enddate)
+
+            if len(namesb) > 0:
+                most_beers = namesb[0]
+                for i in range(1, len(namesb)):
+                    if valuesb[i - 1] == valuesb[i]:
+                        most_beers += ", " + namesb[i]
+                    else:
+                        break
+            else:
+                most_beers = "Niemand :("
+
+            if len(namesf) > 0:
+                most_flugel = namesf[0]
+                for i in range(1, len(namesf)):
+                    if valuesf[i - 1] == valuesf[i]:
+                        most_flugel += ", " + namesf[i]
+                    else:
+                        break
+            else:
+                most_flugel = "Niemand :("
+
+                return {'beer': most_beers,
+                        'flugel': most_flugel}
+    elif name == "RecentlyPlayed":
+        history = []
+
+        now = datetime.now()
+        for i in range(1, len(spotify.history)):
+            timediff = now - spotify.history[i]['end-time']
+            history.append({"timestamp": "- {0:0=2d}:{0:0=2d}".format(int(timediff.seconds / 3600), int(timediff.seconds / 60)),
+                            "title": spotify.history[i]['title'],
+                            "artist": spotify.history[i]['artist']})
+
+        return history
+
+    return
+
+
+def most_drank_data(drinkid):
+    if drinkid > 0:
+        data = stats.most_bought_of_one_product_by_users_today(drinkid, datetime.now())
+        return {'labels': data[2],
+                'values': data[1],
+                'product_name': Product.query.get(drinkid).name}
+    else:
+        return {'labels': [],
+                'values': [],
+                'product_name': ""}
 
 
 def update_stats():
