@@ -42,6 +42,10 @@
     text-shadow: -1px 0 white, 0 1px white, 1px 0 white, 0 -1px white;
 }
 
+.second-table-column {
+    background-color: lightgrey;
+}
+
 body {
     background-color: #F1F3FA !important
 }
