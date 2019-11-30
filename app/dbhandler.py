@@ -12,7 +12,9 @@ settings = {}
 
 def initialize_settings():
     global settings
-    default_settings = {'dinner_product_id': None}
+    default_settings = {'dinner_product_id': -1,
+                        'beer_product_id': -1,
+                        'flugel_product_id': -1}
     sses = Setting.query.all()
     settings_keys = []
     for s in sses:

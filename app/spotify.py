@@ -3,17 +3,22 @@ from spotipy import Spotify, oauth2, SpotifyException
 from flask import render_template, redirect, url_for, flash
 import os
 import wget
+from datetime import datetime
 
 
 spotify_token = None
 sp = None
 current_user = ""
+currently_playing_id = ""
 SPOTIPY_CLIENT_ID = 'e81cc50c967a4c64a8073d678f7b6503'
 SPOTIPY_CLIENT_SECRET = 'c8d84aec8a6d4197b5eca4991ba7694b'
 SPOTIPY_REDIRECT_URI = 'http://127.0.0.1:5000/api/spotify/login'
 SCOPE = 'user-read-playback-state user-modify-playback-state user-read-currently-playing'
 CACHE = '.spotipyoauthcache'
 sp_oauth = oauth2.SpotifyOAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, scope=SCOPE, cache_path=CACHE)
+
+
+history = []
 
 
 def logout():
@@ -64,17 +69,19 @@ def renew():
     token_info = sp_oauth.get_cached_token()
 
     if token_info:
-        # print("Found cached token!")
+        # Retieve token from memory
         access_token = token_info['access_token']
+        # Log in again at Spotify
         sp = Spotify(access_token)
         return True
     else:
+        # Logout if this is not possible
         logout()
         return False
 
 
 def current_playback():
-    global sp, current_user
+    global sp, current_user, currently_playing_id, history
 
     if sp is None:
         return None
@@ -83,6 +90,7 @@ def current_playback():
     try:
         results = sp.current_playback()
     except SpotifyException:
+        # Spotify has probably logged out, so we need to log in again
         print("SpotifyException caught!")
         if renew() is False:
             print("Had to log out :(")
@@ -90,17 +98,41 @@ def current_playback():
         else:
             print("Successfully relogged!")
 
-    try:
-        results = sp.current_playback()
-    except SpotifyException:
-        logout()
-        return
+        # Retry getting information from Spotify
+        try:
+            results = sp.current_playback()
+        except SpotifyException:
+            logout()
+            return
 
     if results is None:
         return results
 
+    # If the album cover has not been downloaded yet, download it
     if results['item']['album']['id'] + ".jpg" not in os.listdir(app.config['ALBUM_COVER_FOLDER']):
         wget.download(results['item']['album']['images'][1]["url"],
                       app.config['ALBUM_COVER_FOLDER'] + "/" + results['item']['album']['id'] + ".jpg")
+
+    # If the currently playing track is not equal to the track we are playing now and if we are a quarter on the
+    # track...
+    if results['item']['id'] != currently_playing_id and (results['progress_ms'] / results['item']['duration_ms'] > 0.25):
+        # Change the currently playing track
+        currently_playing_id = results['item']['id']
+        # Get all the artist from the track
+        artist = ""
+        for a in results['item']['artists']:
+            artist += a['name']
+            artist += ', '
+        artist = artist[:-2]
+        # Add this track to the history
+        history.insert(0, {'title': results['item']['name'],
+                           'artist': artist,
+                           'end-time': datetime.now()})
+        # If we now have more than 8 tracks in history, remove the last one so we have at most 10 tracks.
+        if len(history) > 8:
+            del history[-1]
+    # If the track equals the current track, then change the end time of the track (because we are still playing it)
+    elif results['item']['id'] == currently_playing_id:
+        history[0]['end-time'] = datetime.now()
 
     return results

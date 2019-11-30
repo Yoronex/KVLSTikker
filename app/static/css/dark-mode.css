@@ -46,6 +46,10 @@
     color: white !important;
 }
 
+.second-table-column {
+    background-color: #343a40;
+}
+
 body {
     color: #ffffff;
     background-color: #212121 !important;

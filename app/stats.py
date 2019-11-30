@@ -3,6 +3,7 @@ from app import app, db
 from app.forms import LoginForm, UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm, \
     ChangeDrinkForm, ChangeDrinkImageForm, AddInventoryForm, PayOutProfitForm
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory, Setting
+from app.dbhandler import settings
 from datetime import datetime, timedelta
 
 
@@ -44,16 +45,16 @@ def init_daily_stats():
     enddate = datetime.now()
     begindate = get_yesterday_for_today(enddate)
 
-    daily_stats["products"] = Product.query.filter(Product.purchaseable == True).count()
+    daily_stats["products"] = Product.query.filter(Product.purchaseable == True, Product.id != settings['dinner_product_id']).count()
     daily_stats["users"] = User.query.count()
-    drinkers = Purchase.query.filter(Purchase.timestamp > begindate).group_by(Purchase.user_id).all()
+    drinkers = Purchase.query.filter(Purchase.timestamp > begindate, Purchase.product_id != settings['dinner_product_id']).group_by(Purchase.user_id).all()
     for d in drinkers:
         daily_stats_seen_users.append(d.user_id)
     daily_stats["drinkers"] = len(drinkers)
-    daily_stats["rounds"] = Purchase.query.filter(Purchase.timestamp > begindate, Purchase.round == True).count()
-    daily_stats["purchases"] = Purchase.query.filter(Purchase.timestamp > begindate).count()
+    daily_stats["rounds"] = Purchase.query.filter(Purchase.timestamp > begindate, Purchase.round == True, Purchase.product_id != settings['dinner_product_id']).count()
+    daily_stats["purchases"] = Purchase.query.filter(Purchase.timestamp > begindate, Purchase.product_id != settings['dinner_product_id']).count()
 
-    purchases = Purchase.query.filter(Purchase.timestamp > begindate).all()
+    purchases = Purchase.query.filter(Purchase.timestamp > begindate, Purchase.product_id != settings['dinner_product_id']).all()
     products = {}
     for p in purchases:
         if p.product_id not in products.keys():
@@ -66,7 +67,6 @@ def init_daily_stats():
             daily_stats["mixes"] += p.amount
         elif category == "Shots":
             daily_stats["shots"] += p.amount
-
 
     for u in Upgrade.query.all():
         daily_stats["euros"] += u.amount
@@ -209,7 +209,7 @@ def balance_over_time_user(userid, parsedbegin, parsedend):
 def most_bought_products_per_user(userid, parsedbegin, parsedend):
     count = {}
 
-    purchases = Purchase.query.filter(and_(Purchase.user_id == userid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend, Purchase.round == False)).all()
+    purchases = Purchase.query.filter(and_(Purchase.user_id == userid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend, Purchase.round == False, Purchase.product_id != settings['dinner_product_id'])).all()
 
     for p in purchases:
         if p.product_id not in count:
@@ -325,7 +325,7 @@ def most_bought_of_one_product_by_users_from_group(drinkid, groupid, parsedbegin
 
 def most_bought_products_by_users(parsedbegin, parsedend):
     count = {}
-    purchases = Purchase.query.filter(and_(Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend)).all()
+    purchases = Purchase.query.filter(and_(Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend, Purchase.product_id != settings['dinner_product_id'])).all()
     for pur in purchases:
         if pur.product_id not in count:
             count[pur.product_id] = pur.amount
@@ -347,7 +347,7 @@ def most_bought_products_by_users_today(parsedend):
 def most_alcohol_drank_by_users(parsedbegin, parsedend):
     count = {}
     purchases = Purchase.query.filter(and_(Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend,
-                                           Purchase.round == False)).all()
+                                           Purchase.round == False, Purchase.product_id != settings['dinner_product_id'])).all()
 
     for pur in purchases:
         alcohol = Product.query.get(pur.product_id).alcohol
