@@ -968,6 +968,18 @@ def api_total_alcohol():
                     "labels": labels})
 
 
+@app.route('/api/bigscreen/snow')
+def api_disable_snow():
+    socket.disable_snow()
+    return redirect(url_for('bigscreen'))
+
+
+@app.route('/api/bigscreen/reload')
+def api_reload_bigscreen():
+    socket.send_reload()
+    return redirect(url_for('bigscreen'))
+
+
 @app.route('/testaddquotes')
 def test_add_quotes():
     quotes = ['Roy: Kathelijn belde, er wordt te laf gezopen!',

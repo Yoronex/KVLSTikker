@@ -58,6 +58,16 @@ function toggle_darkmode() {
     location.reload()
 }
 
+function toggle_snow() {
+    let cookie = getCookie('snow');
+    if(cookie === "False") {
+        setCookie('snow', 'True', 1);
+    } else {
+        setCookie('snow', 'False', 1);
+    }
+    location.reload();
+}
+
 function getCookie(cname) {
     var name = cname + "=";
     var decodedCookie = decodeURIComponent(document.cookie);
