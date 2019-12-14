@@ -206,12 +206,14 @@ def drink(drinkid):
     elif int(dinnerid) == drinkid:
         return redirect(url_for('drink_dinner'))
 
+    borrel_data = dbhandler.borrel_mode(drinkid)
+
     drink = Product.query.get(drinkid)
     usergroups = get_usergroups_with_users()
     statsdict = dbhandler.get_product_stats(drinkid)
     return render_template('drink.html', title=drink.name,
                            h1="{} aftikken (€ {})".format(drink.name, ('%.2f' % drink.price).replace('.', ',')),
-                           drink=drink,
+                           drink=drink, borrel_data=borrel_data,
                            usergroups=usergroups, Product=Product,
                            shared=False, stats=statsdict, User=User), 200
 
@@ -255,17 +257,19 @@ def purchase_dinner_from_cart(cart):
     return redirect(url_for('purchase_from_cart_together', drinkid=drinkid, amount=amount, cart=cart))
 
 
-@app.route('/drink/<int:drinkid>/<int:userid>')
-def purchase(drinkid, userid):
-    quantity = 1
-    alert = (dbhandler.addpurchase(drinkid, userid, quantity))
-    flash("{}x {} voor {} verwerkt".format(alert[0], alert[1], alert[2]), alert[3])
-    return redirect(url_for('index'))
+#@app.route('/drink/<int:drinkid>/<int:userid>')
+#def purchase(drinkid, userid):
+#    product = Product.query.get(drinkid)
+#    quantity = 1
+#    alert = (dbhandler.addpurchase(drinkid, userid, quantity))
+#    flash("{}x {} voor {} verwerkt".format(alert[0], alert[1], alert[2]), alert[3])
+#    return redirect(url_for('index'))
 
 
 # Input in format of <userid>a<amount>&...
 @app.route('/drink/<int:drink_id>/<string:cart>')
 def purchase_from_cart(drink_id, cart):
+    product = Product.query.get(drink_id)
     # final_alert = {}
     shared = False
     split = cart.split('&')
@@ -276,6 +280,7 @@ def purchase_from_cart(drink_id, cart):
     else:
         r = True
 
+    total_bought = 0
     success_messages = {}
     for order in split[1:len(split)]:
         data = order.split('a')
@@ -283,25 +288,16 @@ def purchase_from_cart(drink_id, cart):
             shared = True
             amount = data[1]
         else:
-            alert = (dbhandler.addpurchase(drink_id, int(data[0]), int(data[1]), r))
+            total_bought += int(data[1])
+            if dbhandler.borrel_mode_enabled and drink_id in dbhandler.borrel_mode_drinks:
+                dbhandler.addpurchase(drink_id, int(data[0]), int(data[1]), r, 0)
+            else:
+                alert = (dbhandler.addpurchase(drink_id, int(data[0]), int(data[1]), r, product.price))
+                success_messages = process_alert_from_adddrink(alert, success_messages)
 
-            if alert[3] == "success":
-                q = alert[0]
-                if math.floor(q) == q:
-                    q = math.floor(q)
-                key = "{}x {} voor".format(q, alert[1])
-                if key not in success_messages:
-                    success_messages[key] = alert[2]
-                else:
-                    success_messages[key] = success_messages[key] + ", {}".format(alert[2])
-            # else:
-            #     if alert[3] not in final_alert:
-            #         final_alert[alert[3]] =
-            #     else:
-            #         final_alert[alert[3]] = final_alert[alert[1]] + ", \n " + alert[0]
-
-    #for key, value in final_alert.items():
-    #    flash(value, key)
+    if dbhandler.borrel_mode_enabled and drink_id in dbhandler.borrel_mode_drinks:
+        alert = (dbhandler.addpurchase(drink_id, int(dbhandler.settings['borrel_mode_user']), total_bought, True, product.price))
+        success_messages = process_alert_from_adddrink(alert, success_messages)
 
     final_flash = ""
     for front, end in success_messages.items():
@@ -318,14 +314,28 @@ def purchase_from_cart(drink_id, cart):
         return redirect(url_for('purchase_together', drinkid=drink_id, amount=amount))
 
 
+def process_alert_from_adddrink(alert, success_messages):
+    if alert[3] == "success":
+        q = alert[0]
+        if math.floor(q) == q:
+            q = math.floor(q)
+        key = "{}x {} voor".format(q, alert[1])
+        if key not in success_messages:
+            success_messages[key] = alert[2]
+        else:
+            success_messages[key] = success_messages[key] + ", {}".format(alert[2])
+    return success_messages
+
+
 @register_breadcrumb(app, '.drink.id.shared', 'Gezamelijk', order=3)
 @app.route('/drink/<int:drinkid>/shared/<int:amount>')
 def purchase_together(drinkid, amount):
     drink = copy.deepcopy(Product.query.get(drinkid))
     usergroups = get_usergroups_with_users()
+    borrel_data = dbhandler.borrel_mode(drinkid)
     drink.price = drink.price * amount
     statsdict = dbhandler.get_product_stats(drinkid)
-    return render_template('drink.html', title=drink.name,
+    return render_template('drink.html', title=drink.name, borrel_data=borrel_data,
                            h1="Gezamenlijk " + str(amount) + " " + drink.name + " afrekenen", drink=drink,
                            usergroups=usergroups, Product=Product,
                            shared=True, stats=statsdict, User=User), 200
@@ -334,6 +344,7 @@ def purchase_together(drinkid, amount):
 # Input in format of <userid>a<amount>&
 @app.route('/drink/<int:drinkid>/shared/<int:amount>/<string:cart>')
 def purchase_from_cart_together(drinkid, amount, cart):
+    product = Product.query.get(drinkid)
     final_alert = {}
     success_messages = {}
     denominator = 0
@@ -350,20 +361,16 @@ def purchase_from_cart_together(drinkid, amount, cart):
 
     for order in split[1:len(split)]:
         data = order.split('a')
-        alert = dbhandler.addpurchase(drinkid, int(data[0]), float(int(data[1])) * amount / denominator, r)
 
-        if alert[3] == "success":
-            q = alert[0]
-            if math.floor(q) == q:
-                q = math.floor(q)
-            key = "{}x {} voor".format(q, alert[1])
-            if key not in success_messages:
-                success_messages[key] = alert[2]
-            else:
-                success_messages[key] = success_messages[key] + ", {}".format(alert[2])
+        if dbhandler.borrel_mode_enabled and drinkid in dbhandler.borrel_mode_drinks:
+            dbhandler.addpurchase(drinkid, int(data[0]), float(int(data[1])) * amount / denominator, r, 0)
+        else:
+            alert = dbhandler.addpurchase(drinkid, int(data[0]), float(int(data[1])) * amount / denominator, r, product.price)
+            success_messages = process_alert_from_adddrink(alert, success_messages)
 
-    # for key, value in final_alert.items():
-    #     flash(value, key)
+    if dbhandler.borrel_mode_enabled and drinkid in dbhandler.borrel_mode_drinks:
+        alert = (dbhandler.addpurchase(drinkid, int(dbhandler.settings['borrel_mode_user']), amount, True, product.price))
+        success_messages = process_alert_from_adddrink(alert, success_messages)
 
     final_flash = ""
     for front, end in success_messages.items():
@@ -398,7 +405,7 @@ def admin():
     transactions = {}
     t_list = []
     upgrades = Upgrade.query.all()
-    purchases = Purchase.query.all()
+    purchases = Purchase.query.filter(Purchase.price > 0).all()
     transactions['upgrades'] = len(upgrades)
     transactions['purchases'] = len(purchases)
     transactions['total'] = len(upgrades) + len(purchases)
@@ -675,7 +682,8 @@ def recalculate_max_stats():
             if p.round:
                 stats.update_daily_stats("rounds", 1)
             stats.update_daily_stats_drinker(p.user_id)
-            stats.update_daily_stats_product(p.product_id, p.amount)
+            if p.price > 0:
+                stats.update_daily_stats_product(p.product_id, p.amount)
             stats.update_daily_stats("purchases", 1)
     stats.update_daily_stats("products", Product.query.filter(Product.purchaseable == True).count())
     stats.update_daily_stats("users", User.query.count())

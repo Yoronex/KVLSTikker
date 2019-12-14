@@ -4,25 +4,32 @@ from werkzeug.utils import secure_filename
 from datetime import datetime
 from random import randrange
 import os
+import json
 from sqlalchemy import and_
 
 
 settings = {}
+borrel_mode_enabled = False
+borrel_mode_drinks = []
 
 
 def initialize_settings():
     global settings
     default_settings = {'dinner_product_id': -1,
                         'beer_product_id': -1,
-                        'flugel_product_id': -1}
+                        'flugel_product_id': -1,
+                        'borrel_mode_user': -1,
+                        'borrel_mode_drinks': [],
+                        'borrel_mode_amount': 0,
+                        'borrel_mode_start_amount': 0}
     sses = Setting.query.all()
     settings_keys = []
     for s in sses:
         settings_keys.append(s.key)
 
-    for k in default_settings.keys():
+    for k, v in default_settings.items():
         if k not in settings_keys:
-            s = Setting(key=k)
+            s = Setting(key=k, value=v)
             db.session.add(s)
             db.session.commit()
 
@@ -31,6 +38,39 @@ def initialize_settings():
 
 
 initialize_settings()
+
+
+def update_settings(key, value):
+    settings[key] = value
+    s = Setting.query.get(key)
+    s.value = value
+    db.session.commit()
+
+
+def borrel_mode(drinkid):
+    global borrel_mode_enabled, borrel_mode_drinks
+
+    borrel_mode_user = int(settings['borrel_mode_user'])
+    if borrel_mode_user != -1:
+        products = json.loads(settings['borrel_mode_drinks'])
+        borrel_mode_drinks = products
+        if drinkid in products:
+            total_bought = 0
+            for p1 in products:
+                for p in Purchase.query.filter(Purchase.user_id == borrel_mode_user, Purchase.product_id == p1, Purchase.price > 0).all():
+                    total_bought += p.amount
+
+            left_over = int(settings['borrel_mode_amount']) + int(settings['borrel_mode_start_amount']) - total_bought
+            if left_over <= 0:
+                update_settings('borrel_mode_user', -1)
+                borrel_mode_enabled = False
+                return None
+
+            borrel_mode_enabled = True
+            return {'left': left_over,
+                    'user': User.query.get(borrel_mode_user).name}
+
+    return None
 
 
 def remove_existing_file(filename):
@@ -46,29 +86,45 @@ def create_filename(product, old_filename, image, character):
     return filename
 
 
-def addpurchase(drink_id, user_id, quantity, rondje):
+def addpurchase(drink_id, user_id, quantity, rondje, price_per_one):
+    # Round quantity to at most two decimals
     if type(quantity) is float:
         quantity = float(round(quantity * 100)) / 100
+    # Get drink and user objects from database
     drink = Product.query.get(drink_id)
     user = User.query.get(user_id)
 
-    if drink.recipe_input is None:
-        inventory = take_from_inventory(user, drink_id, quantity)
+    # If the price is zero, we do not have to take any inventory
+    if price_per_one > 0:
+        # If we product is not a mix, we can simply take it from inventory
+        if drink.recipe_input is None:
+            inventory = take_from_inventory(user, drink_id, quantity)
+        # However, if the product is a mix...
+        else:
+            inventory = {'costs': 0, 'inventory_usage': []}
+            # For every ingredient of the mix...
+            for r in Recipe.query.filter(Recipe.product_id == drink.id).all():
+                # Take the respective quantity from inventory
+                result = take_from_inventory(user, r.ingredient_id, r.quantity * quantity)
+                # Add the costs of the ingredient to the total costs
+                inventory['costs'] = inventory['costs'] + result['costs']
+                # Add the inventory usage
+                inventory['inventory_usage'] = inventory['inventory_usage'] + result['inventory_usage']
     else:
+        # We take no inventory if the price is zero, so the costs are zero
         inventory = {'costs': 0, 'inventory_usage': []}
-        # added_price = 0
-        # for key, val in drink.recipe_input.items():
-        for r in Recipe.query.filter(Recipe.product_id == drink.id).all():
-            result = take_from_inventory(user, r.ingredient_id, r.quantity * quantity)
-            inventory['costs'] = inventory['costs'] + result['costs']
-            inventory['inventory_usage'] = inventory['inventory_usage'] + result['inventory_usage']
+
+    # Get the profitgroup of the user
     profitgroup = Usergroup.query.get(user.profitgroup_id)
-    profit = drink.price * quantity - inventory['costs']
+    # Calculate the profit
+    profit = price_per_one * quantity - inventory['costs']
+    # Add the profit to the group
     profitgroup.profit = profitgroup.profit + profit
+    # Save to database
     db.session.commit()
 
-    user.balance = user.balance - float(drink.price) * quantity
-    purchase = Purchase(user_id=user.id, timestamp=datetime.now(), product_id=drink.id, price=drink.price,
+    user.balance = user.balance - float(price_per_one) * quantity
+    purchase = Purchase(user_id=user.id, timestamp=datetime.now(), product_id=drink.id, price=price_per_one,
                         amount=quantity, round=rondje)
     db.session.add(purchase)
     db.session.commit()
@@ -79,7 +135,7 @@ def addpurchase(drink_id, user_id, quantity, rondje):
         db.session.commit()
         i_u = None
 
-    balchange = -drink.price * quantity
+    balchange = -price_per_one * quantity
     transaction = Transaction(user_id=user.id, timestamp=datetime.now(), purchase_id=purchase.id,
                               balchange=balchange, newbal=user.balance)
     db.session.add(transaction)
@@ -87,7 +143,8 @@ def addpurchase(drink_id, user_id, quantity, rondje):
 
     stats.update_daily_stats_product(drink_id, quantity)
     stats.update_daily_stats('euros', balchange)
-    stats.update_daily_stats('purchases', 1)
+    if price_per_one > 0:
+        stats.update_daily_stats('purchases', 1)
     if rondje:
         stats.update_daily_stats('rounds', 1)
 
@@ -439,7 +496,7 @@ def get_product_stats(product_id):
                 {"product": p.name, "quantity": get_inventory(p.id), "inventory_warning": p.inventory_warning})
             result['volume'] = result['volume'] + p.volume / 1000
 
-    purchases = Purchase.query.filter(Purchase.product_id == product_id).all()
+    purchases = Purchase.query.filter(Purchase.product_id == product_id, Purchase.price > 0).all()
     users = {u.id: [0, 0] for u in User.query.all()}
     result['total_bought'] = 0
     for pur in purchases:

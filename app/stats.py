@@ -52,9 +52,9 @@ def init_daily_stats():
         daily_stats_seen_users.append(d.user_id)
     daily_stats["drinkers"] = len(drinkers)
     daily_stats["rounds"] = Purchase.query.filter(Purchase.timestamp > begindate, Purchase.round == True, Purchase.product_id != settings['dinner_product_id']).count()
-    daily_stats["purchases"] = Purchase.query.filter(Purchase.timestamp > begindate, Purchase.product_id != settings['dinner_product_id']).count()
+    daily_stats["purchases"] = Purchase.query.filter(Purchase.timestamp > begindate, Purchase.product_id != settings['dinner_product_id'], Purchase.price > 0).count()
 
-    purchases = Purchase.query.filter(Purchase.timestamp > begindate, Purchase.product_id != settings['dinner_product_id']).all()
+    purchases = Purchase.query.filter(Purchase.timestamp > begindate, Purchase.product_id != settings['dinner_product_id'], Purchase.price > 0).all()
     products = {}
     for p in purchases:
         if p.product_id not in products.keys():
