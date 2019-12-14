@@ -3,12 +3,12 @@
 
 {% block app_content %}
     <div class="row">
-        <div class="col-xl-3">
+        <!--<div class="col-xl-3">
             <a href="{{ url_for('api_spotify_login') }}" class="btn btn-block btn-green">Spotify login</a>
         </div>
         <div class="col-xl-3">
             <a href="{{ url_for('api_spotify_logout') }}" class="btn btn-block btn-yellow">Spotify logout</a>
-        </div>
+        </div>-->
         <div class="col-xl-3">
             <a href="{{ url_for('api_disable_snow') }}" class="btn btn-block btn-green">Sneeuw uit</a>
         </div>
@@ -55,17 +55,14 @@
                 <tr>
                     <td style="text-align: right">Ingelogd:</td>
                     <td style="text-align: left">{{ spusername }}</td>
-                </tr>
-                {% else %}
                 <tr>
-                    <td style="text-align: right">Ingelogd:</td>
-                    <td style="text-align: left">Niemand :(</td>
-                </tr>
-                <tr>
-                    <td colspan="2" style="text-align: center"><i>Als je automatisch wordt ingelogd als iemand anders, probeer dan met de rechtermuisknop de knop "Spotify Login" te openen in een incognitotablad of privétablad!</i></td>
+                    <td colspan="2"><a style="font-size:1rem" href="{{ url_for('api_spotify_logout') }}" class="btn btn-green">Log uit</a></td>
                 </tr>
                 {% endif %}
             </table>
+            {% if spusername == "" %}
+            {{ wtf.quick_form(form_spotify) }}
+            {% endif %}
         </div>
         <div class="col-xl img-thumbnail">
             <h5 style="text-align: center; font-weight: bold">Citaat toevoegen</h5>

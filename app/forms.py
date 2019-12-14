@@ -1,10 +1,12 @@
+import os
+
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SubmitField, SelectField, SelectMultipleField, widgets, IntegerField, DecimalField, BooleanField, FileField, TextAreaField, PasswordField
 from wtforms.fields.html5 import DateField
 from wtforms.validators import ValidationError, DataRequired, EqualTo, Email
 from app.models import User, Usergroup, Product
 from sqlalchemy import and_
-from app import db
+from app import db, app
 
 
 # users = []
@@ -169,3 +171,16 @@ class AddQuoteForm(FlaskForm):
 class SlideInterruptForm(FlaskForm):
     interrupt = TextAreaField('Bericht', validators=[DataRequired()])
     submit_interrupt = SubmitField('Verstuur')
+
+
+class ChooseSpotifyUser(FlaskForm):
+    spotify_user = SelectField('Account')
+    spotify_user_name = StringField('Naam voor nieuwe gebruiker')
+    spotify_submit = SubmitField('Log in')
+
+    def __init__(self, *args, **kwargs):
+        super(ChooseSpotifyUser, self).__init__(*args, **kwargs)
+        names = [("0", "Nieuw account toevoegen")]
+        for n in os.listdir(app.config['SPOTIFY_CACHE_FOLDER']):
+            names.append((n[19:], n[19:]))
+        self.spotify_user.choices = names
