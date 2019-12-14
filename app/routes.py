@@ -2,7 +2,7 @@ from flask import render_template, flash, redirect, url_for, request, abort, jso
 from sqlalchemy import and_
 from app import app, stats, socket, spotify, socketio, dbhandler
 from app.forms import UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm, \
-    ChangeDrinkForm, ChangeDrinkImageForm, AddInventoryForm, PayOutProfitForm, AddQuoteForm, SlideInterruptForm
+    ChangeDrinkForm, ChangeDrinkImageForm, AddInventoryForm, PayOutProfitForm, AddQuoteForm, SlideInterruptForm, ChooseSpotifyUser
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory
 from flask_breadcrumbs import register_breadcrumb
 import copy
@@ -920,6 +920,7 @@ def server_status():
 def bigscreen():
     form_quote = AddQuoteForm()
     form_interrupt = SlideInterruptForm()
+    form_spotify = ChooseSpotifyUser()
 
     if form_quote.submit_quote.data and form_quote.validate_on_submit():
         dbhandler.addquote(form_quote.quote.data)
@@ -930,8 +931,16 @@ def bigscreen():
 
         return redirect(url_for('bigscreen'))
 
+    if form_spotify.spotify_submit.data and form_spotify.validate_on_submit():
+        if form_spotify.spotify_user.data != '0':
+            spotify.set_cache(os.path.join(app.config['SPOTIFY_CACHE_FOLDER'], '.spotifyoauthcache-' + form_spotify.spotify_user.data))
+            return redirect(url_for('api_spotify_login'))
+        elif form_spotify.spotify_user.data == "0" and form_spotify.spotify_user_name.data != "":
+            spotify.set_cache(os.path.join(app.config['SPOTIFY_CACHE_FOLDER'], '.spotifyoauthcache-' + form_spotify.spotify_user_name.data))
+            return redirect(url_for('api_spotify_login'))
+
     return render_template('admin/bigscreen.html', title="BigScreen Beheer", h1="BigScreen Beheer", form_quote=form_quote,
-                           form_interrupt=form_interrupt, spusername=spotify.current_user), 200
+                           form_interrupt=form_interrupt, form_spotify=form_spotify, spusername=spotify.current_user), 200
 
 
 @app.route("/api/spotify/login")
@@ -974,6 +983,18 @@ def api_total_alcohol():
     return jsonify({"ids": ids,
                     "values": values,
                     "labels": labels})
+
+
+@app.route('/api/bigscreen/snow')
+def api_disable_snow():
+    socket.disable_snow()
+    return redirect(url_for('bigscreen'))
+
+
+@app.route('/api/bigscreen/reload')
+def api_reload_bigscreen():
+    socket.send_reload()
+    return redirect(url_for('bigscreen'))
 
 
 @app.route('/testaddquotes')

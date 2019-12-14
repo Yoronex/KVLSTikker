@@ -32,6 +32,9 @@
         $("#wrapper").toggleClass("toggled");
     });
 </script>
+{% if request.cookies.get('snow') != 'False' %}
+<script type="text/javascript" src="{{ url_for('.static', filename='js/snowstorm.js') }}"></script>
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -87,10 +90,16 @@
                     <hr>
                     <h5>Bekende bugs</h5>
                     <ul>
-                        <li><i>Totaal gedronken</i> bij een drank aftikken telt geen rondjes mee</li>
+                        <li>Wanneer je inlogt met Spotify, log je automatisch in als de eerste persoon die dit deed in de huidige installatie van Tikker</li>
                     </ul>
                     <hr>
                     <h5>Changelog</h5>
+                    <b>Versie 1.3.2 (07/12/2019)</b>: Merry Christmas!
+                    <ul>
+                        <li>Sneeuw toegevoegd aan Tikker en Tikker BigScreen</li>
+                        <li>"Sneeuw uit" knop toegevoegd aan Tikker BigScreen controlepaneel</li>
+                        <li>Herstartknop toegevoegd aan Tikker BigScreen controlepaneel</li>
+                    </ul>
                     <b>Versie 1.3.1 (30/11/2019)</b>: Extra slides
                     <ul>
                         <li>Ondersteuning voor de volgende slides van BigScreen toegevoegd
@@ -280,6 +289,13 @@
                     Light Mode
                     {% else %}
                     Dark Mode
+                    {% endif %}
+                </a>
+                <a onclick="toggle_snow()" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}" style="cursor:pointer; color: #495057;" >Sneeuw
+                    {% if request.cookies.get('snow') == 'False' %}
+                    aan
+                    {% else %}
+                    uit
                     {% endif %}
                 </a>
             </div>

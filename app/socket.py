@@ -189,3 +189,11 @@ def send_interrupt(message):
 
 def send_transaction(message):
     socketio.emit('transaction', {"name": "Transaction", "message": message}, namespace='/test')
+
+
+def send_reload():
+    socketio.emit('reload', None, namespace='/test')
+
+
+def disable_snow():
+    socketio.emit('snow', None, namespace='/test')

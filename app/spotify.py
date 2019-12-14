@@ -26,8 +26,16 @@ def logout():
     sp = None
     current_user = ""
 
-    if os.path.exists(CACHE):
-        os.remove(CACHE)
+    #if os.path.exists(CACHE):
+    #    os.remove(CACHE)
+
+
+def set_cache(cache):
+    global CACHE, sp_oauth
+    CACHE = cache
+    sp_oauth = oauth2.SpotifyOAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, scope=SCOPE,
+                                   cache_path=CACHE)
+    return
 
 
 def login(request):
