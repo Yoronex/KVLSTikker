@@ -4,13 +4,18 @@ from datetime import datetime
 from sqlalchemy import and_
 from random import randrange
 from app.models import Product, Quote, User, Purchase
-
+from urllib.error import URLError
+from ics import Calendar
+import pytz
+import urllib.request
 import copy
 
 most_drank = 0
 second_most_drank = 0
 third_most_drank = 0
+slide_time = 0
 
+cal = Calendar()
 
 @socketio.on('connect', namespace='/test')
 def test_connect():
@@ -24,9 +29,11 @@ def test_disconnect():
 
 @socketio.on('init', namespace='/test')
 def init_bigscreen(msg):
+    global slide_time
+    slide_time = msg['slide_time']
     slide_name = msg['slide_name']
-    slide = get_slide_data(slide_name)
     spotify_data = get_spotify_data()
+    slide = get_slide_data(slide_name)
     stats_daily, stats_max = get_stats()
     emit('init', {'slide': {'name': slide_name,
                             'data': slide},
@@ -57,7 +64,7 @@ def update_slide_data(msg):
 
 
 def get_slide_data(name):
-    global third_most_drank, second_most_drank, most_drank
+    global third_most_drank, second_most_drank, most_drank, cal
 
     if name == "DrankTonight":
         data = stats.most_bought_products_by_users_today(datetime.now())
@@ -139,13 +146,45 @@ def get_slide_data(name):
         history = []
 
         now = datetime.now()
+        print("now: " + str(now))
         for i in range(1, len(spotify.history)):
             timediff = now - spotify.history[i]['end-time']
-            history.append({"timestamp": "- {0:0=2d}:{0:0=2d}".format(int(timediff.seconds / 3600), int(timediff.seconds / 60)),
+            minutes = int((timediff.seconds + slide_time) / 60)
+            seconds = int((timediff.seconds + slide_time) % 60)
+            if minutes >= 10:
+                minutes = str(minutes)
+            else:
+                minutes = "0" + str(minutes)
+            if seconds >= 10:
+                seconds = str(seconds)
+            else:
+                seconds = "0" + str(seconds)
+            history.append({"timestamp": "{}:{}".format(minutes, seconds),
                             "title": spotify.history[i]['title'],
                             "artist": spotify.history[i]['artist']})
 
         return history
+
+    elif name == "Calendar":
+        get_current_calendar()
+        now = pytz.utc.localize(datetime.now())
+
+        items = []
+        for event in cal.events:
+            if now > event.begin.datetime:
+                continue
+            diff = event.begin.datetime.date() - now.date()
+            items.append({'name': event.name,
+                          'date': event.begin.datetime.strftime("%d/%m/%Y %H:%M"),
+                          'days': diff.days})
+
+        if len(items) == 0:
+            return {'upcoming_events': False}
+        if len(items) > 10:
+            items = items[0:10]
+
+        return {'upcoming_events': True,
+                'calendar': items}
 
     return
 
@@ -197,3 +236,13 @@ def send_reload():
 
 def disable_snow():
     socketio.emit('snow', None, namespace='/test')
+
+
+def get_current_calendar():
+    global cal
+    req = urllib.request.Request('https://drive.kvls.nl/remote.php/dav/public-calendars/BKWDW9PJT2mmoRa4?export')
+    try:
+        response = urllib.request.urlopen(req)
+    except URLError:
+        return
+    cal = Calendar(response.read().decode('iso-8859-1'))

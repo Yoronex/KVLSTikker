@@ -1,3 +1,5 @@
+ics==0.6
+pytz==2019.3
 Flask==1.0.2
 flask-wtf==0.14.2
 flask_breadcrumbs==0.4.0
@@ -8,3 +10,4 @@ flask_socketio==4.2.1
 flask_cors==3.0.8
 spotipy==2.4.4
 wget==3.2
+gevent==1.4.0

@@ -136,8 +136,8 @@ def current_playback():
         history.insert(0, {'title': results['item']['name'],
                            'artist': artist,
                            'end-time': datetime.now()})
-        # If we now have more than 8 tracks in history, remove the last one so we have at most 10 tracks.
-        if len(history) > 8:
+        # If we now have more than 10 tracks in history, remove the last one so we have at most 10 tracks.
+        if len(history) > 10:
             del history[-1]
     # If the track equals the current track, then change the end time of the track (because we are still playing it)
     elif results['item']['id'] == currently_playing_id:

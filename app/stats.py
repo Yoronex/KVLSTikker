@@ -347,7 +347,7 @@ def most_bought_products_by_users_today(parsedend):
 def most_alcohol_drank_by_users(parsedbegin, parsedend):
     count = {}
     purchases = Purchase.query.filter(and_(Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend,
-                                           Purchase.round == False, Purchase.product_id != settings['dinner_product_id'])).all()
+                                           Purchase.round == False, Purchase.product_id != settings['dinner_product_id'], Purchase.price > 0)).all()
 
     for pur in purchases:
         alcohol = Product.query.get(pur.product_id).alcohol

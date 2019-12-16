@@ -15,13 +15,13 @@ borrel_mode_drinks = []
 
 def initialize_settings():
     global settings
-    default_settings = {'dinner_product_id': -1,
-                        'beer_product_id': -1,
-                        'flugel_product_id': -1,
-                        'borrel_mode_user': -1,
-                        'borrel_mode_drinks': [],
-                        'borrel_mode_amount': 0,
-                        'borrel_mode_start_amount': 0}
+    default_settings = {'dinner_product_id': '-1',
+                        'beer_product_id': '-1',
+                        'flugel_product_id': '-1',
+                        'borrel_mode_user': '-1',
+                        'borrel_mode_drinks': '[]',
+                        'borrel_mode_amount': '0',
+                        'borrel_mode_start_amount': '0'}
     sses = Setting.query.all()
     settings_keys = []
     for s in sses:
