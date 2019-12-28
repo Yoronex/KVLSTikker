@@ -15,6 +15,7 @@ borrel_mode_drinks = []
 
 def initialize_settings():
     global settings
+    # All settings and their default values
     default_settings = {'dinner_product_id': '-1',
                         'beer_product_id': '-1',
                         'flugel_product_id': '-1',
@@ -22,50 +23,72 @@ def initialize_settings():
                         'borrel_mode_drinks': '[]',
                         'borrel_mode_amount': '0',
                         'borrel_mode_start_amount': '0'}
+    # Get all settings that are in the database
     sses = Setting.query.all()
     settings_keys = []
+    # Add all setting keys to the list
     for s in sses:
         settings_keys.append(s.key)
 
+    # Loop over all default settings
     for k, v in default_settings.items():
+        # If the default setting is not in the database...
         if k not in settings_keys:
+            # Add it with its default value
             s = Setting(key=k, value=v)
             db.session.add(s)
             db.session.commit()
 
+    # Finally, add all settings to the settings object
+    # This includes duplicates for the stats (see stats.py)
     for s in Setting.query.all():
         settings[s.key] = s.value
 
 
+# Run initialization of settings
 initialize_settings()
 
 
 def update_settings(key, value):
+    # Change the settings entry accordingly
     settings[key] = value
+    # Get the database entry
     s = Setting.query.get(key)
+    # Change the value
     s.value = value
+    # Save changes in database
     db.session.commit()
 
 
 def borrel_mode(drinkid):
     global borrel_mode_enabled, borrel_mode_drinks
 
+    # Get the user that is paying for everything in borrel mode
     borrel_mode_user = int(settings['borrel_mode_user'])
+    # If the user is -1, borrel mode is disabled so we do not have to execute anything
     if borrel_mode_user != -1:
+        # Get the products that use borrel mode
         products = json.loads(settings['borrel_mode_drinks'])
+        # Set the global variable so less computations are necessary in routes.py
         borrel_mode_drinks = products
+        # If the current drink is in the products...
         if drinkid in products:
             total_bought = 0
+            # We count the total amount of borrel mode products bought (also before the borrel started)
             for p1 in products:
                 for p in Purchase.query.filter(Purchase.user_id == borrel_mode_user, Purchase.product_id == p1, Purchase.price > 0).all():
                     total_bought += p.amount
 
+            # Calculate how many products are left
             left_over = int(settings['borrel_mode_amount']) + int(settings['borrel_mode_start_amount']) - total_bought
+            # If it is zero or less...
             if left_over <= 0:
+                # We disable borrel mode by changing some settings and variables
                 update_settings('borrel_mode_user', -1)
                 borrel_mode_enabled = False
                 return None
 
+            # If borrel mode is on, we set the boolean and return how many is left and who is paying
             borrel_mode_enabled = True
             return {'left': left_over,
                     'user': User.query.get(borrel_mode_user).name}
@@ -74,15 +97,21 @@ def borrel_mode(drinkid):
 
 
 def remove_existing_file(filename):
+    # Get the location of the file
     file_loc = os.path.join(app.config["UPLOAD_FOLDER"] + filename)
+    # If it exists, delete it
     if os.path.exists(file_loc):
         os.remove(file_loc)
 
 
 def create_filename(product, old_filename, image, character):
+    # Get the filename and its extension
     filename, file_extension = os.path.splitext(secure_filename(image.filename))
+    # Create a new filename with the productID, a letter, a counter (which we increment by one) and the extension
     filename = str(product.id) + character + "-" + str(int(old_filename.split('-')[1]) + 1) + file_extension
+    # Delete the file if it already exists to prevent duplicates
     remove_existing_file(filename)
+    # Return the filename
     return filename
 
 
@@ -123,85 +152,114 @@ def addpurchase(drink_id, user_id, quantity, rondje, price_per_one):
     # Save to database
     db.session.commit()
 
+    # Calculate the new user balance
     user.balance = user.balance - float(price_per_one) * quantity
+    # Create a purchase entry in the table, so we can use its purchase ID to create the transaction
     purchase = Purchase(user_id=user.id, timestamp=datetime.now(), product_id=drink.id, price=price_per_one,
                         amount=quantity, round=rondje)
     db.session.add(purchase)
     db.session.commit()
 
+    # Create all inventory usage entries
     for x in inventory['inventory_usage']:
         i_u = Inventory_usage(purchase_id=purchase.id, inventory_id=x['id'], quantity=x['quantity'])
         db.session.add(i_u)
         db.session.commit()
+        # Set the object to None to clean up after creation
         i_u = None
 
+    # Calculate the change in balance
     balchange = -price_per_one * quantity
+    # Create a transaction entry and add it to the database
     transaction = Transaction(user_id=user.id, timestamp=datetime.now(), purchase_id=purchase.id,
                               balchange=balchange, newbal=user.balance)
     db.session.add(transaction)
     db.session.commit()
 
+    # Update the daily stats with the new purchase
     stats.update_daily_stats_product(drink_id, quantity)
     stats.update_daily_stats('euros', balchange)
+    # If the price is zero, we do not add this purchase as it is added somewhere else
     if price_per_one > 0:
         stats.update_daily_stats('purchases', 1)
     if rondje:
         stats.update_daily_stats('rounds', 1)
-
-    # return "{}x {} voor {} verwerkt".format(quantity, drink.name, user.name), "success"
     return quantity, drink.name, user.name, "success"
 
 
 def addbalance(user_id, description, amount):
+    # Create an upgrade entry and add it to the database
     upgrade = Upgrade(user_id=user_id, description=description, timestamp=datetime.now(), amount=amount)
     db.session.add(upgrade)
     db.session.commit()
+    # Get the user object
     user = User.query.get(upgrade.user_id)
+    # Upgrade its balance
     user.balance = user.balance + float(amount)
+    # Create a transaction object with the new balance and the upgrade entry and add it to the database
     transaction = Transaction(user_id=user_id, timestamp=datetime.now(), upgrade_id=upgrade.id,
                               balchange=upgrade.amount,
                               newbal=user.balance)
     db.session.add(transaction)
     db.session.commit()
 
+    # Update the daily stats accordingly
     stats.update_daily_stats('euros', upgrade.amount)
 
-    return "Gebruiker {} heeft succesvol opgewaardeerd met €{}".format(user.name,
-                                                                       str("%.2f" % upgrade.amount).replace(".",
-                                                                                                            ",")), "success"
+    return "Gebruiker {} heeft succesvol opgewaardeerd met €{}".format(user.name, str("%.2f" % upgrade.amount)
+                                                                       .replace(".", ",")), "success"
 
 
 def parse_recipe(recipe):
+    # If there is a recipe, let's parse it!
     if recipe != "":
+        # The format is "1x1, 2x1, ..." where the first digit is the quantity and the second digit is the productID
+        # First, split the recipe into components (products)
         components = recipe.split(",")
         result_recipe = {}
+        # For all components...
         for c in components:
+            # Delete the spaces from the string and split it on the x (so data[0] is the quantity and data[1] is the
+            #     productID
             data = c.replace(" ", "").split("x")
+            # Verify the data is in the corredt format
             if int(data[0]) <= 0 or int(data[1]) <= 0 or len(data) != 2:
                 return "Recept voldoet niet aan de gegeven syntax!", "danger"
+            # Check that there are no other symbols in the components objects
             len_a = int(len(data[0])) + int(len(data[1])) + 1
             len_b = int(len(c.replace(" ", "")))
             if len_a != len_b:
                 return "Recept voldoet niet aan de gegeven syntax!", "danger"
+            # Change the strings to integers
             data[0] = int(data[0])
             data[1] = int(data[1])
+            # Ingredient must exist and has to be purchaseable
             if Product.query.get(data[1]) is None or Product.query.get(data[1]).purchaseable is False:
                 return "Product met ID {} bestaat niet of is niet beschikbaar!".format(str(data[1])), "danger"
+            # Ingredient cannot be a mix itself
             if Recipe.query.filter(Recipe.product_id == data[1]).count() > 0:
                 return "Ingrediënt met ID {} bestaat zelf ook uit ingredienten!".format(str(data[1])), "danger"
+            # Add the ingedient to the result recipe with its amount
             result_recipe[data[1]] = data[0]
+        # If we have only one ingredient, we return an error
         if len(result_recipe) <= 1:
-            return "Een recept kan niet uit één type product bestaan!"
+            return "Een recept kan niet uit één type product bestaan!", "danger"
+        # If all is right, we return the resulting (parsed) recipe
         return result_recipe
     return None
 
 
 def adddrink(name, price, category, order, image, hoverimage, recipe, inventory_warning, alcohol, volume, unit):
+    # Get the recipe if it exists
     result_recipe = parse_recipe(recipe)
+    # If the result_recipe is a tuple, it is a return message so we return it
     if type(result_recipe) is tuple:
         return result_recipe
+    # If no inventory warning is set, we set it to zero by default
     if inventory_warning is None:
         inventory_warning = 0
+
+    # Get the filename of both images and check that they have the correct extensions
     s_filename, s_file_extension = os.path.splitext(secure_filename(image.filename))
     if s_file_extension[1:] not in app.config["ALLOWED_EXTENSIONS"]:
         return "Statische afbeelding is niet van het correcte bestandstype (geen .png, .jpg, .bmp of .gif)", "danger"
@@ -210,35 +268,48 @@ def adddrink(name, price, category, order, image, hoverimage, recipe, inventory_
         if h_file_extension[1:] not in app.config["ALLOWED_EXTENSIONS"]:
             return "Hover afbeelding is niet van het correcte bestandstype (geen .png, .jpg, .bmp of .gif)", "danger"
 
+    # Calculate the product placement in the order list
     amount_of_prod = Product.query.count()
+    # If the order number is smaller than the amount...
     if order < amount_of_prod:
+        # We need to increase the order number of all successive products
         p_ord = Product.query.filter(Product.order >= order).all()
         for i in range(0, len(p_ord)):
             p_ord[i].order = p_ord[i].order + 1
+    # If this is not the case, we set the position to the last product in the list
     elif order >= amount_of_prod:
         order = amount_of_prod + 1
 
+    # If we have a recipe...
     if result_recipe is not None:
+        # We create a product with the recipe
         product = Product(name=name, price=price, category=category, order=order, purchaseable=True, image="", hoverimage="",
                           recipe_input=result_recipe)
+    # If we do not have a recipe...
     else:
+        # We set the default values of volume and alcohol if none is given
         if volume is "":
             volume = "0"
         if alcohol is "":
             alcohol = "0"
+        # Then, we create a new product in the database
         product = Product(name=name, price=price, category=category, order=order, purchaseable=True, image="", hoverimage="",
                           inventory_warning=inventory_warning, volume=int(float(volume)), unit=unit,
                           alcohol=float(alcohol.replace(",", ".").replace("%", "").replace(" ", "")) / 100)
     db.session.add(product)
     db.session.commit()
 
+    # If we have a recipe...
     if result_recipe is not None:
+        # Then we need to add a recipe entry for all ingredients in the database
         for key, val in result_recipe.items():
             db.session.add(Recipe(product_id=product.id, ingredient_id=key, quantity=val))
         db.session.commit()
 
+    # Create the upload folder if it does not exist
     if not os.path.exists(app.config["UPLOAD_FOLDER"]):
         os.makedirs(app.config["UPLOAD_FOLDER"])
+    # Set the product images
     product.image = create_filename(product, str(product.id) + "s-0", image, "s")
     image.save(os.path.join(app.config["UPLOAD_FOLDER"], product.image))
 
@@ -249,6 +320,7 @@ def adddrink(name, price, category, order, image, hoverimage, recipe, inventory_
         hoverimage.save(os.path.join(app.config["UPLOAD_FOLDER"], product.hoverimage))
     db.session.commit()
 
+    # Update the daily stats because we added a product
     stats.update_daily_stats('products', 1)
 
     return "Product {} succesvol aangemaakt".format(product.name), "success"
