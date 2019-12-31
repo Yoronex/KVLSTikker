@@ -1,0 +1,55 @@
+<p>Beste {{ user.name }},<br></p>
+<p>Dit is je maandelijkse transactieoverzicht van de maand {{ months }}. Bedankt voor je aanwezigheid en het verbeteren van de gezelligheid!</p>
+
+<table>
+    <colgroup>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col>
+        <col style="min-width: 70px">
+    </colgroup>
+    <tr>
+        <th>ID</th>
+        <th>Datum</th>
+        <th>Tijd</th>
+        <th>Wat</th>
+        <th>Hoeveel</th>
+        <th>Saldo</th>
+    </tr>
+    {% for t in transactions %}
+    <tr>
+        <td>{{ t.id }}</td>
+        <td>{{ t.timestamp.strftime("%Y-%m-%d") }}</td>
+        <td>{{ t.timestamp.strftime("%H:%M:%S") }}</td>
+        {% if t.purchase_id is not none %}
+        <td>{{ Purchase.query.get(t.purchase_id).amount }}x {{
+            Product.query.get(Purchase.query.get(t.purchase_id).product_id).name }}
+        </td>
+        {% else %}
+        <td>{{ Upgrade.query.get(t.upgrade_id).description }}</td>
+        {% endif %}
+        {% if t.balchange < 0 %}
+        <td><span style="color: red;font-weight:bold;">€{{ '%.2f' % t.balchange }}</span></td>
+        {% else %}
+        <td><span style="color: green;font-weight:bold;">€{{ '%.2f' % t.balchange }}</span></td>
+        {% endif %}
+        {% if t.newbal < 0 %}
+        <td><span style="color: red;font-weight:bold;">€{{ '%.2f' % t.newbal }}</span></td>
+        {% else %}
+        <td><span style="color: green;font-weight:bold;">€{{ '%.2f' % t.newbal }}</span></td>
+        {% endif %}
+    </tr>
+    {% endfor %}
+</table>
+
+<p><br>
+    <i>Met vriendelijke Scoutsgroet,</i><br>
+    <b>Tikker</b><br><br>
+
+    <b>Scouting Kornet van Limburg Stirum</b><br>
+    Hooiberglaan 7 | 8121 RA | Olst <br>
+    <a href="http://www.kvls.nl/" target="_blank">www.kvls.nl</a><br>
+    <img border=0 width=83 height=96 src="https://www.kvls.nl/images/images/KVLS-Logo-modern-kleur.png">
+</p>

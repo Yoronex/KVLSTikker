@@ -11,6 +11,8 @@ from sqlalchemy import and_
 settings = {}
 borrel_mode_enabled = False
 borrel_mode_drinks = []
+overview_emails = False
+debt_emails = False
 
 
 def initialize_settings():
@@ -22,7 +24,9 @@ def initialize_settings():
                         'borrel_mode_user': '-1',
                         'borrel_mode_drinks': '[]',
                         'borrel_mode_amount': '0',
-                        'borrel_mode_start_amount': '0'}
+                        'borrel_mode_start_amount': '0',
+                        'last_overview_email': '2019-07-01',
+                        'last_debt_email': '2019-07-01'}
     # Get all settings that are in the database
     sses = Setting.query.all()
     settings_keys = []
@@ -47,6 +51,21 @@ def initialize_settings():
 
 # Run initialization of settings
 initialize_settings()
+
+
+# Determine whether an option should be given to send emails with monthly overviews
+now = datetime.now()
+last_overview_email = datetime.strptime(settings.get('last_overview_email'), "%Y-%m-%d")
+last_debt_email = datetime.strptime(settings.get('last_debt_email'), "%Y-%m-%d")
+if now > last_overview_email and now.month != last_overview_email.month and now.day > 3:
+    overview_emails = True
+if now > last_debt_email and (now - last_debt_email).days >= 3:
+    debt_emails = True
+
+
+@app.context_processor
+def emails():
+    return dict(send_overview_emails=overview_emails, send_debt_emails=debt_emails)
 
 
 def update_settings(key, value):

@@ -1,6 +1,6 @@
 from flask import render_template, flash, redirect, url_for, request, abort, jsonify, json, make_response
 from sqlalchemy import and_
-from app import app, stats, socket, spotify, socketio, dbhandler
+from app import app, stats, socket, spotify, socketio, dbhandler, emailhandler
 from app.forms import UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm, \
     ChangeDrinkForm, ChangeDrinkImageForm, AddInventoryForm, PayOutProfitForm, AddQuoteForm, SlideInterruptForm, ChooseSpotifyUser
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory
@@ -852,11 +852,26 @@ def throw_exception():
 def shutdown():
     if request.remote_addr != "127.0.0.1":
         abort(403)
+    if request.args.get('emails') == 'True':
+        if dbhandler.overview_emails:
+            emailhandler.send_overview_emails()
+        elif dbhandler.debt_emails:
+            emailhandler.send_debt_emails()
     shutdown_server()
     app.logger.info('Tikker shutting down')
     return render_template('error.html', title="Tikker wordt afgesloten...", h1="Uitschakelen",
                            message="Tikker wordt nu afgesloten. Je kan dit venster sluiten.", gif_url="")
 
+
+@app.route('/testemail/<int:mail>')
+def test_emailing(mail):
+    if int(mail) == 1:
+        emailhandler.test_debt_email()
+    elif int(mail) == 2:
+        emailhandler.test_overview_email()
+    elif int(mail) == 3:
+        emailhandler.test_dinner_overview_email()
+    return redirect(url_for('index'))
 
 @app.route('/error/403')
 def show_401():

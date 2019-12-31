@@ -1,0 +1,15 @@
+Beste {{ user.name }},
+
+Dit is je maandelijkse transactieoverzicht van de maand {{ months }}. Bedankt voor je aanwezigheid en het verbeteren van de gezelligheid!
+
+ID - Datum - Tijd - Wat - Hoeveel - Saldo
+{% for t in transactions %}
+{{ t.id }} - {{ t.timestamp.strftime("%Y-%m-%d") }} - {{ t.timestamp.strftime("%H:%M:%S") }} - {% if t.purchase_id is not none %}
+        {{ Purchase.query.get(t.purchase_id).amount }}x {{Product.query.get(Purchase.query.get(t.purchase_id).product_id).name }}
+{% else %}
+        {{ Upgrade.query.get(t.upgrade_id).description }}
+{% endif %} - €{{ '%.2f' % t.balchange }} - €{{ '%.2f' % t.newbal }}
+{% endfor %}
+
+Met vriendelijke Scoutsgroet,
+Tikker

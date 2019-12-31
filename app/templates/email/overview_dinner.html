@@ -1,0 +1,29 @@
+<p>Beste {{ user.name }},<br></p>
+
+<p>In de maand {{ months }} heb je meegegeten op de opkomsten. Je hebt deze maaltijden betaalt met Tikker. Het gaat hierbij om de volgende maaltijden en bedragen:</p>
+<table>
+    {% set sum = 0.0 %}
+    {% for p in purchases %}
+    <tr>
+        <td>{{ p.timestamp.strftime("%Y-%m-%d") }}</td>
+        <td style="width: 4px"></td>
+        <td>€{{ '%.2f' % (p.amount * p.price) }}</td>
+    </tr>
+    {% endfor %}
+    <tr>
+        <td>Totaal</td>
+        <td style="width: 4px"></td>
+        <td>€{{ '%.2f' % total }}</td>
+    </tr>
+</table>
+
+
+<p><br>
+    <i>Met vriendelijke Scoutsgroet,</i><br>
+    <b>Tikker</b><br><br>
+
+    <b>Scouting Kornet van Limburg Stirum</b><br>
+    Hooiberglaan 7 | 8121 RA | Olst <br>
+    <a href="http://www.kvls.nl/" target="_blank">www.kvls.nl</a><br>
+    <img border=0 width=83 height=96 src="https://www.kvls.nl/images/images/KVLS-Logo-modern-kleur.png">
+</p>

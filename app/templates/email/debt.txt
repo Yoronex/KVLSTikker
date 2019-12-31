@@ -1,0 +1,14 @@
+Beste {{ user.name }},
+
+Volgens onze administratie heb je nog een grote openstaande schuld.
+Het gaat hierbij om een bedrag van
+
+€ {{ '%.2f' % user.balance }}
+
+Zou je deze schuld zo snel mogelijk willen betalen?
+Extra overgemaakt geld wordt als saldo op je Tikker account gezet.
+Betalen kan door over te maken naar rekeningnummer NL03RABO0333194322 t.n.v. Scouting Kornet van Limburg Stirum o.v.v. Opwaardering met je naam.
+Je kunt ook Hans vragen een Tikkie te sturen.
+
+Met vriendelijke Scoutsgroet,
+Tikker

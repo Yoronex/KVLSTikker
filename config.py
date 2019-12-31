@@ -16,3 +16,16 @@ class Config(object):
     ALLOWED_EXTENSIONS = {'jpg', 'png', 'bmp', 'gif'}
     ADMIN_PASSWORD = "knotgang"
     STATS_BEGINDATE = "2019-01-01"
+    MAIL_SERVER = 'mail.kvls.nl'
+    MAIL_PORT = 587
+    MAIL_USE_TLS = True
+    MAIL_USE_SSL = False
+    MAIL_USERNAME = os.getenv('MAIL_USERNAME')
+    MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
+    MAIL_DEFAULT_SENDER = ("KVLS Tikker", "tikker@kvls.nl")
+    DEBT_MAXIMUM = -30.0
+    SPOTIPY_CLIENT_ID = os.getenv('SPOTIPY_CLIENT_ID')
+    SPOTIPY_CLIENT_SECRET = os.getenv('SPOTIPY_CLIENT_SECRET')
+    SPOTIPY_REDIRECT_URI = 'http://127.0.0.1:5000/api/spotify/login'
+    SPOTIPY_SCOPE = 'user-read-playback-state user-modify-playback-state user-read-currently-playing'
+    SPOTIPY_CACHE = '.spotipyoauthcache'

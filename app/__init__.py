@@ -8,6 +8,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_bootstrap import Bootstrap
 from flask_breadcrumbs import Breadcrumbs
+from flask_mail import Mail
 from logging.handlers import RotatingFileHandler
 import os
 import zipfile
@@ -42,6 +43,7 @@ migrate = Migrate(app, db)
 Bootstrap(app)
 breadcrumbs = Breadcrumbs(app=app)
 app.config['BOOTSTRAP_SERVE_LOCAL'] = True
+mail = Mail(app)
 
 from app import routes, models
 

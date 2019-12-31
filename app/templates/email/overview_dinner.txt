@@ -1,0 +1,13 @@
+Beste {{ user.name }},
+
+In de maand {{ month }} heb je meegegeten op de opkomsten. Je hebt deze maaltijden betaalt met Tikker. Het gaat hierbij om de volgende maaltijden en bedragen:
+{% set sum = 0.0 %}
+{% for p in purchases %}
+    {{ p.timestamp.strftime("%Y-%m-%d") }}: €{{ '%.2f' % (p.amount * p.price) }}
+    {% set sum = sum + (p.amount * p.price) %}
+{% endfor %}
+
+Totaal: €{{ '%.2f' % total }}
+
+Met vriendelijke Scoutsgroet,
+Tikker

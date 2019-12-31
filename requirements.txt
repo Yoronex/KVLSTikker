@@ -1,7 +1,8 @@
 ics==0.6
 pytz==2019.3
-Flask==1.0.2
+Flask==1.1.1
 flask-wtf==0.14.2
+flask-mail==0.9.1
 flask_breadcrumbs==0.4.0
 flask_bootstrap4==4.0.2
 flask_migrate==2.2.1

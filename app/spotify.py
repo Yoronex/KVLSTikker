@@ -10,16 +10,10 @@ spotify_token = None
 sp = None
 current_user = ""
 currently_playing_id = ""
-SPOTIPY_CLIENT_ID = 'e81cc50c967a4c64a8073d678f7b6503'
-SPOTIPY_CLIENT_SECRET = 'c8d84aec8a6d4197b5eca4991ba7694b'
-SPOTIPY_REDIRECT_URI = 'http://127.0.0.1:5000/api/spotify/login'
-SCOPE = 'user-read-playback-state user-modify-playback-state user-read-currently-playing'
-CACHE = '.spotipyoauthcache'
-sp_oauth = oauth2.SpotifyOAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, scope=SCOPE, cache_path=CACHE)
-
-
+CACHE = app.config['SPOTIPY_CACHE']
+sp_oauth = oauth2.SpotifyOAuth(app.config['SPOTIPY_CLIENT_ID'], app.config['SPOTIPY_CLIENT_SECRET'],
+                               app.config['SPOTIPY_REDIRECT_URI'], scope=app.config['SPOTIPY_SCOPE'], cache_path=CACHE)
 history = []
-
 
 def logout():
     global sp, current_user
@@ -33,8 +27,8 @@ def logout():
 def set_cache(cache):
     global CACHE, sp_oauth
     CACHE = cache
-    sp_oauth = oauth2.SpotifyOAuth(SPOTIPY_CLIENT_ID, SPOTIPY_CLIENT_SECRET, SPOTIPY_REDIRECT_URI, scope=SCOPE,
-                                   cache_path=CACHE)
+    sp_oauth = oauth2.SpotifyOAuth(app.config['SPOTIPY_CLIENT_ID'], app.config['SPOTIPY_CLIENT_SECRET'],
+                               app.config['SPOTIPY_REDIRECT_URI'], scope=app.config['SPOTIPY_SCOPE'], cache_path=CACHE)
     return
 
 
