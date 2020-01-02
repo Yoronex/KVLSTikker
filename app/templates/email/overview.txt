@@ -11,5 +11,7 @@ ID - Datum - Tijd - Wat - Hoeveel - Saldo
 {% endif %} - €{{ '%.2f' % t.balchange }} - €{{ '%.2f' % t.newbal }}
 {% endfor %}
 
+Op het moment van schrijven is je saldo €{{ '%.2f' % user.balance }}.
+
 Met vriendelijke Scoutsgroet,
 Tikker

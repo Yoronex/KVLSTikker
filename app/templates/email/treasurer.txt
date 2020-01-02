@@ -1,0 +1,27 @@
+Beste penningmeester,
+
+Alle gebruikers van Tikker hebben zojuist een email gehad als hun schuld groter is dan € {{ '%.2f' % -maxdebt }}.
+    Hierbij krijg jij ook een mail met het saldo van elke gebruiker, hoeveel geld er in ieder winstpotje zit en hoeveel drank er nog op voorraad is.
+
+Schulden
+{% for usergroup in usergroups %}
+- {{ usergroup.name }}{% for u in usergroup.users.all() %}
+     -{{ u.name }}: €{{ '%.2f' % u.balance }}
+  {% endfor %}
+{% endfor %}
+
+Winstpotjes{% for u in usergroups %}
+- {{ u.name }}: €{{ '%.2f' % u.profit }}
+{% endfor %}
+
+Inventaris
+<table>
+{% for p in products %}
+- {{ p.name }}: {{ p.quantity }} / {{ p.inventory_value }}
+{% endfor %}
+
+Alle gebruikers hebben {% if also_overview %}WEL een {% else %}GEEN{% endif %} overzicht gehad met transacties en hun actuele saldo.
+Deze zal rond het begin van volgende maand verstuurd worden.
+
+Met vriendelijke Scoutsgroet,
+Tikker

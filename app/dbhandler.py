@@ -26,7 +26,8 @@ def initialize_settings():
                         'borrel_mode_amount': '0',
                         'borrel_mode_start_amount': '0',
                         'last_overview_email': '2019-07-01',
-                        'last_debt_email': '2019-07-01'}
+                        'last_debt_email': '2019-07-01',
+                        'treasurer-email': ""}
     # Get all settings that are in the database
     sses = Setting.query.all()
     settings_keys = []
@@ -813,6 +814,13 @@ def calcStock(product_id):
     sum = 0
     for i in inventories:
         sum = sum + i.quantity
+    return sum
+
+
+def calc_inventory_value(product_id):
+    sum = 0
+    for i in Inventory.query.filter(and_(Inventory.product_id == product_id, Inventory.quantity != 0)):
+        sum += i.quantity * i.price_before_profit
     return sum
 
 

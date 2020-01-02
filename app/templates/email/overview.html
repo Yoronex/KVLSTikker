@@ -44,6 +44,12 @@
     {% endfor %}
 </table>
 
+<p>Op het moment van schrijven is je saldo {% if user.balance < 0 %}
+        <span style="color: red;font-weight:bold;">€{{ '%.2f' % user.balance }}</span>
+        {% else %}
+        <span style="color: green;font-weight:bold;">€{{ '%.2f' % user.balance }}</span>
+{% endif %}.</p>
+
 <p><br>
     <i>Met vriendelijke Scoutsgroet,</i><br>
     <b>Tikker</b><br><br>

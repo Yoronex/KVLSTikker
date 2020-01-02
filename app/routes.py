@@ -871,6 +871,8 @@ def test_emailing(mail):
         emailhandler.test_overview_email()
     elif int(mail) == 3:
         emailhandler.test_dinner_overview_email()
+    elif int(mail) == 4:
+        emailhandler.test_treasurer_email()
     return redirect(url_for('index'))
 
 @app.route('/error/403')

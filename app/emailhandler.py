@@ -6,7 +6,7 @@ from flask_mail import Message
 from sqlalchemy import and_
 
 from app import app, mail, dbhandler, db
-from app.models import User, Purchase, Transaction, Product, Upgrade
+from app.models import User, Purchase, Transaction, Product, Upgrade, Usergroup
 
 enabled = True
 if app.config['MAIL_PASSWORD'] is '':
@@ -36,9 +36,14 @@ def test_overview_email():
     send_emails(emails)
 
 
+def test_treasurer_email():
+    emails = create_treasurer_email(False)
+    send_emails(emails)
+
+
 def send_debt_emails():
     users = User.query.all()
-    emails = create_debt_emails(users)
+    emails = create_debt_emails(users) + create_treasurer_email(False)
     try:
         send_emails(emails)
         flash("Emails succesvol verstuurd!", "success")
@@ -50,12 +55,11 @@ def send_debt_emails():
 def send_overview_emails():
     users = User.query.all()
     begindate = datetime.strptime(dbhandler.settings['last_overview_email'], "%Y-%m-%d")
-    #  enddate = datetime.now().replace(day=1)
-    enddate = datetime(year=2020, month=1, day=1)
+    enddate = datetime.now().replace(day=1)
     if enddate.weekday() >= 4:
         enddate += timedelta(days=7 - enddate.weekday())
 
-    emails = create_overview_dinner_emails(users, begindate, enddate) + create_overview_emails(users, begindate, enddate) + create_debt_emails(users)
+    emails = create_overview_dinner_emails(users, begindate, enddate) + create_overview_emails(users, begindate, enddate) + create_debt_emails(users) + create_treasurer_email(True)
 
     try:
         send_emails(emails)
@@ -141,6 +145,27 @@ def create_overview_emails(users, begindate, enddate):
             emails.append(result)
 
     return emails
+
+
+def create_treasurer_email(also_overview):
+    if dbhandler.settings['treasurer-email'] != "":
+        usergroups = Usergroup.query.all()
+        products = []
+        for p in Product.query.filter(and_(Product.recipe_input == None), (Product.purchaseable == True)).all():
+            result = dbhandler.get_inventory_stock(p.id)
+            result[0]['name'] = p.name
+            result[0]['id'] = p.id
+            result[0]['inventory_value'] = dbhandler.calc_inventory_value(p.id)
+            products.append(result[0])
+
+        return [{'html': render_template('email/treasurer.html', User=User, usergroups=usergroups, products=products,
+                                         also_overview=also_overview, maxdebt=app.config["DEBT_MAXIMUM"]),
+                 'body': render_template('email/treasurer.txt', User=User, usergroups=usergroups, products=products,
+                                         also_overview=also_overview, maxdebt=app.config["DEBT_MAXIMUM"]),
+                 'recipients': [dbhandler.settings['treasurer-email']],
+                 'subject': "Actuele schulden, winstpotjes en inventaris"}]
+    else:
+        return []
 
 
 def send_emails(emails):
