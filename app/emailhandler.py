@@ -27,12 +27,22 @@ def test_debt_email():
 
 
 def test_dinner_overview_email():
-    emails = create_overview_dinner_emails([User.query.get(1)])
+    begindate = datetime.strptime(dbhandler.settings['last_overview_email'], "%Y-%m-%d")
+    enddate = datetime.now().replace(day=1)
+    if enddate.weekday() >= 4:
+        enddate += timedelta(days=7 - enddate.weekday())
+
+    emails = create_overview_dinner_emails([User.query.get(1)], begindate, enddate)
     send_emails(emails)
 
 
 def test_overview_email():
-    emails = create_overview_emails([User.query.get(1)])
+    begindate = datetime.strptime(dbhandler.settings['last_overview_email'], "%Y-%m-%d")
+    enddate = datetime.now().replace(day=1)
+    if enddate.weekday() >= 4:
+        enddate += timedelta(days=7 - enddate.weekday())
+
+    emails = create_overview_emails([User.query.get(1)], begindate, enddate)
     send_emails(emails)
 
 
