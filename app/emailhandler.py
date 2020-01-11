@@ -1,5 +1,6 @@
 import socket
 from datetime import datetime, timedelta
+from smtplib import SMTPRecipientsRefused
 
 from flask import render_template, flash
 from flask_mail import Message
@@ -181,5 +182,10 @@ def create_treasurer_email(also_overview):
 def send_emails(emails):
     with mail.connect() as conn:
         for e in emails:
-            msg = Message(recipients=e['recipients'], html=e['html'], body=e['body'], subject=e['subject'])
-            conn.send(msg)
+            try:
+                msg = Message(recipients=e['recipients'], html=e['html'], body=e['body'], subject=e['subject'])
+                conn.send(msg)
+            except SMTPRecipientsRefused:
+                error = 'Kon niet de mail "{}" versturen naar {}'.format(e['subject'], e['recipients'])
+                app.logger.info(error)
+                flash(error)
