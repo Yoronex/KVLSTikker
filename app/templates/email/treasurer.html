@@ -1,0 +1,77 @@
+<p>Beste penningmeester,</p><br>
+
+<p>Alle gebruikers van Tikker hebben zojuist een email gehad als hun schuld groter is dan € {{ '%.2f' % -maxdebt }}.
+    Hierbij krijg jij ook een mail met het saldo van elke gebruiker, hoeveel geld er in ieder winstpotje zit en hoeveel drank er nog op voorraad is.</p><br>
+
+<p><b>Schulden</b><br>
+<table>
+    <tr>
+        {% for usergroup in usergroups %}
+            <td style="width: {{ 100 / usergroups|length  }}%; vertical-align: top; text-align: center">
+                <b>{{ usergroup.name }}</b><br>
+                <table style="width: 100%">
+                    {% for u in usergroup.users.all() %}
+                    <tr>
+                        <td style="width: 50%; text-align: right">{{ u.name }}</td>
+                        {% if u.balance < 0 %}
+                        <td><span style="width: 50%; color: red;font-weight:bold;">€{{ '%.2f' % u.balance }}</span></td>
+                        {% else %}
+                        <td><span style="width: 50%; color: green;font-weight:bold;">€{{ '%.2f' % u.balance }}</span></td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </table>
+            </td>
+        {% endfor %}
+    </tr>
+</table></p><br>
+
+<p><b>Winstpotjes</b><br>
+<table>
+    {% for u in usergroups %}
+    <tr>
+        <td style="text-align: right">{{ u.name }}:</td>
+        <td style="width: 3px"></td>
+        <td style="text-align: left">{% if u.profit < 0 %}<span style="color:red;font-weight:bold;">
+            {% else %}<span style="color:green;font-weight:bold;">{% endif %}€{{ '%.2f' % u.profit }}</span></td>
+    </tr>
+    {% endfor %}
+</table></p><br>
+
+<p><b>Inventaris</b><br>
+<table>
+    <tr>
+        <th style="text-align: right">Wat</th>
+        <th></th>
+        <th>Aantal</th>
+        <th></th>
+        <th>Waarde</th>
+    </tr>
+    {% for p in products %}
+    <tr>
+        <td style="text-align: right">{{ p.name }}:</td>
+        <td style="width: 3px"></td>
+        <td style="text-align: left">
+            {% if p.quantity < 0 %}<span style="color: red;">{{ p.quantity }}</span>
+            {% elif p.quantity <= p.inventory_warning %}<span style="color: darkorange;">{{ p.quantity }}</span>
+            {% else %} {{ p.quantity }}
+        {% endif %} </td>
+        <td style="width: 3px"></td>
+        <td>€{{ '%.2f' % p['inventory_value'] }}</td>
+    </tr>
+    {% endfor %}
+</table></p><br>
+
+<p>Alle gebruikers hebben {% if also_overview %}<span style="color: green; font-weight: bold">WEL</span> een
+{% else %}<span style="color: red; font-weight: bold">GEEN</span>{% endif %} overzicht gehad met transacties en hun
+actuele saldo. Deze zal rond het begin van volgende maand verstuurd worden.</p>
+
+<p><br>
+    <i>Met vriendelijke Scoutsgroet,</i><br>
+    <b>Tikker</b><br><br>
+
+    <b>Scouting Kornet van Limburg Stirum</b><br>
+    Hooiberglaan 7 | 8121 RA | Olst <br>
+    <a href="http://www.kvls.nl/" target="_blank">www.kvls.nl</a><br>
+    <img border=0 width=83 height=96 src="https://www.kvls.nl/images/images/KVLS-Logo-modern-kleur.png">
+</p>
