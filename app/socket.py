@@ -120,28 +120,12 @@ def get_slide_data(name):
             idsb, valuesb, namesb = stats.most_bought_of_one_product_by_users(dbhandler.settings['beer_product_id'], begindate, enddate)
             idsf, valuesf, namesf = stats.most_bought_of_one_product_by_users(dbhandler.settings['flugel_product_id'], begindate, enddate)
 
-            if len(namesb) > 0:
-                most_beers = namesb[0]
-                for i in range(1, len(namesb)):
-                    if valuesb[i - 1] == valuesb[i]:
-                        most_beers += ", " + namesb[i]
-                    else:
-                        break
-            else:
-                most_beers = "Niemand :("
+            most_beers = get_top_users(namesb, valuesb)
+            most_flugel = get_top_users(namesf, valuesf)
 
-            if len(namesf) > 0:
-                most_flugel = namesf[0]
-                for i in range(1, len(namesf)):
-                    if valuesf[i - 1] == valuesf[i]:
-                        most_flugel += ", " + namesf[i]
-                    else:
-                        break
-            else:
-                most_flugel = "Niemand :("
+            return {'beer': most_beers,
+                    'flugel': most_flugel}
 
-                return {'beer': most_beers,
-                        'flugel': most_flugel}
     elif name == "RecentlyPlayed":
         history = []
 
@@ -175,8 +159,13 @@ def get_slide_data(name):
                 continue
             diff = event.begin.datetime.date() - now.date()
             items.append({'name': event.name,
+                          'datetime': event.begin.datetime.date(),
                           'date': event.begin.datetime.strftime("%d/%m/%Y %H:%M"),
                           'days': diff.days})
+
+        items = sorted(items, key=lambda k: k['datetime'])
+        for i in items:
+            del i['datetime']
 
         if len(items) == 0:
             return {'upcoming_events': False}
@@ -186,7 +175,7 @@ def get_slide_data(name):
         return {'upcoming_events': True,
                 'calendar': items}
 
-    return
+    return {}
 
 
 def most_drank_data(drinkid):
@@ -246,3 +235,15 @@ def get_current_calendar():
     except URLError:
         return
     cal = Calendar(response.read().decode('iso-8859-1'))
+
+
+def get_top_users(names, values):
+    if len(names) > 0:
+        most = names[0]
+        for i in range(1, len(names)):
+            if values[i - 1] == values[i]:
+                most += ", " + names[i]
+            else:
+                break
+        return most
+    return "Niemand :("
