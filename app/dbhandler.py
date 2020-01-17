@@ -1,3 +1,4 @@
+import math
 from app import app, db, stats
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory, Recipe, Inventory_usage, Setting, Quote
 from werkzeug.utils import secure_filename
@@ -13,6 +14,17 @@ borrel_mode_enabled = False
 borrel_mode_drinks = []
 overview_emails = False
 debt_emails = False
+
+
+def fix_float_errors_in_user_balances():
+    users = User.query.all()
+    for i in range(0, len(users)):
+        users[i].balance = round(users[i].balance, 4)
+    db.session.commit()
+
+
+# Because 1.1 + 2.2 !+ 3.3 in Python, we have to fix this every now and then (so at startup seems like a good time)
+fix_float_errors_in_user_balances()
 
 
 def initialize_settings():
@@ -81,6 +93,16 @@ def update_settings(key, value):
     db.session.commit()
 
 
+def round_up(float_number, n=2):
+    decimals = math.pow(10, n)
+    return math.ceil(float_number * decimals) / decimals
+
+
+def round_down(float_number, n=2):
+    decimals = math.pow(10, n)
+    return math.floor(float_number * decimals) / decimals
+
+
 def borrel_mode(drinkid):
     global borrel_mode_enabled, borrel_mode_drinks
 
@@ -138,8 +160,7 @@ def create_filename(product, old_filename, image, character):
 
 def addpurchase(drink_id, user_id, quantity, rondje, price_per_one):
     # Round quantity to at most two decimals
-    if type(quantity) is float:
-        quantity = float(round(quantity * 100)) / 100
+    quantity = round_up(quantity)
     # Get drink and user objects from database
     drink = Product.query.get(drink_id)
     user = User.query.get(user_id)
@@ -155,7 +176,7 @@ def addpurchase(drink_id, user_id, quantity, rondje, price_per_one):
             # For every ingredient of the mix...
             for r in Recipe.query.filter(Recipe.product_id == drink.id).all():
                 # Take the respective quantity from inventory
-                result = take_from_inventory(user, r.ingredient_id, r.quantity * quantity)
+                result = take_from_inventory(user, r.ingredient_id, round_up(r.quantity * quantity))
                 # Add the costs of the ingredient to the total costs
                 inventory['costs'] = inventory['costs'] + result['costs']
                 # Add the inventory usage
@@ -167,14 +188,14 @@ def addpurchase(drink_id, user_id, quantity, rondje, price_per_one):
     # Get the profitgroup of the user
     profitgroup = Usergroup.query.get(user.profitgroup_id)
     # Calculate the profit
-    profit = price_per_one * quantity - inventory['costs']
+    profit = round_down(price_per_one * quantity - inventory['costs'])
     # Add the profit to the group
-    profitgroup.profit = profitgroup.profit + profit
+    profitgroup.profit = profitgroup.profit + round_up(profit)
     # Save to database
     db.session.commit()
 
     # Calculate the new user balance
-    user.balance = user.balance - float(price_per_one) * quantity
+    user.balance = user.balance - round_up(float(price_per_one) * quantity)
     # Create a purchase entry in the table, so we can use its purchase ID to create the transaction
     purchase = Purchase(user_id=user.id, timestamp=datetime.now(), product_id=drink.id, price=price_per_one,
                         amount=quantity, round=rondje)
@@ -190,7 +211,7 @@ def addpurchase(drink_id, user_id, quantity, rondje, price_per_one):
         i_u = None
 
     # Calculate the change in balance
-    balchange = -price_per_one * quantity
+    balchange = round_down(-price_per_one * quantity)
     # Create a transaction entry and add it to the database
     transaction = Transaction(user_id=user.id, timestamp=datetime.now(), purchase_id=purchase.id,
                               balchange=balchange, newbal=user.balance)

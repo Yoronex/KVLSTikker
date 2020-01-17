@@ -49,7 +49,7 @@ function addToCart(u_id, user_name, shared) {
         cell1.style.width = "50%";
         cell2.innerHTML = "1x";
         cell2.style.width = "15%";
-        cell3.innerHTML = "€" + parseFloat(Math.round(prod_price * 100) / 100).toFixed(2).toString();
+        cell3.innerHTML = "€" + parseFloat(Math.ceil(prod_price * 100) / 100).toFixed(2).toString();
         cell3.style.width = "20%";
 
         //var temp = [];
@@ -79,7 +79,7 @@ function addToCart(u_id, user_name, shared) {
         cell1.style.width = "50%";
         cell2.innerHTML = "1/" + total.toString();
         cell2.style.width = "15%";
-        cell3.innerHTML = "€" + parseFloat(Math.round(prod_price / total * 100) / 100).toFixed(2).toString();
+        cell3.innerHTML = "€" + parseFloat(Math.ceil(prod_price / total * 100) / 100).toFixed(2).toString();
         cell3.style.width = "20%";
 
         updateCart();
@@ -97,7 +97,7 @@ function changeCartAmount(user_id, row, amount) {
     var count_cell = row.cells[count_loc];
     var count = parseInt(count_cell.innerHTML) + amount;
     row.cells[count_loc].innerHTML = count.toString() + "x";
-    row.cells[price_loc].innerHTML = "€" + parseFloat(Math.round((parseFloat(prod_price) * count)* 100) / 100).toFixed(2).toString();
+    row.cells[price_loc].innerHTML = "€" + parseFloat(Math.ceil((parseFloat(prod_price) * count)* 100) / 100).toFixed(2).toString();
 }
 
 function removeFromCart(u_id) {
@@ -123,7 +123,7 @@ function changeCartPart(user_id, row, amount) {
     var count_cell = row.cells[count_loc];
     var count = parseInt(count_cell.innerHTML) + amount;
     row.cells[count_loc].innerHTML = count.toString() + "/" + total.toString();
-    row.cells[price_loc].innerHTML = "€" + parseFloat(Math.round((parseFloat(prod_price) * count / total)* 100) / 100).toFixed(2).toString();
+    row.cells[price_loc].innerHTML = "€" + parseFloat(Math.ceil((parseFloat(prod_price) * count / total)* 100) / 100).toFixed(2).toString();
 
     updateCart();
 }
