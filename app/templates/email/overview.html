@@ -1,5 +1,20 @@
 <p>Beste {{ user.name }},<br></p>
 <p>Dit is je maandelijkse transactieoverzicht van de maand {{ months }}. Bedankt voor je aanwezigheid en het verbeteren van de gezelligheid!</p>
+<p>Op het moment van schrijven is je saldo {% if user.balance < 0 %}
+        <span style="color: red;font-weight:bold;">€{{ '%.2f' % user.balance }}</span>
+        {% else %}
+        <span style="color: green;font-weight:bold;">€{{ '%.2f' % user.balance }}</span>
+{% endif %}.</p>
+
+<table>
+    {% for i in range(product_name|length) %}
+    <tr>
+        <td>{{ product_name[i] }}</td>
+        <td style="width: 3px"></td>
+        <td>{{ product_amount[i] }}</td>
+    </tr>
+    {% endfor %}
+</table>
 
 <table>
     <colgroup>
@@ -43,12 +58,6 @@
     </tr>
     {% endfor %}
 </table>
-
-<p>Op het moment van schrijven is je saldo {% if user.balance < 0 %}
-        <span style="color: red;font-weight:bold;">€{{ '%.2f' % user.balance }}</span>
-        {% else %}
-        <span style="color: green;font-weight:bold;">€{{ '%.2f' % user.balance }}</span>
-{% endif %}.</p>
 
 <p><br>
     <i>Met vriendelijke Scoutsgroet,</i><br>

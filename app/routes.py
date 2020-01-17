@@ -167,7 +167,7 @@ def user(userid):
     data = []
     for p_id, amount in count.items():
         data.append((p_id, Product.query.get(p_id).name, int(amount)))
-    ids, values, labels = top10(count, data)
+    ids, values, labels = stats.top_n(count, data, 20)
 
     return render_template('user.html', title=user.name, h1="Informatie over " + user.name, user=user,
                            transactions=transactions, Purchase=Purchase, upgrades=upgrades, Product=Product,
@@ -726,28 +726,6 @@ def force_execute():
 
 def getStatValue(elem):
     return elem[2]
-
-
-def top10(count, data):
-    data.sort(key=getStatValue, reverse=True)
-    if len(count) <= 10:
-        size = len(count)
-    else:
-        size = 9
-
-    ids = [data[i][0] for i in range(0, size)]
-    labels = [data[i][1] for i in range(0, size)]
-    values = [data[i][2] for i in range(0, size)]
-
-    if len(count) - size >= 2:
-        sum = 0
-        for i in range(size, len(count)):
-            sum = sum + data[i][2]
-        ids.append(0)
-        values.append(sum)
-        labels.append("Overig")
-
-    return ids, values, labels
 
 
 @register_breadcrumb(app, '.stats', 'Statistieken', order=1)

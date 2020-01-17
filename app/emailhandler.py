@@ -6,7 +6,7 @@ from flask import render_template, flash
 from flask_mail import Message
 from sqlalchemy import and_
 
-from app import app, mail, dbhandler, db
+from app import app, mail, dbhandler, db, stats
 from app.models import User, Purchase, Transaction, Product, Upgrade, Usergroup
 
 enabled = True
@@ -124,7 +124,6 @@ def create_overview_dinner_emails(users, begindate, enddate):
             and_(Purchase.product_id == dbhandler.settings['dinner_product_id'], Purchase.user_id == u.id,
                  Purchase.timestamp > begindate, Purchase.timestamp < enddate)).all()
         if len(purchases) > 0:
-
             months = monthlist_fast([begindate, enddate])
             total = 0
             for p in purchases:
@@ -142,16 +141,22 @@ def create_overview_dinner_emails(users, begindate, enddate):
 
 def create_overview_emails(users, begindate, enddate):
     emails = []
+    nr_of_products = Product.query.count()
 
     for u in users:
         transactions = Transaction.query.filter(and_(Transaction.user_id == u.id, Transaction.timestamp > begindate, Transaction.timestamp < enddate)).all()
         if len(transactions) > 0:
             months = monthlist_fast([begindate, enddate])
 
+            product_ids, product_amount, product_names = stats.most_bought_products_per_user(u.id, begindate, enddate,
+                                                                                             nr_of_products)
+
             result = {'html': render_template('email/overview.html', user=u, transactions=transactions, Product=Product,
-                                              Purchase=Purchase, Upgrade=Upgrade, months=months),
+                                              Purchase=Purchase, Upgrade=Upgrade, months=months,
+                                              product_name=product_names, product_amount=product_amount),
                       'body': render_template('email/overview.txt', user=u, transactions=transactions, Product=Product,
-                                              Purchase=Purchase, Upgrade=Upgrade, months=months),
+                                              Purchase=Purchase, Upgrade=Upgrade, months=months,
+                                              product_name=product_names, product_amount=product_amount),
                       'recipients': [u.email], 'subject': "Maandelijks overzicht transacties {}".format(months)}
             emails.append(result)
 

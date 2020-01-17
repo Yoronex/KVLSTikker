@@ -17,6 +17,7 @@ slide_time = 0
 
 cal = Calendar()
 
+
 @socketio.on('connect', namespace='/test')
 def test_connect():
     emit('my response', {'data': 'Connected'})
@@ -55,7 +56,6 @@ def get_spotify_data():
         return {'logged in': False}
 
 
-
 @socketio.on('slide_data', namespace='/test')
 def update_slide_data(msg):
     name = msg["name"]
@@ -90,7 +90,9 @@ def get_slide_data(name):
     elif name == "PriceList":
         pnames = []
         prices = []
-        products = Product.query.filter(and_(Product.purchaseable == True, Product.id != dbhandler.settings['dinner_product_id'])).order_by(Product.order.asc()).all()
+        products = Product.query.filter(
+            and_(Product.purchaseable == True, Product.id != dbhandler.settings['dinner_product_id'])).order_by(
+            Product.order.asc()).all()
         for p in products:
             pnames.append(p.name)
             prices.append("€ {}".format(('%.2f' % p.price).replace('.', ',')))
@@ -117,8 +119,10 @@ def get_slide_data(name):
             enddate = datetime.now()
             begindate = stats.get_yesterday_for_today(enddate)
 
-            idsb, valuesb, namesb = stats.most_bought_of_one_product_by_users(dbhandler.settings['beer_product_id'], begindate, enddate)
-            idsf, valuesf, namesf = stats.most_bought_of_one_product_by_users(dbhandler.settings['flugel_product_id'], begindate, enddate)
+            idsb, valuesb, namesb = stats.most_bought_of_one_product_by_users(dbhandler.settings['beer_product_id'],
+                                                                              begindate, enddate)
+            idsf, valuesf, namesf = stats.most_bought_of_one_product_by_users(dbhandler.settings['flugel_product_id'],
+                                                                              begindate, enddate)
 
             most_beers = get_top_users(namesb, valuesb)
             most_flugel = get_top_users(namesf, valuesf)
@@ -130,7 +134,6 @@ def get_slide_data(name):
         history = []
 
         now = datetime.now()
-        print("now: " + str(now))
         for i in range(1, len(spotify.history)):
             timediff = now - spotify.history[i]['end-time']
             minutes = int((timediff.seconds + slide_time) / 60)
