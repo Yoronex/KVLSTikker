@@ -77,3 +77,14 @@ def is_18min(u):
 
 app.jinja_env.globals.update(get_date_today=get_date_today)
 app.jinja_env.globals.update(is_18min=is_18min)
+
+now = datetime.now()
+if (now.month is 1 and now.day > 10) or (1 < now.month < 12):
+    en_snow = False
+else:
+    en_snow = True
+
+
+@app.context_processor
+def snow():
+    return dict(snow=en_snow)
