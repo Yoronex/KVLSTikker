@@ -27,7 +27,8 @@ def initialize_settings():
                         'borrel_mode_start_amount': '0',
                         'last_overview_email': '2019-07-01',
                         'last_debt_email': '2019-07-01',
-                        'treasurer-email': ""}
+                        'treasurer-email': "",
+                        'birthday_groups': "[]"}
     # Get all settings that are in the database
     sses = Setting.query.all()
     settings_keys = []
@@ -835,12 +836,13 @@ def force_edit():
 
 def is_birthday():
     today = datetime.today()
+    birthday_groups = json.loads(settings['birthday_groups'])
     days_in_year = 365.2425
     birthdays = []
     for u in User.query.all():
         bday = datetime(today.year, u.birthday.month, u.birthday.day)
         diff = (today - bday).days
-        if 0 <= diff <= 7:
+        if (0 <= diff <= 7) and (u.usergroup_id in birthday_groups):
             age = int((today - u.birthday).days / days_in_year)
             birthdays.append({"user": u, "age": age})
     return birthdays
