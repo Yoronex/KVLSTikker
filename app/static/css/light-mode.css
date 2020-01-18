@@ -33,6 +33,12 @@
     border-color: #0b8337 !important;
 }
 
+.btn-secondary {
+    background-color: #ffd94a !important;
+    color: white !important;
+    border-color: #FFE26F !important;
+}
+
 .btn-grey {
     background-color: #939393;
     color: #000000;

@@ -1,11 +1,21 @@
 {% extends "base.html" %}
 
 {% block scripts %}
+{{super()}}
     <script src="{{url_for('.static', filename='js/cart.js')}}"></script>
     <script>
         initCart({{ drink.price|tojson }});
+        $(function() {
+            $('#toggle-one').bootstrapToggle();
+          })
     </script>
-{{super()}}
+<script type="text/javascript" src="{{url_for('.static', filename='js/bootstrap4-toggle.min.js')}}"></script>
+{% endblock %}
+
+
+{% block styles %}
+    {{super()}}
+    <link rel="stylesheet" href="{{url_for('.static', filename='css/bootstrap4-toggle.min.css')}}">
 {% endblock %}
 
 {% block app_content %}
@@ -102,7 +112,7 @@
             <div class="img-thumbnail">
                 <table id="cart" width="100%"></table>
                 <hr>
-                <input {% if shared == true %}type="hidden"{% endif %} type="checkbox" id="round">{% if shared == false %} Rondje{% endif %}
+                {% if shared == false %}Rondje {% endif %}<input {% if shared == true %}type="hidden"{% endif %} type="checkbox" id="round" data-toggle="toggle" data-on="Ja" data-off="Nee" data-offstyle="secondary">
                 <a class="btn btn-block btn-grey" id="submitbutton" onclick="submitCart()" width="90%">Versturen</a>
             </div>
         </div>
