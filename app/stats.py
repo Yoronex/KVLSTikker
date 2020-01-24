@@ -142,12 +142,12 @@ def get_yesterday_for_today(enddate):
     return datetime(begindate.year, begindate.month, begindate.day, 12, 0, 0)
 
 
-def top10(count, data):
+def top_n(count, data, n):
     data.sort(key=getStatValue, reverse=True)
-    if len(count) <= 10:
+    if len(count) <= n:
         size = len(count)
     else:
-        size = 9
+        size = n - 1
 
     ids = [data[i][0] for i in range(0, size)]
     labels = [data[i][1] for i in range(0, size)]
@@ -206,7 +206,7 @@ def balance_over_time_user(userid, parsedbegin, parsedend):
     return datat, idw, labelw, valuew
 
 
-def most_bought_products_per_user(userid, parsedbegin, parsedend):
+def most_bought_products_per_user(userid, parsedbegin, parsedend, n=20):
     count = {}
 
     purchases = Purchase.query.filter(and_(Purchase.user_id == userid, Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend, Purchase.round == False, Purchase.product_id != settings['dinner_product_id'])).all()
@@ -220,7 +220,7 @@ def most_bought_products_per_user(userid, parsedbegin, parsedend):
     data = []
     for p_id, amount in count.items():
         data.append((p_id, Product.query.get(p_id).name, int(amount)))
-    ids, values, labels = top10(count, data)
+    ids, values, labels = top_n(count, data, n)
 
     return ids, values, labels
 
@@ -247,7 +247,7 @@ def most_bought_of_one_product_by_groups(drinkid, parsedbegin, parsedend):
     datag = []
     for g_id, amount in count_groups.items():
         datag.append((g_id, Usergroup.query.get(g_id).name, int(amount)))
-    idsg, valuesg, labelsg = top10(count_groups, datag)
+    idsg, valuesg, labelsg = top_n(count_groups, datag, 20)
 
     return idsg, valuesg, labelsg
 
@@ -266,7 +266,7 @@ def most_bought_of_one_product_by_users(drinkid, parsedbegin, parsedend):
     datau = []
     for u_id, amount in count.items():
         datau.append((u_id, User.query.get(u_id).name, int(amount)))
-    idsu, valuesu, labelsu = top10(count, datau)
+    idsu, valuesu, labelsu = top_n(count, datau, 20)
 
     return idsu, valuesu, labelsu
 
@@ -299,7 +299,7 @@ def most_bought_of_one_product_by_groups_from_group(drinkid, groupid, parsedbegi
     for g_id, amount in count_groups.items():
         datag.append((g_id, Usergroup.query.get(g_id).name, int(amount)))
 
-    idsg, valuesg, labelsg = top10(count_groups, datag)
+    idsg, valuesg, labelsg = top_n(count_groups, datag, 20)
 
     return idsg, valuesg, labelsg
 
@@ -318,7 +318,7 @@ def most_bought_of_one_product_by_users_from_group(drinkid, groupid, parsedbegin
     datau = []
     for u_id, amount in count.items():
         datau.append((u_id, User.query.get(u_id).name, int(amount)))
-    idsu, valuesu, labelsu = top10(count, datau)
+    idsu, valuesu, labelsu = top_n(count, datau, 20)
 
     return idsu, valuesu, labelsu
 
@@ -359,7 +359,7 @@ def most_alcohol_drank_by_users(parsedbegin, parsedend):
     datau = []
     for u_id, amount in count.items():
         datau.append((u_id, User.query.get(u_id).name, float(amount)))
-    idsu, valuesu, labelsu = top10(count, datau)
+    idsu, valuesu, labelsu = top_n(count, datau, 20)
 
     return idsu, valuesu, labelsu
 

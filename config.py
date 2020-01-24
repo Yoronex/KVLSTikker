@@ -12,6 +12,7 @@ class Config(object):
     BACKUP_FOLDER = os.path.join(basedir, 'backup')
     ALBUM_COVER_FOLDER = os.path.join(basedir, 'app/static/covers')
     SPOTIFY_CACHE_FOLDER = os.path.join(basedir, 'spotifycache')
+    DOCUMENT_FOLDER = os.path.join(basedir, 'documents')
     MAX_BACKUPS = 20
     ALLOWED_EXTENSIONS = {'jpg', 'png', 'bmp', 'gif'}
     ADMIN_PASSWORD = "knotgang"

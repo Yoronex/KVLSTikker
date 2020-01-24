@@ -1,6 +1,6 @@
 {% extends 'bootstrap/base.html' %}
 
-{% set version = "1.4.1" %}
+{% set version = "1.4.2" %}
 
 {% block title %}
 {% if title %}Tikker - {{ title }}
@@ -32,7 +32,7 @@
         $("#wrapper").toggleClass("toggled");
     });
 </script>
-{% if request.cookies.get('snow') != 'False' %}
+{% if request.cookies.get('snow') != 'False' and snow == "True" %}
 <script type="text/javascript" src="{{ url_for('.static', filename='js/snowstorm.js') }}"></script>
 {% endif %}
 {% endblock %}
@@ -101,11 +101,25 @@
                     <hr>
                     <h5>Bekende bugs</h5>
                     <ul>
-                        <li>Wanneer je inlogt met Spotify, log je automatisch in als de eerste persoon die dit deed in de huidige installatie van Tikker</li>
-                        <li>Het keuzemenu bij Tikker BigScreen wie inlogt op Spotify werkt niet</li>
+                        <li>Geen! Hoera!</li>
                     </ul>
                     <hr>
                     <h5>Changelog</h5>
+                    <b>Versie 1.4.2</b>: Bugfixes
+                    <ul>
+                        <li>Biertje Kwartiertje toegevoegd aan BigScreen</li>
+                        <li>Inventariscorrectie genereert nu een rapport in het .docx formaat in de map 'documents'</li>
+                        <li>De maandelijkse overzichtemails hebben nu ook een tabel met hoeveel er van alles gekocht is</li>
+                        <li>De feestdagen zijn voorbij, dus de sneeuw is uitgezet</li>
+                        <li>De "Rondje" checkbox is vervangen door een toggle knop voor een betere touchscreen ervaring</li>
+                        <li>Bug gefixt in inventariscorrectie die de verkeerde of geen inventaris liet zien bij producten</li>
+                        <li>Bug gefixt in inventariscorrectie die bij het corrigeren van negatieve inventaris fouten maakte in de inventaris database</li>
+                        <li>Bug gefixt die de kalender op BigScreen niet in chronologische volgorde zette, maar in volgorde van toevoegen aan de agenda</li>
+                        <li>Bug gefixt die BigScreen liet crashen wanneer iemand Flugel had gedronken</li>
+                        <li>Bug gefixt errors veroorzaakte wanneer iemand een podcast aan het afspelen was op Spotify</li>
+                        <li>Bug gefixt die het versturen van emails stopt, als de email server weigert hem te versturen</li>
+                        <li>Enkele wijzigingen doorgevoord die <i>floating point errors</i> in saldo's verminderen</li>
+                    </ul>
                     <b>Versie 1.4.1 (11/01/2019)</b>: Penningmeester email
                     <ul>
                         <li>De penningmeester van de bar krijgt nu samen met de schuldemails een mail met de actuele saldo's, inventaris en winstpotjes</li>
@@ -329,12 +343,14 @@
                     Dark Mode
                     {% endif %}
                 </a>
+                {% if snow == "True" %}
                 <a onclick="toggle_snow()" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}" style="cursor:pointer; color: #495057;" >Sneeuw
                     {% if request.cookies.get('snow') == 'False' %}
                     aan
                     {% else %}
                     uit
                     {% endif %}
+                {% endif %}
                 </a>
             </div>
             <div style="position: absolute; bottom: 0;">

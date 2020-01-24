@@ -237,3 +237,4 @@ migrations_old_2/versions/9925adbe0c25_create_all_tables.py
 /app.db
 app/static/covers/
 covers/
+documents/

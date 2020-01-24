@@ -12,3 +12,4 @@ flask_cors==3.0.8
 spotipy==2.4.4
 wget==3.2
 gevent==1.4.0
+python-docx==0.8.10
