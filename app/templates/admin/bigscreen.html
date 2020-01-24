@@ -5,15 +5,15 @@
     <div class="row">
         <!--<div class="col-xl-3">
             <a href="{{ url_for('api_spotify_login') }}" class="btn btn-block btn-green">Spotify login</a>
-        </div>
-        <div class="col-xl-3">
-            <a href="{{ url_for('api_spotify_logout') }}" class="btn btn-block btn-yellow">Spotify logout</a>
         </div>-->
         <div class="col-xl-3">
             <a href="{{ url_for('api_disable_snow') }}" class="btn btn-block btn-green">Sneeuw uit</a>
         </div>
         <div class="col-xl-3">
             <a href="{{ url_for('api_reload_bigscreen') }}" class="btn btn-block btn-yellow">Herstarten</a>
+        </div>
+        <div class="col-xl-3">
+            <a href="{{ url_for('biertje_kwartiertje') }}" class="btn btn-block btn-green">Biertje Kwartiertje</a>
         </div>
     </div>
 
@@ -71,6 +71,34 @@
         <div class="col-xl img-thumbnail">
             <h5 style="text-align: center; font-weight: bold">Bericht op scherm</h5>
             {{ wtf.quick_form(form_interrupt) }}
+        </div>
+        <div class="col-xl img-thumbnail">
+            <table width="100%" style="font-size: 1rem;">
+                <tr>
+                    <th colspan="2" style="font-size: 1.25rem">Biertje Kwartiertje</th>
+                </tr>
+                {% if bk['playing'] == true %}
+                <tr>
+                    <td style="text-align: right">Deelnemers:</td>
+                    <td style="text-align: left">{% for u in bk['participants'] %}{{ u.name }}, {% endfor %}</td>
+                </tr>
+                <tr>
+                    <td style="text-align: right">Drank:</td>
+                    <td style="text-align: left">{{ bk['drink'] }}</td>
+                </tr>
+                <tr>
+                    <td style="text-align: right">Speeltijd:</td>
+                    <td style="text-align: left">{{ bk['playtime'] }} minuten</td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="text-align: center"><a style="font-size:1rem" href="{{ url_for('stop_biertje_kwartiertje') }}" class="btn btn-block btn-green">Stoppen</a></td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="2" style="text-align: center">Er wordt momenteel geen biertje kwartiertje gespeeld! Klik op <i>Biertje Kwartiertje</i> bovenin om het in te stellen!</td>
+                </tr>
+                {% endif %}
+            </table>
         </div>
     </div>
 

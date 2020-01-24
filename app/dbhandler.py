@@ -15,6 +15,9 @@ borrel_mode_drinks = []
 overview_emails = False
 debt_emails = False
 
+biertje_kwartiertje_participants = []  # tuple: (user_id, quantity)
+biertje_kwartiertje_time = 15
+biertje_kwartiertje_drink = -1
 
 def fix_float_errors_in_user_balances():
     users = User.query.all()

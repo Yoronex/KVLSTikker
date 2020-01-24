@@ -1,4 +1,6 @@
-from app import app, socketio, stats, spotify, dbhandler
+import math
+
+from app import app, socketio, stats, spotify, dbhandler, EN_SNOW
 from flask_socketio import emit
 from datetime import datetime
 from sqlalchemy import and_
@@ -40,13 +42,55 @@ def init_bigscreen(msg):
                             'data': slide},
                   'spotify': spotify_data,
                   'stats': {'daily': stats_daily,
-                            'max': stats_max}})
+                            'max': stats_max},
+                  'snow': EN_SNOW})
 
 
 @socketio.on('spotify', namespace='/test')
 def update_spotify_request():
     spotify_data = get_spotify_data()
     emit('spotify update', spotify_data)
+
+
+@socketio.on('biertje_kwartiertje_exec', namespace='/test')
+def biertje_kwartiertje_purchase():
+    drink_id = dbhandler.biertje_kwartiertje_drink
+    product = Product.query.get(drink_id)
+
+    total_bought = 0
+    success_messages = {}
+    for participant in dbhandler.biertje_kwartiertje_participants:
+        total_bought += int(participant[1])
+        if dbhandler.borrel_mode_enabled and drink_id in dbhandler.borrel_mode_drinks:
+            dbhandler.addpurchase(drink_id, int(participant[0]), int(participant[1]), False, 0)
+        else:
+            alert = (dbhandler.addpurchase(drink_id, int(participant[0]), int(participant[1]), False, product.price))
+            success_messages = process_alert_from_adddrink(alert, success_messages)
+
+    if dbhandler.borrel_mode_enabled and drink_id in dbhandler.borrel_mode_drinks:
+        alert = (dbhandler.addpurchase(drink_id, int(dbhandler.settings['borrel_mode_user']), total_bought, True, product.price))
+        success_messages = process_alert_from_adddrink(alert, success_messages)
+
+    final_flash = ""
+    for front, end in success_messages.items():
+        final_flash = final_flash + str(front) + " " + end + ", "
+    if final_flash != "":
+        send_transaction(final_flash[:-2])
+
+    update_stats()
+
+
+def process_alert_from_adddrink(alert, success_messages):
+    if alert[3] == "success":
+        q = alert[0]
+        if math.floor(q) == q:
+            q = math.floor(q)
+        key = "{}x {} voor".format(q, alert[1])
+        if key not in success_messages:
+            success_messages[key] = alert[2]
+        else:
+            success_messages[key] = success_messages[key] + ", {}".format(alert[2])
+    return success_messages
 
 
 def get_spotify_data():
@@ -228,6 +272,14 @@ def send_reload():
 
 def disable_snow():
     socketio.emit('snow', None, namespace='/test')
+
+
+def start_biertje_kwartiertje():
+    socketio.emit('biertje_kwartiertje_start', {'minutes': dbhandler.biertje_kwartiertje_time}, namespace='/test')
+
+
+def stop_biertje_kwartiertje():
+    socketio.emit('biertje_kwartiertje_stop', None, namespace='/test')
 
 
 def get_current_calendar():

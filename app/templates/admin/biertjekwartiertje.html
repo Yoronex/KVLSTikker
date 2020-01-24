@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% set shared = 'False' %}
+
+{% block scripts %}
+{{super()}}
+<script src="{{url_for('.static', filename='js/cart.js')}}"></script>
+<script>
+    biertjekwartiertje = true;
+    initCart(0, {{ already_playing|tojson }});
+</script>
+{% endblock %}
+
+{% block app_content %}
+<body data-minus-img="{{ url_for('static', filename='img/minus.png') }}">
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl">
+            {%  include 'userlistbuttons.html' %}
+        </div>
+        <div class="col-xl-3 min-width-460-md">
+
+            <div class="img-thumbnail" width="100%" style="font-size: 12pt;">
+                <img class="front-image" src="{{ url_for('.static', filename='img/clock.jpg' ) }}" style="max-width:100%;max-height:100%; display: block; margin: 0 auto;">
+            </div>
+
+            <div class="img-thumbnail" width="100%" style="font-size: 12pt">
+                <table style="margin-left:auto;margin-right:auto;">
+                    <tr>
+                        <th colspan="2" style="font-size: 28px; color: red;">Biertje Kwartiertje</th>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="text-align: center;">Biertje kwartiertje: de regels zijn simpel. Elk kwartier een nieuw biertje. Simpel toch?
+                        Omdat we veelzijdig zijn, hoef je het niet met een biertje te spelen en ook mag je zelf de lengte van je kwartiertje kiezen!
+                        Tikker tikt deze drankjes automatisch af voor alle deelnemers.</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="img-thumbnail" width="100%" style="font-size: 12pt; text-align: center">
+                <form>
+                    <label class="form-control-label" for="drink">Drank</label><br>
+                    <select id="drink" name="drink" style="width: 100%">
+                        {% for p in products %}
+                        <option value="{{ p.id }}">{{ p.name }} (€{{ '%.2f' % p.price }} ps)</option>
+                        {% endfor %}
+                    </select>
+                    <br>
+                    <label class="form-control-label" for="playtime">Tijd (in minuten)</label>
+                    <input type="number" id="playtime" class="form-control" name="playtime" value="15" style="width: 100%">
+                </form>
+            </div>
+
+            <div class="img-thumbnail">
+                <table id="cart" width="100%"></table>
+                <hr>
+                <input type="hidden" type="checkbox" id="round">
+                <btn class="btn btn-block btn-grey" id="submitbutton" onclick="submitCart()" width="90%">Versturen</btn>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

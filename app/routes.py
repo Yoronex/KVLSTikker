@@ -1,8 +1,7 @@
 from flask import render_template, flash, redirect, url_for, request, abort, jsonify, json, make_response
 from sqlalchemy import and_
 from app import app, stats, socket, spotify, socketio, dbhandler, emailhandler
-from app.forms import UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm, \
-    ChangeDrinkForm, ChangeDrinkImageForm, AddInventoryForm, PayOutProfitForm, AddQuoteForm, SlideInterruptForm, ChooseSpotifyUser
+from app.forms import *
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory
 from flask_breadcrumbs import register_breadcrumb
 import copy
@@ -911,11 +910,20 @@ def server_status():
 ########################
 
 
+@register_breadcrumb(app, '.admin.bigscreen', 'BigScreen', order=2)
 @app.route("/admin/bigscreen", methods=['GET', 'POST'])
 def bigscreen():
     form_quote = AddQuoteForm()
     form_interrupt = SlideInterruptForm()
     form_spotify = ChooseSpotifyUser()
+
+    if len(dbhandler.biertje_kwartiertje_participants) > 0:
+        bk = {'playing': True,
+              'participants': [User.query.get(x[0]) for x in dbhandler.biertje_kwartiertje_participants],
+              'drink': Product.query.get(dbhandler.biertje_kwartiertje_drink).name,
+              'playtime': dbhandler.biertje_kwartiertje_time}
+    else:
+        bk = {'playing': False}
 
     if form_quote.submit_quote.data and form_quote.validate_on_submit():
         dbhandler.addquote(form_quote.quote.data)
@@ -934,8 +942,59 @@ def bigscreen():
             spotify.set_cache(os.path.join(app.config['SPOTIFY_CACHE_FOLDER'], '.spotifyoauthcache-' + form_spotify.spotify_user_name.data))
             return redirect(url_for('api_spotify_login'))
 
-    return render_template('admin/bigscreen.html', title="BigScreen Beheer", h1="BigScreen Beheer", form_quote=form_quote,
+    return render_template('admin/bigscreen.html', title="BigScreen Beheer", h1="BigScreen Beheer", form_quote=form_quote, bk=bk,
                            form_interrupt=form_interrupt, form_spotify=form_spotify, spusername=spotify.current_user), 200
+
+
+@register_breadcrumb(app, '.admin.bigscreen.bk', 'Biertje Kwartiertje', order=3)
+@app.route("/admin/bigscreen/biertjekwartiertje")
+def biertje_kwartiertje():
+    usergroups = get_usergroups_with_users()
+    dinnerid = dbhandler.settings['dinner_product_id']
+    products = Product.query.filter(and_(Product.purchaseable == True, Product.id != dinnerid)).all()
+
+    already_playing = []
+    for i in dbhandler.biertje_kwartiertje_participants:
+        for j in range(0, i[1]):
+            already_playing.append({'id': i[0], 'name': User.query.get(i[0]).name})
+
+    return render_template('admin/biertjekwartiertje.html', title="Biertje Kwartiertje", h1="Biertje kwartiertje instellen",
+                           usergroups=usergroups, shared=False, User=User, products=products, already_playing=already_playing), 200
+
+
+@app.route("/admin/bigscreen/biertjekwartiertje/<string:cart>")
+def start_biertje_kwartiertje(cart):
+    dbhandler.biertje_kwartiertje_participants = []
+    split = cart.split('&')
+    for order in split[1:len(split)]:
+        data = order.split('a')
+        dbhandler.biertje_kwartiertje_participants.append((int(data[0]), int(data[1])))
+
+    if len(dbhandler.biertje_kwartiertje_participants) > 0:
+        dbhandler.biertje_kwartiertje_time = int(request.args['time'])
+        dbhandler.biertje_kwartiertje_drink = int(request.args['drink'])
+        socket.start_biertje_kwartiertje()
+    else:
+        stop_biertje_kwartiertje()
+
+    return redirect(url_for("bigscreen"))
+
+
+@app.route("/admin/bigscreen/biertjekwartiertje/stop")
+def stop_biertje_kwartiertje():
+    dbhandler.biertje_kwartiertje_participants = []
+    dbhandler.biertje_kwartiertje_time = 0
+    dbhandler.biertje_kwartiertje_drink = -1
+    socket.stop_biertje_kwartiertje()
+    return redirect(url_for("bigscreen"))
+
+
+@app.route("/admin/bigscreen/biertjekwartiertje/test")
+def test_biertje_kwartiertje():
+    print(dbhandler.biertje_kwartiertje_participants)
+    print(dbhandler.biertje_kwartiertje_time)
+    print(dbhandler.biertje_kwartiertje_drink)
+    return redirect(url_for("bigscreen"))
 
 
 @app.route("/api/spotify/login")
