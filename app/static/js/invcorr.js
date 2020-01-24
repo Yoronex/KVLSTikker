@@ -4,6 +4,7 @@ var max;
 var inventories = [];
 var usergroup_ids = {};
 var result = [];
+var product_id;
 
 function init(pr, inv, g_ids) {
     products = pr;
@@ -14,10 +15,8 @@ function init(pr, inv, g_ids) {
     updatePage();
 }
 
-var product_id;
-
 function getInv(inventory) {
-    if (inventory['id'] === product_id) {
+    if (inventory['product_id'] === product_id) {
         return inventory
     }
 }
@@ -30,6 +29,11 @@ async function updatePage() {
     }
 
     index++;
+
+    var percentage = Math.round(index * 100 / max);
+    var progress = document.getElementById("progress");
+    progress.style.width = percentage.toString() + "%";
+
     if (index < products.length) {
         var p = products[index];
         if (index !== 0) {
@@ -46,10 +50,6 @@ async function updatePage() {
 
         document.getElementById("curr_inv").innerHTML = p['stock'];
         document.getElementById("real_inv").value = p['stock'];
-
-        var percentage = Math.round(index * 100 / max);
-        var progress = document.getElementById("progress");
-        progress.style.width = percentage.toString() + "%";
 
         product_id = p['id'];
         var invs = inventories.filter(getInv);
@@ -79,6 +79,8 @@ async function updatePage() {
         if (index === products.length - 1) {
             document.getElementById("next-btn").innerHTML = "Voltooien";
         }
+
+        document.getElementById("loader").style.display = "none";
     }
     else {
         var http = new XMLHttpRequest();
@@ -94,14 +96,14 @@ async function updatePage() {
             }
         };
         http.send(param);
+        document.getElementById("next-btn").classList.add('disabled');
     }
-    document.getElementById("loader").style.display = "none";
 }
 
 function addToResult() {
     var real_inv = parseInt(document.getElementById("real_inv").value);
     var old_inv = parseInt(document.getElementById("curr_inv").innerHTML);
-    var diff = old_inv - real_inv;
+    var diff = real_inv - old_inv;
     if (diff < 0) {
         document.getElementById("product-list-" + products[index]['id'].toString()).cells[2].innerHTML = diff.toString();
     } else {

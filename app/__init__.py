@@ -30,6 +30,9 @@ if not os.path.exists(app.config['BACKUP_FOLDER']):
 if not os.path.exists(app.config['SPOTIFY_CACHE_FOLDER']):
     os.makedirs(app.config['SPOTIFY_CACHE_FOLDER'])
 
+if not os.path.exists(app.config['DOCUMENT_FOLDER']):
+    os.makedirs(app.config['DOCUMENT_FOLDER'])
+
 list_of_files = os.listdir(app.config['BACKUP_FOLDER'])
 if len(list_of_files) >= app.config['MAX_BACKUPS']:
     full_paths = [os.path.join(app.config['BACKUP_FOLDER'], str(x)) for x in list_of_files]

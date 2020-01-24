@@ -13,6 +13,7 @@ import math
 
 from datetime import datetime, timedelta
 from dateutil import tz
+from docx import Document
 
 
 def is_filled(data):
@@ -1069,3 +1070,36 @@ def test_add_quotes():
 def test_interrupt():
     socket.send_interrupt({"name": "Message", "data": "Dit is een interrupt"})
     return redirect(url_for('index'))
+
+
+@app.route('/testdocument')
+def test_document():
+    doc = Document()
+    doc.add_heading("Test document", 0)
+    doc.add_heading("Door Roy", 1)
+
+    doc.add_paragraph('Een paragraaf')
+
+    doc.add_paragraph('Een', style='List Number')
+    doc.add_paragraph('Twee', style='List Number')
+    doc.add_paragraph('Drie', style='List Number')
+
+    records = [
+        [3, '101', 'Spam'],
+        [7, '422', 'Eggs'],
+        [4, '631', 'Spam, spam, eggs, and spam']
+    ]
+
+    table = doc.add_table(rows=0, cols=3)
+    for tuple in records:
+        print(tuple)
+        print()
+        row_cells = table.add_row().cells
+        row_cells[0].text = str(tuple[0])
+        row_cells[1].text = tuple[1]
+        row_cells[2].text = tuple[2]
+
+    doc.add_page_break()
+
+    doc.save(os.path.join(app.config['DOCUMENT_FOLDER'], 'demo.docx'))
+    return True

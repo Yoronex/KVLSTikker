@@ -1,13 +1,14 @@
 import math
 from app import app, db, stats
-from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory, Recipe, Inventory_usage, Setting, Quote
+from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory, Recipe, Inventory_usage, \
+    Setting, Quote
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from random import randrange
 import os
 import json
 from sqlalchemy import and_
-
+from docx import Document
 
 settings = {}
 borrel_mode_enabled = False
@@ -18,6 +19,7 @@ debt_emails = False
 biertje_kwartiertje_participants = []  # tuple: (user_id, quantity)
 biertje_kwartiertje_time = 15
 biertje_kwartiertje_drink = -1
+
 
 def fix_float_errors_in_user_balances():
     users = User.query.all()
@@ -68,7 +70,6 @@ def initialize_settings():
 
 # Run initialization of settings
 initialize_settings()
-
 
 # Determine whether an option should be given to send emails with monthly overviews
 now = datetime.now()
@@ -122,7 +123,8 @@ def borrel_mode(drinkid):
             total_bought = 0
             # We count the total amount of borrel mode products bought (also before the borrel started)
             for p1 in products:
-                for p in Purchase.query.filter(Purchase.user_id == borrel_mode_user, Purchase.product_id == p1, Purchase.price > 0).all():
+                for p in Purchase.query.filter(Purchase.user_id == borrel_mode_user, Purchase.product_id == p1,
+                                               Purchase.price > 0).all():
                     total_bought += p.amount
 
             # Calculate how many products are left
@@ -328,7 +330,8 @@ def adddrink(name, price, category, order, image, hoverimage, recipe, inventory_
     # If we have a recipe...
     if result_recipe is not None:
         # We create a product with the recipe
-        product = Product(name=name, price=price, category=category, order=order, purchaseable=True, image="", hoverimage="",
+        product = Product(name=name, price=price, category=category, order=order, purchaseable=True, image="",
+                          hoverimage="",
                           recipe_input=result_recipe)
     # If we do not have a recipe...
     else:
@@ -338,7 +341,8 @@ def adddrink(name, price, category, order, image, hoverimage, recipe, inventory_
         if alcohol is "":
             alcohol = "0"
         # Then, we create a new product in the database
-        product = Product(name=name, price=price, category=category, order=order, purchaseable=True, image="", hoverimage="",
+        product = Product(name=name, price=price, category=category, order=order, purchaseable=True, image="",
+                          hoverimage="",
                           inventory_warning=inventory_warning, volume=int(float(volume)), unit=unit,
                           alcohol=float(alcohol.replace(",", ".").replace("%", "").replace(" ", "")) / 100)
     db.session.add(product)
@@ -483,7 +487,8 @@ def delusergroup(usergroup_id):
     return "Groep {} verwijderd".format(usergroup.name), "success"
 
 
-def editdrink_attr(product_id, name, price, category, order, purchaseable, recipe, inventory_warning, alcohol, volume, unit):
+def editdrink_attr(product_id, name, price, category, order, purchaseable, recipe, inventory_warning, alcohol, volume,
+                   unit):
     result_recipe = parse_recipe(recipe)
     if type(result_recipe) is tuple:
         return result_recipe
@@ -653,6 +658,22 @@ def find_newest_inventory(product_id):
     return find_inventory(product_id, -1)
 
 
+def find_newest_product_price(product_id):
+    inventories = Inventory.query.filter(Inventory.product_id == product_id, Inventory.quantity > 0).all()
+    if len(inventories) == 0:
+        inventories = Inventory.query.filter(Inventory.product_id == product_id, Inventory.quantity == 0).all()
+        if len(inventories) == 0:
+            return 0.0
+        elif type(inventories) is Inventory:
+            return inventories.price_before_profit
+        else:
+            return inventories[-1].price_before_profit
+    elif type(inventories) is Inventory:
+        return inventories.price_before_profit
+    else:
+        return inventories[-1].price_before_profit
+
+
 def find_oldest_inventory(product_id):
     return find_inventory(product_id, 0)
 
@@ -758,14 +779,19 @@ def take_from_inventory(user, product_id, quantity):
     return {"costs": added_costs, "inventory_usage": inventory_usage}
 
 
-def add_to_inventory(product_id, quantity):
+def increase_inventory_quantity(product_id, quantity):
     p = Product.query.get(product_id)
     inventory = find_newest_inventory(product_id)
     if inventory is None:
         inventories = Inventory.query.filter(Inventory.product_id == product_id).all()
         if len(inventories) == 0:
-            inventory = Inventory(product_id=product_id, timestamp=datetime.utcnow(), price_before_profit=0.0,
-                                  quantity=0, note="Extra inventaris")
+            empty_invs = Inventory.query.filter(Inventory.product_id == product_id, Inventory.quantity < 0).all()
+            if len(empty_invs) == 0:
+                price = 0.0
+            else:
+                price = empty_invs[-1].price_before_profit
+            inventory = Inventory(product_id=product_id, timestamp=datetime.utcnow(), price_before_profit=price,
+                                  quantity=0, note="Inventariscorrectie")
             db.session.add(inventory)
         elif type(inventories) is Inventory:
             inventory = Inventory
@@ -797,25 +823,118 @@ def fix_negative_inventory(p_id):
 
 
 def correct_inventory(json):
+    # Create a list of all groups that will participate in this inventory correction
+    all_groups = set()
     for i in json:
+        s = set(i['groups'])
+        all_groups.update(s)
+    all_groups = list(all_groups)
+    per_group_costs = [0] * len(all_groups)
+    total_costs = 0
+
+    # Create a document for the overview of this correction
+    now = datetime.now()
+    document = Document()
+    document.add_heading('Inventaris Correctie', 0)
+
+    document.add_paragraph("Op {} om {} is er een inventariscorrectie uitgevoerd. Hierbij zijn de volgende wijzigingen "
+                           "doorgevoerd in de inventaris.".format(now.strftime("%Y-%m-%d"), now.strftime("%H:%M:%S")))
+
+    # Table layout: Product name | Inventory in Tikker | Real inventory | Difference | Costs | <per group its costs or
+    # profit>
+    table = document.add_table(rows=1, cols=5 + len(all_groups))
+    header_cells = table.rows[0].cells
+    header_cells[0].text = "Productnaam"
+    header_cells[1].text = "Inv in Tikker"
+    header_cells[2].text = "Echte inv"
+    header_cells[3].text = "Verschil"
+    header_cells[4].text = "Kosten"
+    for i in range(0, len(all_groups)):
+        header_cells[5 + i].text = "Kosten {}".format(Usergroup.query.get(all_groups[i]).name)
+
+    for i in json:
+        # Get the product object
         p = Product.query.get(i['product_id'])
-        diff = float(i['stock']) - float(calcStock(p.id))
+        # Calculate the inventory difference
+        tikker_inv = calcStock(p.id)
+        diff = int(i['stock']) - int(tikker_inv)
+
+        # Create a new row for the document table
+        row_cells = table.add_row().cells
+        row_cells[0].text = p.name
+        row_cells[1].text = str(tikker_inv)
+        row_cells[2].text = str(i['stock'])
+        row_cells[3].text = str(diff)
+        if diff < 0:
+            row_cells[4].text = '-€ %.2f' % round_up(-diff * p.price)
+            total_costs += round_up(-diff * p.price)
+        elif diff > 0:
+            row_cells[4].text = '€ %.2f' % round_down(diff * p.price)
+            total_costs += round_down(diff * p.price)
+
+        # If the difference is less than 0, we have lost some inventory, which costs money
         if diff < 0:
             for g_id in i['groups']:
+                # Get the group object
                 g = Usergroup.query.get(g_id)
-                g.profit = g.profit + diff * p.price / len(i['groups'])
+                # Calculate the costs for this group
+                cost = round_up(diff * p.price / len(i['groups']))
+                # Change its profit
+                g.profit = g.profit + cost
                 db.session.commit()
+                # Add it to the row in the table and to the cumulative costs
+                index = all_groups.index(g_id)
+                per_group_costs[index] += cost
+                row_cells[5 + index].text = '-€ %.2f' % -cost
+                # Reset the group object
                 g = None
             take_from_inventory(None, p.id, -diff)
         elif diff > 0:
-            add_to_inventory(p.id, diff)
-            inv = find_newest_inventory()
+            new_price = find_newest_product_price(p.id)
+            add_inventory(p.id, diff, new_price, "Inventariscorrectie")
             for g_id in i['groups']:
                 g = Usergroup.query.get(g_id)
-                g.profit = g.profit + diff * inv.price_before_profit / len(i['groups'])
+                profit_for_group = round_down(diff * new_price / len(i['groups']))
+                g.profit = g.profit + profit_for_group
                 db.session.commit()
+                # Add it to the row in the table and to the cumulative costs
+                index = all_groups.index(g_id)
+                per_group_costs[index] += profit_for_group
+                row_cells[5 + index].text = '€ %.2f' % profit_for_group
+                # Reset the group object
                 g = None
-    return "Inventaris correctie succesvol doorgevoerd!", "success"
+
+    row_cells = table.add_row().cells
+    if total_costs < 0:
+        row_cells[4].text = '-€ %.2f' % -total_costs
+    else:
+        row_cells[4].text = '€ %.2f' % total_costs
+
+    for i in range(0, len(per_group_costs)):
+        if per_group_costs[i] < 0:
+            row_cells[5 + i].text = '-€ %.2f' % -per_group_costs[i]
+        else:
+            row_cells[5 + i].text = '€ %.2f' % per_group_costs[i]
+
+    # Try to save the file
+    # If it is not possible because the file is locked, try it again with a different filename until it works
+    count = 0
+    while True:
+        filename = os.path.join(app.config['DOCUMENT_FOLDER'], 'inventariscorrectie_{}_{}.docx'
+                                .format(now.strftime("%Y%m%d"), count))
+        # If the file exists, raise the file name and try again
+        if os.path.exists(filename):
+            count += 1
+            continue
+        try:
+            # If saving the file is successful, escape the loop and finish
+            document.save(filename)
+            break
+        # If the file is opened, catch the error and try again
+        except PermissionError:
+            count += 1
+
+    return "Inventaris correctie succesvol doorgevoerd! Het rapport is opgeslagen in {}".format(filename), "success"
 
 
 def payout_profit(usergroup_id, amount, password):
