@@ -954,12 +954,14 @@ def biertje_kwartiertje():
     dinnerid = dbhandler.settings['dinner_product_id']
     products = Product.query.filter(and_(Product.purchaseable == True, Product.id != dinnerid)).all()
 
+    drink = Product.query.get(1)
+
     already_playing = []
     for i in dbhandler.biertje_kwartiertje_participants:
         for j in range(0, i[1]):
             already_playing.append({'id': i[0], 'name': User.query.get(i[0]).name})
 
-    return render_template('admin/biertjekwartiertje.html', title="Biertje Kwartiertje", h1="Biertje kwartiertje instellen",
+    return render_template('admin/biertjekwartiertje.html', title="Biertje Kwartiertje", h1="Biertje kwartiertje instellen", drink=drink,
                            usergroups=usergroups, shared=False, User=User, products=products, already_playing=already_playing), 200
 
 

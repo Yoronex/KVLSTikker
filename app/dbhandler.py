@@ -226,6 +226,7 @@ def addpurchase(drink_id, user_id, quantity, rondje, price_per_one):
     # Update the daily stats with the new purchase
     stats.update_daily_stats_product(drink_id, quantity)
     stats.update_daily_stats('euros', balchange)
+    stats.update_daily_stats_drinker(user_id)
     # If the price is zero, we do not add this purchase as it is added somewhere else
     if price_per_one > 0:
         stats.update_daily_stats('purchases', 1)

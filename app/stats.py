@@ -17,7 +17,7 @@ daily_stats = {"products": 0,
                "rounds": 0,
                "euros": 0.0}
 
-daily_stats_seen_users = []
+daily_stats_seen_users = set({})
 
 max_stats = {"max-stats-products": 0,
              "max-stats-users": 0,
@@ -49,7 +49,7 @@ def init_daily_stats():
     daily_stats["users"] = User.query.count()
     drinkers = Purchase.query.filter(Purchase.timestamp > begindate, Purchase.product_id != settings['dinner_product_id']).group_by(Purchase.user_id).all()
     for d in drinkers:
-        daily_stats_seen_users.append(d.user_id)
+        daily_stats_seen_users.add(d.user_id)
     daily_stats["drinkers"] = len(drinkers)
     daily_stats["rounds"] = Purchase.query.filter(Purchase.timestamp > begindate, Purchase.round == True, Purchase.product_id != settings['dinner_product_id']).count()
     daily_stats["purchases"] = Purchase.query.filter(Purchase.timestamp > begindate, Purchase.product_id != settings['dinner_product_id'], Purchase.price > 0).count()
@@ -129,9 +129,14 @@ def update_daily_stats_product(drinkid, amount):
 
 def update_daily_stats_drinker(user_id):
     global daily_stats_seen_users
-    if user_id not in daily_stats_seen_users:
-        daily_stats_seen_users.append(user_id)
-        update_daily_stats("drinkers", 1)
+    # Get the old length of the seen users
+    old_length = len(daily_stats_seen_users)
+    # Add the user to the set of seen users
+    daily_stats_seen_users.add(user_id)
+    # Get the new length of the seen users (can be one larger or equal to the old size)
+    new_length = len(daily_stats_seen_users)
+    # Update the daily stats with the difference between the lengths
+    update_daily_stats("drinkers", new_length - old_length)
 
 
 def get_yesterday_for_today(enddate):

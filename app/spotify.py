@@ -138,5 +138,4 @@ def current_playback():
         elif results['item']['id'] == currently_playing_id:
             history[0]['end-time'] = datetime.now()
 
-    print(results)
     return results

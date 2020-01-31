@@ -173,6 +173,9 @@ def get_slide_data(name):
 
             return {'beer': most_beers,
                     'flugel': most_flugel}
+        else:
+            return {'beer': "Niemand :(",
+                    'flugel': "Niemand :("}
 
     elif name == "RecentlyPlayed":
         history = []
