@@ -151,12 +151,42 @@ def get_slide_data(name):
     elif name == "Debt":
         unames = []
         udebt = []
+        # Get all the users with a negative balance in order from low to high
         users = User.query.filter(User.balance < 0).order_by(User.balance.asc()).all()
+        # Loop over all these users
         for u in users:
+            # Add their name and their balance to the list
             unames.append(u.name)
             udebt.append("€ {}".format(('%.2f' % u.balance).replace('.', ',')))
         return {'names': unames,
                 'amount': udebt}
+
+    elif name == "TopBalance":
+        unames = []
+        ubalances = []
+        # Get all the users with a positive balance in order from high to low
+        users = User.query.filter(User.balance > 0).order_by(User.balance.desc()).all()
+        for u in users:
+            unames.append(u.name)
+            ubalances.append("€ {}".format(('%.2f' % u.balance).replace('.', ',')))
+        return {'names': unames,
+                'amount': ubalances}
+
+    elif name == "Balance":
+        unames = []
+        ubalances = []
+        unparsed = []
+        # Loop over all users that are seen today
+        for id in stats.daily_stats_seen_users:
+            # Get the user object
+            u = User.query.get(id)
+            # Add this user with their name and balance to the list of users
+            unames.append(u.name)
+            ubalances.append("€ {}".format(('%.2f' % u.balance).replace('.', ',')))
+            unparsed.append(u.balance)
+        return {'names': unames,
+                'amount': ubalances,
+                'unparsed': unparsed}
 
     elif name == "Title":
         if dbhandler.settings['beer_product_id'] is not None and dbhandler.settings['flugel_product_id'] is not None:
