@@ -30,3 +30,5 @@ class Config(object):
     SPOTIPY_REDIRECT_URI = 'http://127.0.0.1:5000/api/spotify/login'
     SPOTIPY_SCOPE = 'user-read-playback-state user-modify-playback-state user-read-currently-playing'
     SPOTIPY_CACHE = '.spotipyoauthcache'
+    CALENDAR_URL = 'https://drive.kvls.nl/remote.php/dav/public-calendars/BKWDW9PJT2mmoRa4?export'
+    CALENDAR_UPDATE_INTERVAL = 30 * 60

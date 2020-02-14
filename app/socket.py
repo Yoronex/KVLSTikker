@@ -18,6 +18,7 @@ third_most_drank = 0
 slide_time = 0
 
 cal = Calendar()
+last_calendar_update = datetime.strptime('1970-01-01', "%Y-%m-%d")
 
 
 @socketio.on('connect', namespace='/test')
@@ -108,7 +109,7 @@ def update_slide_data(msg):
 
 
 def get_slide_data(name):
-    global third_most_drank, second_most_drank, most_drank, cal
+    global third_most_drank, second_most_drank, most_drank, cal, last_calendar_update
 
     if name == "DrankTonight":
         data = stats.most_bought_products_by_users_today(datetime.now())
@@ -230,12 +231,14 @@ def get_slide_data(name):
         return history
 
     elif name == "Calendar":
-        get_current_calendar()
+        if (datetime.now() - last_calendar_update).seconds > app.config['CALENDAR_UPDATE_INTERVAL']:
+            get_current_calendar()
+            last_calendar_update = datetime.now()
         now = pytz.utc.localize(datetime.now())
 
         items = []
         for event in cal.events:
-            if now > event.begin.datetime:
+            if now > event.begin.datetime or (event.description is not None and "TIKKERIGNORE" in event.description):
                 continue
             diff = event.begin.datetime.date() - now.date()
             items.append({'name': event.name,
@@ -317,11 +320,11 @@ def stop_biertje_kwartiertje():
 
 def get_current_calendar():
     global cal
-    req = urllib.request.Request('https://drive.kvls.nl/remote.php/dav/public-calendars/BKWDW9PJT2mmoRa4?export')
+    req = urllib.request.Request(app.config['CALENDAR_URL'])
     try:
         response = urllib.request.urlopen(req)
     except URLError:
-        return
+        raise URLError
     cal = Calendar(response.read().decode('iso-8859-1'))
 
 
