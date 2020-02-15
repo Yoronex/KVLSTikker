@@ -196,7 +196,6 @@ def view_dinner_dlc(*args, **kwargs):
         raise ValueError
 
 
-
 @app.route('/drink/<int:drinkid>', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.drink.id', '', dynamic_list_constructor=view_drink_dlc, order=2)
 def drink(drinkid):
@@ -227,7 +226,6 @@ def purchase_from_cart(drink_id, cart_string):
         return redirect(url_for('purchase_together', drinkid=drink_id, amount=msg['shared_amount']))
     else:
         return redirect(url_for('index'))
-
 
 
 @register_breadcrumb(app, '.drink.id.shared', 'Gezamelijk', order=3)
@@ -550,6 +548,44 @@ def payout_profit():
         return redirect(url_for('payout_profit'))
     return render_template("admin/manprofit.html", title="Winst uitkeren", h1="Winst uitkeren", Usergroup=Usergroup,
                            form=form), 200
+
+
+@register_breadcrumb(app, '.admin.borrelmode', "Borrel Modus", order=2)
+@app.route('/admin/borrelmode', methods=['GET', 'POST'])
+def borrel_mode():
+    if request.remote_addr != "127.0.0.1":
+        abort(403)
+    form = BorrelModeForm()
+    if form.validate_on_submit():
+        dbhandler.set_borrel_mode(form.products.data, form.user.data, form.amount.data)
+        flash('Borrel modus succesvol aangezet!', "success")
+
+    # Get general data if borrel mode is still enabled
+    borrel_data = dbhandler.borrel_mode()
+    # Construct a list of products
+    if borrel_data is not None:
+        product_string = ""
+        # For every product, add its name to the string
+        for p in dbhandler.borrel_mode_drinks:
+            product_string += Product.query.get(p).name + ", "
+        # If there are products...
+        if len(product_string) > 0:
+            # Remove the final comma and space from the string
+            product_string = product_string[:-2]
+        # Add this string to the borrel data object
+        borrel_data['products'] = product_string
+        # Add whether borrel mode is still enabled
+        borrel_data['enabled'] = dbhandler.borrel_mode_enabled
+
+    return render_template('admin/borrelmode.html', title="Borrel Modus beheren", h1="Borrel modus", form=form,
+                           borrel_data=borrel_data), 200
+
+
+@app.route('/admin/borrelmode/disable', methods=['GET'])
+def disable_borrel_mode():
+    dbhandler.borrel_mode_enabled = False
+    flash("Borrel mode uitgeschakeld", "success")
+    return redirect(url_for('borrel_mode'))
 
 
 @app.route('/admin/recalcmax')

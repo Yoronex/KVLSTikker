@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+    <div class="row">
+        <div class="col-xl-6">
+            <div style="margin: 15px">
+                <p>
+                    In borrel modus betaalt één iemand automatisch een aantal producten voor iedereen.
+                    De producten kunnen zelf gekozen worden, dus het mag er ook meer dan één zijn. Deze tellen wel allemaal mee voor hetzelfde aantal.
+                    Als er dus bijvoorbeeld 10 drankjes (Bier of Wodka) worden aangeboden door Henkie en er worden twee Wodka's en 3 biertjes afgetikt,
+                    dan zijn er nog 5 drankjes over.
+                </p>
+                <table>
+                    {% if borrel_data != none %}
+                    <tr>
+                        <td>Borrel modus: </td>
+                        <td>AAN</td>
+                    </tr>
+                    <tr>
+                        <td>Producten: </td>
+                        <td>{{ borrel_data['products'] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Wie trakteert: </td>
+                        <td>{{ borrel_data['user'] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Hoeveel over: </td>
+                        <td>{{ borrel_data['left'] }}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="2"><a href="{{ url_for('disable_borrel_mode') }}" class="btn btn-green">Borrel modus uitschakelen</a></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td>Borrel modus: </td>
+                        <td>UIT</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+        </div>
+        <div class="col-xl-6">
+            <h2>Borrelmodus beheren</h2>
+            {{ wtf.quick_form(form) }}
+        </div>
+    </div>
+{% endblock %}

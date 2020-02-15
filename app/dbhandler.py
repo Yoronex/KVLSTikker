@@ -97,28 +97,25 @@ def update_settings(key, value):
     db.session.commit()
 
 
-def borrel_mode(drinkid):
+def borrel_mode(drink_id=None):
     global borrel_mode_enabled, borrel_mode_drinks
 
     # Get the user that is paying for everything in borrel mode
     borrel_mode_user = int(settings['borrel_mode_user'])
     # If the user is -1, borrel mode is disabled so we do not have to execute anything
-    if borrel_mode_user != -1:
-        # Get the products that use borrel mode
-        products = json.loads(settings['borrel_mode_drinks'])
-        # Set the global variable so less computations are necessary in routes.py
-        borrel_mode_drinks = products
+    if borrel_mode_enabled:
         # If the current drink is in the products...
-        if drinkid in products:
+        if drink_id is None or drink_id in borrel_mode_drinks:
             total_bought = 0
             # We count the total amount of borrel mode products bought (also before the borrel started)
-            for p1 in products:
+            for p1 in borrel_mode_drinks:
                 for p in Purchase.query.filter(Purchase.user_id == borrel_mode_user, Purchase.product_id == p1,
                                                Purchase.price > 0).all():
                     total_bought += p.amount
+            total_bought = round_up(total_bought)
 
             # Calculate how many products are left
-            left_over = int(settings['borrel_mode_amount']) + int(settings['borrel_mode_start_amount']) - total_bought
+            left_over = round_up(float(settings['borrel_mode_amount']), 2) + round_up(float(settings['borrel_mode_start_amount']), 2) - total_bought
             # If it is zero or less...
             if left_over <= 0:
                 # We disable borrel mode by changing some settings and variables
@@ -128,10 +125,35 @@ def borrel_mode(drinkid):
 
             # If borrel mode is on, we set the boolean and return how many is left and who is paying
             borrel_mode_enabled = True
-            return {'left': left_over,
+            return {'left': round_down(left_over, 0),
                     'user': User.query.get(borrel_mode_user).name}
 
     return None
+
+
+def set_borrel_mode(products, user_id, amount):
+    global borrel_mode_drinks, borrel_mode_enabled
+
+    # The products variable is a list of strings, so we convert each string to an integer and add it to the list
+    borrel_mode_drinks = []
+    for p in products:
+        borrel_mode_drinks.append(int(p))
+
+    total_bought = 0
+    # We count the total amount of borrel mode products bought (also before the borrel started)
+    for p1 in products:
+        for p in Purchase.query.filter(Purchase.user_id == user_id, Purchase.product_id == p1,
+                                       Purchase.price > 0).all():
+            total_bought += p.amount
+    total_bought = round_up(total_bought)
+
+    # Update the database
+    update_settings('borrel_mode_start_amount', str(total_bought))
+    update_settings('borrel_mode_amount', str(amount))
+    update_settings('borrel_mode_user', str(user_id))
+    update_settings('borrel_mode_drinks', str(borrel_mode_drinks))
+
+    borrel_mode_enabled = True
 
 
 def remove_existing_file(filename):
@@ -832,7 +854,7 @@ def correct_inventory(json):
                            "doorgevoerd in de inventaris.".format(now.strftime("%Y-%m-%d"), now.strftime("%H:%M:%S")))
 
     # Table layout: Product name | Inventory in Tikker | Real inventory | Difference | Costs | <per group its costs or
-    # profit>
+    # profit
     table = document.add_table(rows=1, cols=5 + len(all_groups))
     header_cells = table.rows[0].cells
     header_cells[0].text = "Productnaam"
