@@ -172,7 +172,13 @@ function submitCart() {
     document.getElementById("loader").style.display = "block";
 
     var output = "/";
-    output = output + document.getElementById('round_giver').value + "&";
+    var round_giver = document.getElementById('round_giver');
+    if (round_giver !== null) {
+        output = output + round_giver.value + "&";
+    } else {
+        output = output + "0&"
+    }
+
     for (var key in cartList) {
         output = output + key;
         output = output + "a";
