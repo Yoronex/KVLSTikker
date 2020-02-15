@@ -1,6 +1,6 @@
 from flask import render_template, flash, redirect, url_for, request, abort, jsonify, json, make_response
 from sqlalchemy import and_
-from app import app, stats, socket, spotify, socketio, dbhandler, emailhandler
+from app import app, stats, socket, spotify, socketio, dbhandler, emailhandler, cart
 from app.forms import *
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory
 from flask_breadcrumbs import register_breadcrumb
@@ -218,113 +218,15 @@ def drink(drinkid):
                            shared=False, stats=statsdict, User=User), 200
 
 
-@app.route('/drink/dinner')
-@register_breadcrumb(app, '.drink.dinner', '', dynamic_list_constructor=view_dinner_dlc, order=2)
-def drink_dinner():
-    drinkid = dbhandler.settings['dinner_product_id']
-    if drinkid is None:
-        raise ValueError
-
-    drink = Product.query.get(int(drinkid))
-    usergroups = get_usergroups_with_users()
-    return render_template('drink_dinner.html', title=drink.name, h1="{} aftikken".format(drink.name), drink=drink,
-                           usergroups=usergroups, Product=Product, shared=False, User=User), 200
-
-
-@app.route('/drink/dinner/<string:cart>')
-def purchase_dinner_from_cart(cart):
-    drinkid = dbhandler.settings['dinner_product_id']
-    if drinkid is None:
-        raise ValueError
-    drink = Product.query.get(int(drinkid))
-
-    amount = 0
-    split = cart.split('&')
-    if len(split) == 0:
-        abort(500)
-    if split[0] != "0":
-        raise ValueError
-
-    for order in split[1:len(split)]:
-        data = order.split('a')
-        if data[0] != '0':
-            amount = amount + int(data[1])
-
-    price_pp = math.ceil(float(request.args['price']) * 100 / amount) / 100
-    dbhandler.add_inventory(drinkid, amount, price_pp, request.args['comments'])
-    dbhandler.editdrink_price(drinkid, price_pp)
-
-    return redirect(url_for('purchase_from_cart_together', drinkid=drinkid, amount=amount, cart=cart))
-
-
-#@app.route('/drink/<int:drinkid>/<int:userid>')
-#def purchase(drinkid, userid):
-#    product = Product.query.get(drinkid)
-#    quantity = 1
-#    alert = (dbhandler.addpurchase(drinkid, userid, quantity))
-#    flash("{}x {} voor {} verwerkt".format(alert[0], alert[1], alert[2]), alert[3])
-#    return redirect(url_for('index'))
-
-
 # Input in format of <userid>a<amount>&...
-@app.route('/drink/<int:drink_id>/<string:cart>')
-def purchase_from_cart(drink_id, cart):
-    product = Product.query.get(drink_id)
-    # final_alert = {}
-    shared = False
-    split = cart.split('&')
-    if len(split) == 0:
-        abort(500)
-    if split[0] == "0":
-        r = False
+@app.route('/drink/<int:drink_id>/<cart_string>')
+def purchase_from_cart(drink_id, cart_string):
+    msg = cart.purchase(cart_string, drink_id)
+    if msg['shared'] is True:
+        return redirect(url_for('purchase_together', drinkid=drink_id, amount=msg['shared_amount']))
     else:
-        r = True
-
-    total_bought = 0
-    success_messages = {}
-    for order in split[1:len(split)]:
-        data = order.split('a')
-        if data[0] == '0':
-            shared = True
-            amount = data[1]
-        else:
-            total_bought += int(data[1])
-            if dbhandler.borrel_mode_enabled and drink_id in dbhandler.borrel_mode_drinks:
-                dbhandler.addpurchase(drink_id, int(data[0]), int(data[1]), r, 0)
-            else:
-                alert = (dbhandler.addpurchase(drink_id, int(data[0]), int(data[1]), r, product.price))
-                success_messages = process_alert_from_adddrink(alert, success_messages)
-
-    if dbhandler.borrel_mode_enabled and drink_id in dbhandler.borrel_mode_drinks:
-        alert = (dbhandler.addpurchase(drink_id, int(dbhandler.settings['borrel_mode_user']), total_bought, True, product.price))
-        success_messages = process_alert_from_adddrink(alert, success_messages)
-
-    final_flash = ""
-    for front, end in success_messages.items():
-        final_flash = final_flash + str(front) + " " + end + ", "
-    if final_flash != "":
-        socket.send_transaction(final_flash[:-2])
-        flash(final_flash[:-2] + " verwerkt", "success")
-
-    socket.update_stats()
-
-    if not shared:
         return redirect(url_for('index'))
-    else:
-        return redirect(url_for('purchase_together', drinkid=drink_id, amount=amount))
 
-
-def process_alert_from_adddrink(alert, success_messages):
-    if alert[3] == "success":
-        q = alert[0]
-        if math.floor(q) == q:
-            q = math.floor(q)
-        key = "{}x {} voor".format(q, alert[1])
-        if key not in success_messages:
-            success_messages[key] = alert[2]
-        else:
-            success_messages[key] = success_messages[key] + ", {}".format(alert[2])
-    return success_messages
 
 
 @register_breadcrumb(app, '.drink.id.shared', 'Gezamelijk', order=3)
@@ -342,45 +244,28 @@ def purchase_together(drinkid, amount):
 
 
 # Input in format of <userid>a<amount>&
-@app.route('/drink/<int:drinkid>/shared/<int:amount>/<string:cart>')
-def purchase_from_cart_together(drinkid, amount, cart):
-    product = Product.query.get(drinkid)
-    final_alert = {}
-    success_messages = {}
-    denominator = 0
+@app.route('/drink/<int:drinkid>/shared/<int:amount>/<cart_string>')
+def purchase_from_cart_together(drinkid, amount, cart_string):
+    cart.purchase_together(cart_string, drinkid, amount)
+    return redirect(url_for('index'))
 
-    split = cart.split('&')
-    if len(split) == 0:
-        abort(500)
-    if split[0] == "0":
-        r = False
-    else:
-        r = True
-    for order in split[1:len(split)]:
-        denominator = denominator + int(order.split('a')[1])
 
-    for order in split[1:len(split)]:
-        data = order.split('a')
+@app.route('/drink/dinner')
+@register_breadcrumb(app, '.drink.dinner', '', dynamic_list_constructor=view_dinner_dlc, order=2)
+def drink_dinner():
+    drinkid = dbhandler.settings['dinner_product_id']
+    if drinkid is None:
+        raise ValueError
 
-        if dbhandler.borrel_mode_enabled and drinkid in dbhandler.borrel_mode_drinks:
-            dbhandler.addpurchase(drinkid, int(data[0]), float(int(data[1])) * amount / denominator, r, 0)
-        else:
-            alert = dbhandler.addpurchase(drinkid, int(data[0]), float(int(data[1])) * amount / denominator, r, product.price)
-            success_messages = process_alert_from_adddrink(alert, success_messages)
+    drink = Product.query.get(int(drinkid))
+    usergroups = get_usergroups_with_users()
+    return render_template('drink_dinner.html', title=drink.name, h1="{} aftikken".format(drink.name), drink=drink,
+                           usergroups=usergroups, Product=Product, shared=False, User=User), 200
 
-    if dbhandler.borrel_mode_enabled and drinkid in dbhandler.borrel_mode_drinks:
-        alert = (dbhandler.addpurchase(drinkid, int(dbhandler.settings['borrel_mode_user']), amount, True, product.price))
-        success_messages = process_alert_from_adddrink(alert, success_messages)
 
-    final_flash = ""
-    for front, end in success_messages.items():
-        final_flash = final_flash + front + " " + end + ", "
-    if final_flash != "":
-        socket.send_transaction(final_flash[:-2])
-        flash(final_flash[:-2] + " verwerkt", "success")
-
-    socket.update_stats()
-
+@app.route('/drink/dinner/<cart_string>')
+def purchase_dinner_from_cart(cart_string):
+    cart.purchase_dinner(cart_string, request.args['price'], request.args['comments'])
     return redirect(url_for('index'))
 
 
@@ -920,7 +805,7 @@ def bigscreen():
 
     if len(dbhandler.biertje_kwartiertje_participants) > 0:
         bk = {'playing': True,
-              'participants': [User.query.get(x[0]) for x in dbhandler.biertje_kwartiertje_participants],
+              'participants': [User.query.get(x['user_id']) for x in dbhandler.biertje_kwartiertje_participants],
               'drink': Product.query.get(dbhandler.biertje_kwartiertje_drink).name,
               'playtime': dbhandler.biertje_kwartiertje_time}
     else:
@@ -958,20 +843,17 @@ def biertje_kwartiertje():
 
     already_playing = []
     for i in dbhandler.biertje_kwartiertje_participants:
-        for j in range(0, i[1]):
-            already_playing.append({'id': i[0], 'name': User.query.get(i[0]).name})
+        for j in range(0, i['amount']):
+            already_playing.append({'id': i['user_id'], 'name': User.query.get(i['user_id']).name})
 
     return render_template('admin/biertjekwartiertje.html', title="Biertje Kwartiertje", h1="Biertje kwartiertje instellen", drink=drink,
                            usergroups=usergroups, shared=False, User=User, products=products, already_playing=already_playing), 200
 
 
-@app.route("/admin/bigscreen/biertjekwartiertje/<string:cart>")
-def start_biertje_kwartiertje(cart):
-    dbhandler.biertje_kwartiertje_participants = []
-    split = cart.split('&')
-    for order in split[1:len(split)]:
-        data = order.split('a')
-        dbhandler.biertje_kwartiertje_participants.append((int(data[0]), int(data[1])))
+@app.route("/admin/bigscreen/biertjekwartiertje/<cart_string>")
+def start_biertje_kwartiertje(cart_string):
+    parsed_cart = cart.parse_cart_string(cart_string)
+    dbhandler.biertje_kwartiertje_participants = parsed_cart['orders']
 
     if len(dbhandler.biertje_kwartiertje_participants) > 0:
         dbhandler.biertje_kwartiertje_time = int(request.args['time'])

@@ -16,7 +16,7 @@ borrel_mode_drinks = []
 overview_emails = False
 debt_emails = False
 
-biertje_kwartiertje_participants = []  # tuple: (user_id, quantity)
+biertje_kwartiertje_participants = []  # Same as an order object: {'user_id': int, 'amount': int}
 biertje_kwartiertje_time = 15
 biertje_kwartiertje_drink = -1
 
@@ -228,7 +228,7 @@ def addpurchase(drink_id, user_id, quantity, rondje, price_per_one):
     stats.update_daily_stats('euros', balchange)
     stats.update_daily_stats_drinker(user_id)
     # If the price is zero, we do not add this purchase as it is added somewhere else
-    if price_per_one > 0:
+    if price_per_one > 0 and drink_id != settings['dinner_product_id']:
         stats.update_daily_stats('purchases', 1)
     if rondje:
         stats.update_daily_stats('rounds', 1)
