@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
 
 {% block scripts %}
 {{super()}}
@@ -9,13 +10,17 @@
             $('#toggle-one').bootstrapToggle();
           })
     </script>
-<script type="text/javascript" src="{{url_for('.static', filename='js/bootstrap4-toggle.min.js')}}"></script>
 {% endblock %}
 
 
 {% block styles %}
     {{super()}}
-    <link rel="stylesheet" href="{{url_for('.static', filename='css/bootstrap4-toggle.min.css')}}">
+    <style>
+    label {
+        visibility: hidden;
+        height: 0;
+    }
+    </style>
 {% endblock %}
 
 {% block app_content %}
@@ -29,23 +34,6 @@
         <div class="col-xl-3 min-width-460-md">
             {% if shared == false %}
             <a class="btn btn-block btn-grey" onclick="addToCart('0', 'Gezamenlijk', '{{ drink.price }}')">Gezamelijk</a>
-            {% endif %}
-
-            {% if borrel_data is not none %}
-            <div class="img-thumbnail" width="100%" style="font-size:14pt">
-                <table style="margin-left:auto;margin-right:auto;">
-                    <tr>
-                        <th colspan="2" style="font-size: 28px; color: red;">BORRELMODUS</th>
-                    </tr>
-                    <tr>
-                        <td colspan="2" style="text-align: center;">Borrel modus staat aan. Alles wordt afgetikt op kosten van <u>{{ borrel_data.user }}</u>. </td>
-                    </tr>
-                    <tr>
-                        <td style="text-align: right; width: 60%;">Aantal over:</td>
-                        <td style="text-align: left; width: 40%">{{ borrel_data.left }}</td>
-                    </tr>
-                </table>
-            </div>
             {% endif %}
 
             <div class="img-thumbnail" width="100%" style="font-size: 12pt;">
@@ -109,10 +97,37 @@
                 </table>
             </div>
 
+            {% if borrel_data is not none %}
+            <div class="img-thumbnail" width="100%" style="font-size:14pt">
+                <table style="margin-left:auto;margin-right:auto;">
+                    <tr>
+                        <th colspan="2" style="font-size: 28px; color: red;">BORRELMODUS</th>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="text-align: center;">Borrel modus staat aan. Alles wordt afgetikt op kosten van <u>{{ borrel_data.user }}</u>. </td>
+                    </tr>
+                    <tr>
+                        <td style="text-align: right; width: 60%;">Aantal over:</td>
+                        <td style="text-align: left; width: 40%">{{ borrel_data.left }}</td>
+                    </tr>
+                </table>
+            </div>
+            {% elif shared == false %}
+            <div class="img-thumbnail" width="100%" style="font-size:14pt">
+                <table style="margin-left:auto;margin-right:auto;">
+                    <tr>
+                        <th colspan="2">Rondje</th>
+                    </tr>
+                    <tr>
+                        <td colspan="2" style="text-align: center;">{{ wtf.form_field(roundform.round_giver) }}</td>
+                    </tr>
+                </table>
+            </div>
+            {% endif %}
+
             <div class="img-thumbnail">
                 <table id="cart" width="100%"></table>
                 <hr>
-                {% if shared == false %}Rondje {% endif %}<input {% if shared == true %}type="hidden"{% endif %} type="checkbox" id="round" data-toggle="toggle" data-on="Ja" data-off="Nee" data-offstyle="secondary">
                 <a class="btn btn-block btn-grey" id="submitbutton" onclick="submitCart()" width="90%">Versturen</a>
             </div>
         </div>

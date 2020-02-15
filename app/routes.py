@@ -211,7 +211,8 @@ def drink(drinkid):
     drink = Product.query.get(drinkid)
     usergroups = get_usergroups_with_users()
     statsdict = dbhandler.get_product_stats(drinkid)
-    return render_template('drink.html', title=drink.name,
+    round_form = RoundForm()
+    return render_template('drink.html', title=drink.name, roundform=round_form,
                            h1="{} aftikken (€ {})".format(drink.name, ('%.2f' % drink.price).replace('.', ',')),
                            drink=drink, borrel_data=borrel_data,
                            usergroups=usergroups, Product=Product,
@@ -237,7 +238,7 @@ def purchase_together(drinkid, amount):
     borrel_data = dbhandler.borrel_mode(drinkid)
     drink.price = drink.price * amount
     statsdict = dbhandler.get_product_stats(drinkid)
-    return render_template('drink.html', title=drink.name, borrel_data=borrel_data,
+    return render_template('drink.html', title=drink.name, borrel_data=borrel_data, roundform=None,
                            h1="Gezamenlijk " + str(amount) + " " + drink.name + " afrekenen", drink=drink,
                            usergroups=usergroups, Product=Product,
                            shared=True, stats=statsdict, User=User), 200
@@ -852,7 +853,7 @@ def biertje_kwartiertje():
 
 @app.route("/admin/bigscreen/biertjekwartiertje/<cart_string>")
 def start_biertje_kwartiertje(cart_string):
-    parsed_cart = cart.parse_cart_string(cart_string)
+    parsed_cart = cart.parse_cart_string(cart_string, -1)
     dbhandler.biertje_kwartiertje_participants = parsed_cart['orders']
 
     if len(dbhandler.biertje_kwartiertje_participants) > 0:

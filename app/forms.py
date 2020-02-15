@@ -184,3 +184,15 @@ class ChooseSpotifyUser(FlaskForm):
         for n in os.listdir(app.config['SPOTIFY_CACHE_FOLDER']):
             names.append((n[19:], n[19:]))
         self.spotify_user.choices = names
+
+
+class RoundForm(FlaskForm):
+    round_giver = SelectField("")
+
+    def __init__(self, *args, **kwargs):
+        super(RoundForm, self).__init__(*args, **kwargs)
+        users = [("0", "")]
+        for group in Usergroup.query.all():
+            for u in group.users:
+                users.append((str(u.id), "{} ({})".format(u.name, group.name)))
+        self.round_giver.choices = users

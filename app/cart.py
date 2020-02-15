@@ -8,21 +8,21 @@ from app.models import Product
 
 def purchase(cart, product_id):
     # Parse the raw cart string into something readable
-    parsed_cart = parse_cart_string(cart)
+    parsed_cart = parse_cart_string(cart, product_id)
     # Get the product object
     product = Product.query.get(product_id)
-    # If borrel mode is enabled for this product...
-    if dbhandler.borrel_mode_enabled and product_id in dbhandler.borrel_mode_drinks:
+    # If this total order is a round...
+    if parsed_cart['round']:
         # Create the purchases for everyone to make them count for the stats (with a price of 0)
-        create_purchases(parsed_cart['orders'], product, parsed_cart['round'], 0)
+        create_purchases(parsed_cart['orders'], product, False, 0)
         # Create an order for the paying user
-        order = {'user_id': dbhandler.settings['borrel_mode_user'],
+        order = {'user_id': parsed_cart['round_giver'],
                  'amount': parsed_cart['total_bought']}
         # Let the paying user pay for everything
         success_messages = create_purchases([order], product, True, product.price)
     else:
         # Create purchases for every order
-        success_messages = create_purchases(parsed_cart['orders'], product, parsed_cart['round'], product.price)
+        success_messages = create_purchases(parsed_cart['orders'], product, False, product.price)
 
     # Create the final alert for both Tikker and Tikker BigScreen
     create_and_send_final_flash(success_messages)
@@ -39,16 +39,16 @@ def purchase(cart, product_id):
 
 def purchase_together(cart, product_id, amount):
     # Parse the raw cart string into something readable
-    parsed_cart = parse_cart_string(cart)
+    parsed_cart = parse_cart_string(cart, product_id)
     # Get the product object
     product = Product.query.get(product_id)
-    # If borrel mode is enabled for this product...
-    if dbhandler.borrel_mode_enabled and product_id in dbhandler.borrel_mode_drinks:
+    # If this total order is a round...
+    if parsed_cart['round']:
         # Create the purchases for everyone to make them count for the stats (with a price of 0)
         create_purchases_shared(parsed_cart['orders'], product, parsed_cart['total_bought'],
                                 parsed_cart['round'], 0, amount)
         # Create an order for the paying user
-        order = {'user_id': dbhandler.settings['borrel_mode_user'],
+        order = {'user_id': parsed_cart['round_giver'],
                  'amount': parsed_cart['total_bought']}
         # Let the paying user pay for everything
         success_messages = create_purchases([order], product, True, product.price)
@@ -65,7 +65,7 @@ def purchase_together(cart, product_id, amount):
 
 def purchase_dinner(cart, total_costs, comments):
     # Parse the raw cart string into something readable
-    parsed_cart = parse_cart_string(cart)
+    parsed_cart = parse_cart_string(cart, -1)
     # Get the dinner ID
     dinner_id = dbhandler.settings['dinner_product_id']
     # If the dinner ID is None, return an error, as we should not have entered this method
@@ -110,7 +110,7 @@ def purchase_from_orders(orders, product_id, r=False):
     socket.update_stats()
 
 
-def parse_cart_string(cart):
+def parse_cart_string(cart, product_id):
     # resulting parsed object
     result = {'shared': False,
               'shared_amount': -1,
@@ -120,11 +120,17 @@ def parse_cart_string(cart):
     # If the resulting split has length 0, no cart is passed so we raise an error
     if len(split) == 0:
         abort(500)
-    # If the first value is a 0, this cart is not a round, so we set the value accordingly
-    if split[0] == "0":
+    # If borrel mode is enabled, the cart will be a round by definition
+    if dbhandler.borrel_mode_enabled and product_id in dbhandler.borrel_mode_drinks:
+        result['round'] = True
+        result['round_giver'] = dbhandler.settings['borrel_mode_user']
+    # If the first digit is a zero, we do not want a round
+    elif split[0] == "0":
         result['round'] = False
+    # If the first digit is not a zero, it must be a user ID who will give the round
     else:
         result['round'] = True
+        result['round_giver'] = int(split[0])
 
     # Parsed list of orders
     orders = []
