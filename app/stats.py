@@ -1,5 +1,5 @@
 from sqlalchemy import and_, or_, func
-from app import app, db
+from app import app, db, round_down, round_up
 from app.forms import LoginForm, UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm, \
     ChangeDrinkForm, ChangeDrinkImageForm, AddInventoryForm, PayOutProfitForm
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory, Setting
@@ -17,7 +17,7 @@ daily_stats = {"products": 0,
                "rounds": 0,
                "euros": 0.0}
 
-daily_stats_seen_users = []
+daily_stats_seen_users = set({})
 
 max_stats = {"max-stats-products": 0,
              "max-stats-users": 0,
@@ -49,7 +49,7 @@ def init_daily_stats():
     daily_stats["users"] = User.query.count()
     drinkers = Purchase.query.filter(Purchase.timestamp > begindate, Purchase.product_id != settings['dinner_product_id']).group_by(Purchase.user_id).all()
     for d in drinkers:
-        daily_stats_seen_users.append(d.user_id)
+        daily_stats_seen_users.add(d.user_id)
     daily_stats["drinkers"] = len(drinkers)
     daily_stats["rounds"] = Purchase.query.filter(Purchase.timestamp > begindate, Purchase.round == True, Purchase.product_id != settings['dinner_product_id']).count()
     daily_stats["purchases"] = Purchase.query.filter(Purchase.timestamp > begindate, Purchase.product_id != settings['dinner_product_id'], Purchase.price > 0).count()
@@ -129,9 +129,14 @@ def update_daily_stats_product(drinkid, amount):
 
 def update_daily_stats_drinker(user_id):
     global daily_stats_seen_users
-    if user_id not in daily_stats_seen_users:
-        daily_stats_seen_users.append(user_id)
-        update_daily_stats("drinkers", 1)
+    # Get the old length of the seen users
+    old_length = len(daily_stats_seen_users)
+    # Add the user to the set of seen users
+    daily_stats_seen_users.add(user_id)
+    # Get the new length of the seen users (can be one larger or equal to the old size)
+    new_length = len(daily_stats_seen_users)
+    # Update the daily stats with the difference between the lengths
+    update_daily_stats("drinkers", new_length - old_length)
 
 
 def get_yesterday_for_today(enddate):
@@ -219,7 +224,7 @@ def most_bought_products_per_user(userid, parsedbegin, parsedend, n=20):
 
     data = []
     for p_id, amount in count.items():
-        data.append((p_id, Product.query.get(p_id).name, int(amount)))
+        data.append((p_id, Product.query.get(p_id).name, round_down(amount)))
     ids, values, labels = top_n(count, data, n)
 
     return ids, values, labels
@@ -246,7 +251,7 @@ def most_bought_of_one_product_by_groups(drinkid, parsedbegin, parsedend):
 
     datag = []
     for g_id, amount in count_groups.items():
-        datag.append((g_id, Usergroup.query.get(g_id).name, int(amount)))
+        datag.append((g_id, Usergroup.query.get(g_id).name, round_down(amount)))
     idsg, valuesg, labelsg = top_n(count_groups, datag, 20)
 
     return idsg, valuesg, labelsg
@@ -265,7 +270,7 @@ def most_bought_of_one_product_by_users(drinkid, parsedbegin, parsedend):
 
     datau = []
     for u_id, amount in count.items():
-        datau.append((u_id, User.query.get(u_id).name, int(amount)))
+        datau.append((u_id, User.query.get(u_id).name, round_down(amount)))
     idsu, valuesu, labelsu = top_n(count, datau, 20)
 
     return idsu, valuesu, labelsu
@@ -297,7 +302,7 @@ def most_bought_of_one_product_by_groups_from_group(drinkid, groupid, parsedbegi
 
     datag = []
     for g_id, amount in count_groups.items():
-        datag.append((g_id, Usergroup.query.get(g_id).name, int(amount)))
+        datag.append((g_id, Usergroup.query.get(g_id).name, round_down(amount)))
 
     idsg, valuesg, labelsg = top_n(count_groups, datag, 20)
 
@@ -317,7 +322,7 @@ def most_bought_of_one_product_by_users_from_group(drinkid, groupid, parsedbegin
 
     datau = []
     for u_id, amount in count.items():
-        datau.append((u_id, User.query.get(u_id).name, int(amount)))
+        datau.append((u_id, User.query.get(u_id).name, round_down(amount)))
     idsu, valuesu, labelsu = top_n(count, datau, 20)
 
     return idsu, valuesu, labelsu
@@ -334,7 +339,7 @@ def most_bought_products_by_users(parsedbegin, parsedend):
 
     datap = []
     for p_id, amount in count.items():
-        datap.append((p_id, Product.query.get(p_id).name, int(amount)))
+        datap.append((p_id, Product.query.get(p_id).name, round_down(amount)))
 
     return topall(count, datap)
 

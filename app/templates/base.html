@@ -1,6 +1,6 @@
 {% extends 'bootstrap/base.html' %}
 
-{% set version = "1.4.2" %}
+{% set version = "1.4.3.0" %}
 
 {% block title %}
 {% if title %}Tikker - {{ title }}
@@ -105,7 +105,23 @@
                     </ul>
                     <hr>
                     <h5>Changelog</h5>
-                    <b>Versie 1.4.2</b>: Bugfixes
+                    <b>Versie 1.4.3.0</b>: Rondjes, bugfixes en code opgeruimd
+                    <ul>
+                        <li>Socket waarop BigScreen communiceert met Tikker aangepast. <u>Tikker BigScreen moet ook geupdate worden!</u></li>
+                        <li>Borrel modus kan nu aangezet worden vanuit het Administratorpaneel</li>
+                        <li>Rondjes worden nu gegeven door een gebruiker en tellen mee voor de statistieken</li>
+                        <li>Top 10 hoogste saldo's slide toegevoegd aan BigScreen</li>
+                        <li>Saldo's van alle borrelaars slide toegevoegd aan BigScreen</li>
+                        <li>Kalender in BigScreen negeert activiteiten met "TIKKERIGNORE" in de beschrijving/opmerkingen</li>
+                        <li>Kalender wordt nu ieder half uur geupdate in plaats van iedere keer dat hij langs komt als slide</li>
+                        <li>Menuknoppen onder het KVLS logo zijn groter gemaakt voor betere touchscreen ondersteuning</li>
+                        <li>Achter de schermen de methode van het verwerken van orders grondig aangepast voor betere uitbreidmogelijkheden</li>
+                        <li>Code opgeruimd, want dat moet soms ook gebeuren</li>
+                        <li>Bug gefixt die het aantal borrelaars in BigScreen niet veranderde</li>
+                        <li>Bug gefixt die het opkomstdiner meetelde bij het aantal gekochte drankjes op BigScreen</li>
+                        <li>Bug gefixt die gedeelde aankopen niet meetelde in de statistieken</li>
+                    </ul>
+                    <b>Versie 1.4.2</b>: Biertje kwartiertje en bugfixes
                     <ul>
                         <li>Biertje Kwartiertje toegevoegd aan BigScreen</li>
                         <li>Inventariscorrectie genereert nu een rapport in het .docx formaat in de map 'documents'</li>

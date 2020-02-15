@@ -81,11 +81,6 @@ class DrinkForm(FlaskForm):
         self.pos.default = len(positions) - 1
 
 
-class MultiCheckboxField(SelectMultipleField):
-    widget = widgets.ListWidget(prefix_label=False)
-    option_widget = widgets.CheckboxInput()
-
-
 class UpgradeBalanceForm(FlaskForm):
     user = SelectField('Naam', validators=[DataRequired()])
     description = SelectField('Beschrijving', validators=[DataRequired()], choices=[("Opwaardering", "Opwaardering"), ("Vergoeding inkoop", "Vergoeding inkoop"), ("Vergoeding diner", "Vergoeding diner")])
@@ -184,3 +179,35 @@ class ChooseSpotifyUser(FlaskForm):
         for n in os.listdir(app.config['SPOTIFY_CACHE_FOLDER']):
             names.append((n[19:], n[19:]))
         self.spotify_user.choices = names
+
+
+class RoundForm(FlaskForm):
+    round_giver = SelectField("")
+
+    def __init__(self, *args, **kwargs):
+        super(RoundForm, self).__init__(*args, **kwargs)
+        users = [("0", "")]
+        for group in Usergroup.query.all():
+            for u in group.users:
+                users.append((str(u.id), "{} ({})".format(u.name, group.name)))
+        self.round_giver.choices = users
+
+
+class BorrelModeForm(FlaskForm):
+    products = SelectMultipleField("Producten")
+    user = SelectField("Wie trakteert?")
+    amount = StringField("Hoeveel")
+    submit = SubmitField("Versturen")
+
+    def __init__(self, *args, **kwargs):
+        super(BorrelModeForm, self).__init__(*args, **kwargs)
+        product_list = []
+        for p in Product.query.all():
+            product_list.append((str(p.id), "{} (€ {})".format(p.name, '%.2f' % p.price)))
+        self.products.choices = product_list
+
+        users = []
+        for group in Usergroup.query.all():
+            for u in group.users:
+                users.append((str(u.id), "{} ({})".format(u.name, group.name)))
+        self.user.choices = users

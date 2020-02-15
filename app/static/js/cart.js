@@ -172,11 +172,7 @@ function submitCart() {
     document.getElementById("loader").style.display = "block";
 
     var output = "/";
-    if (document.getElementById('round').checked === true) {
-        output = output + "1&"
-    } else {
-        output = output + "0&"
-    }
+    output = output + document.getElementById('round_giver').value + "&";
     for (var key in cartList) {
         output = output + key;
         output = output + "a";

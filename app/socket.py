@@ -1,6 +1,6 @@
 import math
 
-from app import app, socketio, stats, spotify, dbhandler, EN_SNOW
+from app import app, socketio, stats, spotify, dbhandler, EN_SNOW, cart
 from flask_socketio import emit
 from datetime import datetime
 from sqlalchemy import and_
@@ -18,19 +18,20 @@ third_most_drank = 0
 slide_time = 0
 
 cal = Calendar()
+last_calendar_update = datetime.strptime('1970-01-01', "%Y-%m-%d")
 
 
-@socketio.on('connect', namespace='/test')
+@socketio.on('connect', namespace='/bigscreen')
 def test_connect():
     emit('my response', {'data': 'Connected'})
 
 
-@socketio.on('disconnect', namespace='/test')
+@socketio.on('disconnect', namespace='/bigscreen')
 def test_disconnect():
     print('Client disconnected')
 
 
-@socketio.on('init', namespace='/test')
+@socketio.on('init', namespace='/bigscreen')
 def init_bigscreen(msg):
     global slide_time
     slide_time = msg['slide_time']
@@ -46,51 +47,16 @@ def init_bigscreen(msg):
                   'snow': EN_SNOW})
 
 
-@socketio.on('spotify', namespace='/test')
+@socketio.on('spotify', namespace='/bigscreen')
 def update_spotify_request():
     spotify_data = get_spotify_data()
     emit('spotify update', spotify_data)
 
 
-@socketio.on('biertje_kwartiertje_exec', namespace='/test')
+@socketio.on('biertje_kwartiertje_exec', namespace='/bigscreen')
 def biertje_kwartiertje_purchase():
     drink_id = dbhandler.biertje_kwartiertje_drink
-    product = Product.query.get(drink_id)
-
-    total_bought = 0
-    success_messages = {}
-    for participant in dbhandler.biertje_kwartiertje_participants:
-        total_bought += int(participant[1])
-        if dbhandler.borrel_mode_enabled and drink_id in dbhandler.borrel_mode_drinks:
-            dbhandler.addpurchase(drink_id, int(participant[0]), int(participant[1]), False, 0)
-        else:
-            alert = (dbhandler.addpurchase(drink_id, int(participant[0]), int(participant[1]), False, product.price))
-            success_messages = process_alert_from_adddrink(alert, success_messages)
-
-    if dbhandler.borrel_mode_enabled and drink_id in dbhandler.borrel_mode_drinks:
-        alert = (dbhandler.addpurchase(drink_id, int(dbhandler.settings['borrel_mode_user']), total_bought, True, product.price))
-        success_messages = process_alert_from_adddrink(alert, success_messages)
-
-    final_flash = ""
-    for front, end in success_messages.items():
-        final_flash = final_flash + str(front) + " " + end + ", "
-    if final_flash != "":
-        send_transaction(final_flash[:-2])
-
-    update_stats()
-
-
-def process_alert_from_adddrink(alert, success_messages):
-    if alert[3] == "success":
-        q = alert[0]
-        if math.floor(q) == q:
-            q = math.floor(q)
-        key = "{}x {} voor".format(q, alert[1])
-        if key not in success_messages:
-            success_messages[key] = alert[2]
-        else:
-            success_messages[key] = success_messages[key] + ", {}".format(alert[2])
-    return success_messages
+    cart.purchase_from_orders(dbhandler.biertje_kwartiertje_participants, drink_id)
 
 
 def get_spotify_data():
@@ -100,7 +66,7 @@ def get_spotify_data():
         return {'logged in': False}
 
 
-@socketio.on('slide_data', namespace='/test')
+@socketio.on('slide_data', namespace='/bigscreen')
 def update_slide_data(msg):
     name = msg["name"]
     emit('slide_data', {"name": name,
@@ -108,7 +74,7 @@ def update_slide_data(msg):
 
 
 def get_slide_data(name):
-    global third_most_drank, second_most_drank, most_drank, cal
+    global third_most_drank, second_most_drank, most_drank, cal, last_calendar_update
 
     if name == "DrankTonight":
         data = stats.most_bought_products_by_users_today(datetime.now())
@@ -151,12 +117,42 @@ def get_slide_data(name):
     elif name == "Debt":
         unames = []
         udebt = []
+        # Get all the users with a negative balance in order from low to high
         users = User.query.filter(User.balance < 0).order_by(User.balance.asc()).all()
+        # Loop over all these users
         for u in users:
+            # Add their name and their balance to the list
             unames.append(u.name)
             udebt.append("€ {}".format(('%.2f' % u.balance).replace('.', ',')))
         return {'names': unames,
                 'amount': udebt}
+
+    elif name == "TopBalance":
+        unames = []
+        ubalances = []
+        # Get all the users with a positive balance in order from high to low
+        users = User.query.filter(User.balance > 0).order_by(User.balance.desc()).all()
+        for u in users:
+            unames.append(u.name)
+            ubalances.append("€ {}".format(('%.2f' % u.balance).replace('.', ',')))
+        return {'names': unames,
+                'amount': ubalances}
+
+    elif name == "Balance":
+        unames = []
+        ubalances = []
+        unparsed = []
+        # Loop over all users that are seen today
+        for id in stats.daily_stats_seen_users:
+            # Get the user object
+            u = User.query.get(id)
+            # Add this user with their name and balance to the list of users
+            unames.append(u.name)
+            ubalances.append("€ {}".format(('%.2f' % u.balance).replace('.', ',')))
+            unparsed.append(u.balance)
+        return {'names': unames,
+                'amount': ubalances,
+                'unparsed': unparsed}
 
     elif name == "Title":
         if dbhandler.settings['beer_product_id'] is not None and dbhandler.settings['flugel_product_id'] is not None:
@@ -173,6 +169,9 @@ def get_slide_data(name):
 
             return {'beer': most_beers,
                     'flugel': most_flugel}
+        else:
+            return {'beer': "Niemand :(",
+                    'flugel': "Niemand :("}
 
     elif name == "RecentlyPlayed":
         history = []
@@ -197,12 +196,14 @@ def get_slide_data(name):
         return history
 
     elif name == "Calendar":
-        get_current_calendar()
+        if (datetime.now() - last_calendar_update).seconds > app.config['CALENDAR_UPDATE_INTERVAL']:
+            get_current_calendar()
+            last_calendar_update = datetime.now()
         now = pytz.utc.localize(datetime.now())
 
         items = []
         for event in cal.events:
-            if now > event.begin.datetime:
+            if now > event.begin.datetime or (event.description is not None and "TIKKERIGNORE" in event.description):
                 continue
             diff = event.begin.datetime.date() - now.date()
             items.append({'name': event.name,
@@ -239,7 +240,7 @@ def most_drank_data(drinkid):
 
 def update_stats():
     daily, maxim = get_stats()
-    socketio.emit('stats', {"daily": daily, "max": maxim}, namespace='/test')
+    socketio.emit('stats', {"daily": daily, "max": maxim}, namespace='/bigscreen')
 
 
 def get_stats():
@@ -259,36 +260,36 @@ def get_stats():
 
 
 def send_interrupt(message):
-    socketio.emit('slide_interrupt', {'message': message}, namespace='/test')
+    socketio.emit('slide_interrupt', {'message': message}, namespace='/bigscreen')
 
 
 def send_transaction(message):
-    socketio.emit('transaction', {"name": "Transaction", "message": message}, namespace='/test')
+    socketio.emit('transaction', {"name": "Transaction", "message": message}, namespace='/bigscreen')
 
 
 def send_reload():
-    socketio.emit('reload', None, namespace='/test')
+    socketio.emit('reload', None, namespace='/bigscreen')
 
 
 def disable_snow():
-    socketio.emit('snow', None, namespace='/test')
+    socketio.emit('snow', None, namespace='/bigscreen')
 
 
 def start_biertje_kwartiertje():
-    socketio.emit('biertje_kwartiertje_start', {'minutes': dbhandler.biertje_kwartiertje_time}, namespace='/test')
+    socketio.emit('biertje_kwartiertje_start', {'minutes': dbhandler.biertje_kwartiertje_time}, namespace='/bigscreen')
 
 
 def stop_biertje_kwartiertje():
-    socketio.emit('biertje_kwartiertje_stop', None, namespace='/test')
+    socketio.emit('biertje_kwartiertje_stop', None, namespace='/bigscreen')
 
 
 def get_current_calendar():
     global cal
-    req = urllib.request.Request('https://drive.kvls.nl/remote.php/dav/public-calendars/BKWDW9PJT2mmoRa4?export')
+    req = urllib.request.Request(app.config['CALENDAR_URL'])
     try:
         response = urllib.request.urlopen(req)
     except URLError:
-        return
+        raise URLError
     cal = Calendar(response.read().decode('iso-8859-1'))
 
 
