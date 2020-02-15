@@ -1,5 +1,5 @@
 from sqlalchemy import and_, or_, func
-from app import app, db
+from app import app, db, round_down, round_up
 from app.forms import LoginForm, UserRegistrationForm, UpgradeBalanceForm, UserGroupRegistrationForm, DrinkForm, \
     ChangeDrinkForm, ChangeDrinkImageForm, AddInventoryForm, PayOutProfitForm
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory, Setting
@@ -224,7 +224,7 @@ def most_bought_products_per_user(userid, parsedbegin, parsedend, n=20):
 
     data = []
     for p_id, amount in count.items():
-        data.append((p_id, Product.query.get(p_id).name, int(amount)))
+        data.append((p_id, Product.query.get(p_id).name, round_down(amount)))
     ids, values, labels = top_n(count, data, n)
 
     return ids, values, labels
@@ -251,7 +251,7 @@ def most_bought_of_one_product_by_groups(drinkid, parsedbegin, parsedend):
 
     datag = []
     for g_id, amount in count_groups.items():
-        datag.append((g_id, Usergroup.query.get(g_id).name, int(amount)))
+        datag.append((g_id, Usergroup.query.get(g_id).name, round_down(amount)))
     idsg, valuesg, labelsg = top_n(count_groups, datag, 20)
 
     return idsg, valuesg, labelsg
@@ -270,7 +270,7 @@ def most_bought_of_one_product_by_users(drinkid, parsedbegin, parsedend):
 
     datau = []
     for u_id, amount in count.items():
-        datau.append((u_id, User.query.get(u_id).name, int(amount)))
+        datau.append((u_id, User.query.get(u_id).name, round_down(amount)))
     idsu, valuesu, labelsu = top_n(count, datau, 20)
 
     return idsu, valuesu, labelsu
@@ -302,7 +302,7 @@ def most_bought_of_one_product_by_groups_from_group(drinkid, groupid, parsedbegi
 
     datag = []
     for g_id, amount in count_groups.items():
-        datag.append((g_id, Usergroup.query.get(g_id).name, int(amount)))
+        datag.append((g_id, Usergroup.query.get(g_id).name, round_down(amount)))
 
     idsg, valuesg, labelsg = top_n(count_groups, datag, 20)
 
@@ -322,7 +322,7 @@ def most_bought_of_one_product_by_users_from_group(drinkid, groupid, parsedbegin
 
     datau = []
     for u_id, amount in count.items():
-        datau.append((u_id, User.query.get(u_id).name, int(amount)))
+        datau.append((u_id, User.query.get(u_id).name, round_down(amount)))
     idsu, valuesu, labelsu = top_n(count, datau, 20)
 
     return idsu, valuesu, labelsu
@@ -339,7 +339,7 @@ def most_bought_products_by_users(parsedbegin, parsedend):
 
     datap = []
     for p_id, amount in count.items():
-        datap.append((p_id, Product.query.get(p_id).name, int(amount)))
+        datap.append((p_id, Product.query.get(p_id).name, round_down(amount)))
 
     return topall(count, datap)
 

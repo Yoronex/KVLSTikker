@@ -1,5 +1,5 @@
 import math
-from app import app, db, stats
+from app import app, db, stats, round_up, round_down
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory, Recipe, Inventory_usage, \
     Setting, Quote
 from werkzeug.utils import secure_filename
@@ -95,16 +95,6 @@ def update_settings(key, value):
     s.value = value
     # Save changes in database
     db.session.commit()
-
-
-def round_up(float_number, n=2):
-    decimals = math.pow(10, n)
-    return math.ceil(float_number * decimals) / decimals
-
-
-def round_down(float_number, n=2):
-    decimals = math.pow(10, n)
-    return math.floor(float_number * decimals) / decimals
 
 
 def borrel_mode(drinkid):

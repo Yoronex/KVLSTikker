@@ -1,5 +1,18 @@
 import locale
 import logging
+import math
+
+
+def round_up(float_number, n=2):
+    decimals = math.pow(10, n)
+    return math.ceil(float_number * decimals) / decimals
+
+
+def round_down(float_number, n=2):
+    decimals = math.pow(10, n)
+    return math.floor(float_number * decimals) / decimals
+
+
 from flask import Flask
 from config import Config
 from flask_socketio import SocketIO
@@ -75,13 +88,13 @@ def get_date_today():
 
 
 def is_18min(u):
-        today = datetime.today()
-        days_in_year = 365.2425
-        age = int((today - u.birthday).days / days_in_year)
-        if age < 18:
-            return True
-        else:
-            return False
+    today = datetime.today()
+    days_in_year = 365.2425
+    age = int((today - u.birthday).days / days_in_year)
+    if age < 18:
+        return True
+    else:
+        return False
 
 
 app.jinja_env.globals.update(get_date_today=get_date_today)

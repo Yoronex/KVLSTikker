@@ -2,7 +2,7 @@ import math
 
 from flask import flash, abort, redirect
 
-from app import dbhandler, socket
+from app import dbhandler, socket, round_up, round_down
 from app.models import Product
 
 
@@ -74,7 +74,7 @@ def purchase_dinner(cart, total_costs, comments):
     # Get the product object
     product = Product.query.get(dinner_id)
     # Determine the price for one dinner
-    price_pp = dbhandler.round_up(float(total_costs) / parsed_cart['total_bought'])
+    price_pp = round_up(float(total_costs) / parsed_cart['total_bought'])
     # Add this to the inventory, so it can remain zero after purchasing
     dbhandler.add_inventory(dinner_id, parsed_cart['total_bought'], price_pp, comments)
     # Create the purchases for every order
@@ -180,7 +180,7 @@ def create_purchases(orders, product, r, price):
 def create_purchases_shared(orders, product, total_bought, r, price, initial_amount):
     success_messages = {}
     for o in orders:
-        amount = dbhandler.round_up(o['amount'] * initial_amount / total_bought)
+        amount = round_up(o['amount'] * initial_amount / total_bought)
         return_message = dbhandler.addpurchase(product.id, o['user_id'], amount, r, price)
         process_alert(return_message, success_messages)
     return success_messages
