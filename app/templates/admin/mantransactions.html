@@ -12,6 +12,9 @@
             <col>
         </colgroup>
         <tr>
+            <td colspan="7">{% with textUnder=true %}{% include 'pagination.html' %}{% endwith %}</td>
+        </tr>
+        <tr>
             <th>ID</th>
             <th>Datum</th>
             <th>Tijd</th>
@@ -39,5 +42,8 @@
             <td><a href="/admin/transactions/delete/{{ t.id }}"><img src="{{ url_for('.static', filename='img/redcross.png') }}" height="30" width="30" alt="Verwijder" title="Verwijder transactie uit Tikker"/></a></td>
         </tr>
         {% endfor %}
+        <tr>
+            <td colspan="7" style="margin-top: 5px">{% include 'pagination.html' %}</td>
+        </tr>
     </table>
 {% endblock %}

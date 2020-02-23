@@ -51,7 +51,7 @@ def login(request):
 
     if access_token:
         # print("Access token available! Trying to get user information...")
-        sp = Spotify(access_token)
+        sp = Spotify(access_token, requests_timeout=1)
         results = sp.current_user()
         current_user = results['display_name']
         flash("Ingelogd op Spotify als {}".format(results['display_name']), "success")

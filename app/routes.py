@@ -1,6 +1,6 @@
 from flask import render_template, flash, redirect, url_for, request, abort, jsonify, json, make_response
 from sqlalchemy import and_
-from app import app, stats, socket, spotify, socketio, dbhandler, emailhandler, cart
+from app import app, stats, socket, spotify, socketio, dbhandler, emailhandler, cart, round_up
 from app.forms import *
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory
 from flask_breadcrumbs import register_breadcrumb
@@ -14,6 +14,10 @@ import math
 from datetime import datetime, timedelta
 from dateutil import tz
 from docx import Document
+
+
+page_size = 100
+pagination_range = 4
 
 
 def is_filled(data):
@@ -94,6 +98,45 @@ if len(birthdays) > 0:
     showed_birthdays = False
 
 
+def calculate_pagination_with_basequery(query, request_obj):
+    # If no page id is provided...
+    if request_obj.args.get('page') is None:
+        # We set it to 1
+        page = 1
+    else:
+        # Otherwise, we get it from the parameters and transform it into an integer
+        page = int(request_obj.args.get('page'))
+    # Get the total amount of rows for this table
+    total_amount_of_entries = query.count()
+    # Calculate the total amount of pages
+    total_amount_of_pages = int(round_up(total_amount_of_entries / page_size, 0))
+    # Calculate the offset in number of rows in a page
+    offset_difference = total_amount_of_entries % page_size
+    # Calculate the offset in number of pages
+    offset = max(0, total_amount_of_pages - page)
+    # Calculate the real offset in number of rows
+    real_offset = offset * page_size - (page_size - offset_difference)
+    # The offset cannot be negative, so if this is the case, we need to decrease the page size
+    if real_offset < 0:
+        real_page_size = page_size  + real_offset
+        real_offset = 0
+    # If the offset is not negative, we simply copy the page size
+    else:
+        real_page_size = page_size
+    # Create the data object that contains all necessary information
+    pagination = {'pages': total_amount_of_pages,
+                  'currentPage': page,
+                  'minPage': max(1, int(page - pagination_range)),
+                  'maxPage': min(total_amount_of_pages, page + pagination_range),
+                  'offset': real_offset,
+                  'pageSize': real_page_size,
+                  'records': '{} ... {} van de {}'.format(page_size * (page - 1) + 1,
+                                                          page_size * (page - 1) + real_page_size,
+                                                          total_amount_of_entries),
+                 }
+    # Return this object
+    return pagination
+
 @app.route('/')
 @app.route('/index')
 @app.route('/drink')
@@ -155,7 +198,10 @@ def view_user_dlc(*args, **kwargs):
 @register_breadcrumb(app, '.user.id', '', dynamic_list_constructor=view_user_dlc, order=2)
 def user(userid):
     user = User.query.get(userid)
-    transactions = user.transactions.order_by(Transaction.id.desc()).all()
+
+    query = user.transactions
+    pagination = calculate_pagination_with_basequery(query, request)
+    transactions = query.limit(pagination['pageSize']).offset(pagination['offset']).all()[::-1]
     upgrades = user.upgrades.all()
 
     count = {}
@@ -171,7 +217,7 @@ def user(userid):
 
     return render_template('user.html', title=user.name, h1="Informatie over " + user.name, user=user,
                            transactions=transactions, Purchase=Purchase, upgrades=upgrades, Product=Product,
-                           Upgrade=Upgrade, ids=ids, data=values, labels=labels, url_prefix=""), 200
+                           Upgrade=Upgrade, ids=ids, data=values, labels=labels, url_prefix="", pag=pagination), 200
 
 
 @app.route('/purchasehistory')
@@ -362,9 +408,13 @@ def admin_users_delete_exec(userid):
 def admin_transactions():
     if request.remote_addr != "127.0.0.1":
         abort(403)
-    transactions = reversed(Transaction.query.all())
+
+    query = Transaction.query
+    pagination = calculate_pagination_with_basequery(query, request)
+    transactions = query.limit(pagination['pageSize']).offset(pagination['offset']).all()[::-1]
+
     return render_template('admin/mantransactions.html', title="Transactiebeheer", h1="Alle transacties", User=User,
-                           transactions=transactions, Purchase=Purchase, Upgrade=Upgrade,
+                           transactions=transactions, Purchase=Purchase, Upgrade=Upgrade, pag=pagination,
                            Product=Product), 200
 
 

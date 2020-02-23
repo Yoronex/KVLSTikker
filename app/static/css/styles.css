@@ -5,6 +5,8 @@
     --lightyellow: #FFE26F;
     --grey: #939393;
     --urlgrey: darkslategray;
+    --primary: var(--green) !important;
+    --secondary: var(--yellow) !important;
 }
 
 .light-mode {
