@@ -3,14 +3,14 @@
 
 {% block app_content %}
     <div class="row">
-        <div class="col-md-6">
+        <div class="col-xl-6">
             <h2>Alle producten</h2>
             <table>
                 <colgroup>
                     <col>
                     <col class="second-table-column">
                     <col>
-                    <col class="second-table-column">
+                    <col class="second-table-column" style="min-width: 4.5rem">
                     <col>
                     <col class="second-table-column">
                     <col>
@@ -58,7 +58,7 @@
                 {% endfor %}
             </table>
         </div>
-        <div class="col-md-5">
+        <div class="col-xl-5">
             <h2>Voeg een product toe</h2>
             {{ wtf.quick_form(form) }}
             <p>Recept syntax: {aantal}x{product}, {aantal}x{product}, ...<br>Voorbeeld: 1x1, 2x3, 1x23</p>
