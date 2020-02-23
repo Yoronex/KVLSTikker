@@ -1,19 +1,13 @@
-from flask import render_template, flash, redirect, url_for, request, abort, jsonify, json, make_response
-from sqlalchemy import and_
+from flask import render_template, flash, redirect, url_for, request, abort, jsonify, make_response
 from app import app, stats, socket, spotify, socketio, dbhandler, emailhandler, cart, round_up
 from app.forms import *
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory
 from flask_breadcrumbs import register_breadcrumb
 import copy
-import collections
-from spotipy import oauth2
-import spotipy.util as util
 import os
-import math
 
 from datetime import datetime, timedelta
 from dateutil import tz
-from docx import Document
 
 
 page_size = 100
@@ -813,18 +807,6 @@ def shutdown():
                            message="Tikker wordt nu afgesloten. Je kan dit venster sluiten.", gif_url="")
 
 
-@app.route('/testemail/<int:mail>')
-def test_emailing(mail):
-    if int(mail) == 1:
-        emailhandler.test_debt_email()
-    elif int(mail) == 2:
-        emailhandler.test_overview_email()
-    elif int(mail) == 3:
-        emailhandler.test_dinner_overview_email()
-    elif int(mail) == 4:
-        emailhandler.test_treasurer_email()
-    return redirect(url_for('index'))
-
 @app.route('/error/403')
 def show_401():
     message = "Je bezoekt Tikker niet vanaf de computer waar Tikker op is geïnstalleerd. Je hebt daarom geen toegang tot deze pagina."
@@ -961,14 +943,6 @@ def stop_biertje_kwartiertje():
     return redirect(url_for("bigscreen"))
 
 
-@app.route("/admin/bigscreen/biertjekwartiertje/test")
-def test_biertje_kwartiertje():
-    print(dbhandler.biertje_kwartiertje_participants)
-    print(dbhandler.biertje_kwartiertje_time)
-    print(dbhandler.biertje_kwartiertje_drink)
-    return redirect(url_for("bigscreen"))
-
-
 @app.route("/api/spotify/login")
 def api_spotify_login():
     return spotify.login(request)
@@ -1021,56 +995,3 @@ def api_disable_snow():
 def api_reload_bigscreen():
     socket.send_reload()
     return redirect(url_for('bigscreen'))
-
-
-@app.route('/testaddquotes')
-def test_add_quotes():
-    quotes = ['Roy: Kathelijn belde, er wordt te laf gezopen!',
-              'Als ik zou willen dat je het begreep, had ik het wel beter uitgelegd.',
-              'Het enige wat je met liegen bereikt is niet geloofd worden als je de waarheid spreekt.',
-              'Logica brengt je van A naar B. Verbeelding brengt je overal.',
-              'Een mens heeft twee oren en één mond om twee keer zoveel te luisteren dan te praten.',
-              'De aarde biedt voldoende om ieders behoefte te bevredigen maar niet ieders hebzucht.']
-    for q in quotes:
-        dbhandler.addquote(q)
-
-    return redirect(url_for('index'))
-
-
-@app.route('/testinterrupt')
-def test_interrupt():
-    socket.send_interrupt({"name": "Message", "data": "Dit is een interrupt"})
-    return redirect(url_for('index'))
-
-
-@app.route('/testdocument')
-def test_document():
-    doc = Document()
-    doc.add_heading("Test document", 0)
-    doc.add_heading("Door Roy", 1)
-
-    doc.add_paragraph('Een paragraaf')
-
-    doc.add_paragraph('Een', style='List Number')
-    doc.add_paragraph('Twee', style='List Number')
-    doc.add_paragraph('Drie', style='List Number')
-
-    records = [
-        [3, '101', 'Spam'],
-        [7, '422', 'Eggs'],
-        [4, '631', 'Spam, spam, eggs, and spam']
-    ]
-
-    table = doc.add_table(rows=0, cols=3)
-    for tuple in records:
-        print(tuple)
-        print()
-        row_cells = table.add_row().cells
-        row_cells[0].text = str(tuple[0])
-        row_cells[1].text = tuple[1]
-        row_cells[2].text = tuple[2]
-
-    doc.add_page_break()
-
-    doc.save(os.path.join(app.config['DOCUMENT_FOLDER'], 'demo.docx'))
-    return True

@@ -1,11 +1,9 @@
-import math
-
 from app import app, socketio, stats, spotify, dbhandler, EN_SNOW, cart
 from flask_socketio import emit
 from datetime import datetime
 from sqlalchemy import and_
 from random import randrange
-from app.models import Product, Quote, User, Purchase
+from app.models import Product, Quote, User
 from urllib.error import URLError
 from ics import Calendar
 import pytz
@@ -23,12 +21,12 @@ last_calendar_update = datetime.strptime('1970-01-01', "%Y-%m-%d")
 
 @socketio.on('connect', namespace='/bigscreen')
 def test_connect():
-    emit('my response', {'data': 'Connected'})
+    print('Tikker BigScreen connected')
 
 
 @socketio.on('disconnect', namespace='/bigscreen')
 def test_disconnect():
-    print('Client disconnected')
+    print('Tikker BigScreen disconnected')
 
 
 @socketio.on('init', namespace='/bigscreen')

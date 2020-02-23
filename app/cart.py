@@ -1,7 +1,6 @@
 import math
 
 from flask import flash, abort, redirect
-
 from app import dbhandler, socket, round_up, round_down
 from app.models import Product
 

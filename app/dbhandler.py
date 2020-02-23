@@ -1,10 +1,7 @@
-import math
 from app import app, db, stats, round_up, round_down
-from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory, Recipe, Inventory_usage, \
-    Setting, Quote
+from app.models import *
 from werkzeug.utils import secure_filename
 from datetime import datetime
-from random import randrange
 import os
 import json
 from sqlalchemy import and_

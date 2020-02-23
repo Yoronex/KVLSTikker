@@ -22,36 +22,6 @@ def set_default_lastoverview():
             db.session.commit()
 
 
-def test_debt_email():
-    emails = create_debt_emails([User.query.get(1)])
-    send_emails(emails)
-
-
-def test_dinner_overview_email():
-    begindate = datetime.strptime(dbhandler.settings['last_overview_email'], "%Y-%m-%d")
-    enddate = datetime.now().replace(day=1)
-    if enddate.weekday() >= 4:
-        enddate += timedelta(days=7 - enddate.weekday())
-
-    emails = create_overview_dinner_emails([User.query.get(1)], begindate, enddate)
-    send_emails(emails)
-
-
-def test_overview_email():
-    begindate = datetime.strptime(dbhandler.settings['last_overview_email'], "%Y-%m-%d")
-    enddate = datetime.now().replace(day=1)
-    if enddate.weekday() >= 4:
-        enddate += timedelta(days=7 - enddate.weekday())
-
-    emails = create_overview_emails([User.query.get(1)], begindate, enddate)
-    send_emails(emails)
-
-
-def test_treasurer_email():
-    emails = create_treasurer_email(False)
-    send_emails(emails)
-
-
 def send_debt_emails():
     users = User.query.all()
     emails = create_debt_emails(users) + create_treasurer_email(False)
