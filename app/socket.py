@@ -195,8 +195,11 @@ def get_slide_data(name):
 
     elif name == "Calendar":
         if (datetime.now() - last_calendar_update).seconds > app.config['CALENDAR_UPDATE_INTERVAL']:
-            get_current_calendar()
-            last_calendar_update = datetime.now()
+            try:
+                get_current_calendar()
+                last_calendar_update = datetime.now()
+            except URLError:
+                return {}
         now = pytz.utc.localize(datetime.now())
 
         items = []
@@ -284,10 +287,7 @@ def stop_biertje_kwartiertje():
 def get_current_calendar():
     global cal
     req = urllib.request.Request(app.config['CALENDAR_URL'])
-    try:
-        response = urllib.request.urlopen(req)
-    except URLError:
-        raise URLError
+    response = urllib.request.urlopen(req)
     cal = Calendar(response.read().decode('iso-8859-1'))
 
 
