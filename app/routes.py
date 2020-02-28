@@ -1,5 +1,5 @@
 from flask import render_template, flash, redirect, url_for, request, abort, jsonify, make_response
-from app import app, stats, socket, spotify, socketio, dbhandler, emailhandler, cart, round_up
+from app import app, stats, socket, spotify, socketio, dbhandler, emailhandler, cart, round_up, round_down
 from app.forms import *
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory
 from flask_breadcrumbs import register_breadcrumb
@@ -321,9 +321,12 @@ def admin():
         abort(403)
 
     products = []
+    total_p_value = 0
     for p in Product.query.filter(and_(Product.recipe_input == None), (Product.purchaseable == True)).all():
         result = dbhandler.get_inventory_stock(p.id)
         result[0]['name'] = p.name
+        result[0]['inventory_value'] = round_down(dbhandler.calc_inventory_value(p.id))
+        total_p_value += result[0]['inventory_value']
         products.append(result[0])
 
     transactions = {}
@@ -342,7 +345,7 @@ def admin():
     transactions['revenue'] = transactions['upgrades_value'] - transactions['purchases_value']
 
     return render_template('admin/admin.html', title='Admin paneel', h1="Beheerderspaneel", Usergroup=Usergroup,
-                           products=products, transactions=transactions), 200
+                           products=products, transactions=transactions, value=total_p_value), 200
 
 
 @app.route('/admin/users', methods=['GET', 'POST'])

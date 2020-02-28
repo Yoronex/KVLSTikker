@@ -99,19 +99,30 @@
         </div>
         <div class="col-xl img-thumbnail">
             <table width="100%">
+                <colgroup>
+                    <col style="width: 50%">
+                    <col style="width: 3rem">
+                    <col>
+                </colgroup>
                 <tr>
-                    <th colspan="2">Inventaris overzicht</th>
+                    <th colspan="3">Inventaris overzicht</th>
                 </tr>
                 {% for p in products %}
                 <tr>
-                    <td style="text-align: right" width="50%">{{ p.name }}:</td>
-                    <td style="text-align: left" width="50%">
+                    <td style="text-align: right">{{ p.name }}:</td>
+                    <td style="text-align: left">
                         {% if p.quantity < 0 %}<span style="color: red;">{{ p.quantity }}</span>
                         {% elif p.quantity <= p.inventory_warning %}<span style="color: darkorange;">{{ p.quantity }}</span>
                         {% else %} {{ p.quantity }}
-                    {% endif %} </td>
+                    {% endif %}</td>
+                    <td style="text-align: left">€ {{ '%.2f' % p.inventory_value }}</td>
                 </tr>
                 {% endfor %}
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td>€ {{ '%.2f' % value }}</td>
+                </tr>
             </table>
         </div>
     </div>
