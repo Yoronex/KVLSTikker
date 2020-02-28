@@ -64,6 +64,10 @@ a {
     color: var(--urlgrey);
 }
 
+.edit-symbol {
+    color: black;
+}
+
 .page-item > .page-link {
     background-color: lightgrey;
     color: black;

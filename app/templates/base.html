@@ -112,6 +112,7 @@
                         <li>In het administratorpaneel staat nu naast de aantallen inventaris ook de waarde van deze inventaris</li>
                         <li>Een error verschijnt nu bovenin het scherm wanneer er een fout wordt gemaakt in een formulier</li>
                         <li>Het bevestigen-scherm wanneer iets wordt verwijderd, laat ook zien wat je precies gaat verwijderen (naast alleen een ID)</li>
+                        <li>Alle symbolen in Tikker zijn vervangen door tekst-symbolen in plaats van afbeeldingen</li>
                         <li>Bug gefixt die Tikker liet vastlopen wanneer iemand was ingelogd met Spotify en de internetverbinding tijdelijk wegviel</li>
                         <li>Prijskolommen in tabellen hebben nu een minimale breedte om te voorkomen dat het euro teken en de prijs beiden op een aparte lijn komen te staan</li>
                     </ul>
@@ -349,9 +350,9 @@
                     V{{ version }}
                 </div>
                 <div class="sidebar-menubuttons">
-                    <a href="{{ url_for('admin') }}" class="btn btn-green">Admin</a>
-                    <button type="button" class="btn btn-yellow" data-toggle="modal" data-target="#about">Over</button>
-                    <button type="button" class="btn btn-green" data-toggle="modal" data-target="#shutdown-modal">Afsluiten</button>
+                    <a href="{{ url_for('admin') }}" class="btn btn-green"><span class="fa fa-cog fa-2x"></span></a>
+                    <button type="button" class="btn btn-yellow" data-toggle="modal" data-target="#about"><span class="fa fa-info-circle fa-2x"></span></button>
+                    <button type="button" class="btn btn-green" data-toggle="modal" data-target="#shutdown-modal"><span class="fa fa-power-off fa-2x"></span></button>
                 </div>
             </div>
 
@@ -418,7 +419,8 @@
                 <div class="row" style="align-items: center">
                     <div class="col align-self-start">
                         <div>
-                            <img id="menu-toggle" src="{% if request.cookies.get('dark-mode') == 'True' %}{{ url_for('.static', filename='img/menu-dark.svg') }}{% else %}{{ url_for('.static', filename='img/menu.svg') }}{% endif %}" style="margin-right: 5px;" width="32px" height="32px">
+                            <!--<img id="menu-toggle" src="{% if request.cookies.get('dark-mode') == 'True' %}{{ url_for('.static', filename='img/menu-dark.svg') }}{% else %}{{ url_for('.static', filename='img/menu.svg') }}{% endif %}" style="margin-right: 5px;" width="32px" height="32px">-->
+                            <span id="menu-toggle" class="fa fa-bars fa-lg" style="margin-right: 5px;"></span>
                             {%- for breadcrumb in breadcrumbs -%}
                             <a href="{{ breadcrumb.url }}">{{ breadcrumb.text }}</a>
                             {{ '/ ' if not loop.last }}

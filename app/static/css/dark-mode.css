@@ -69,6 +69,10 @@ a {
     color: grey;
 }
 
+.edit-symbol {
+    color: white;
+}
+
 .modal {
     color: black !important;
 }

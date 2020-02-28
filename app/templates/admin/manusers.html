@@ -35,7 +35,7 @@
                     {% else %}
                     <td><span style="color: green;font-weight:bold;">€ {{ '%.2f' % u.balance }}</span></td>
                     {% endif %}
-                    <td><a href="/admin/users/delete/{{ u.id }}"><img src="{{ url_for('.static', filename='img/redcross.png') }}" height="30" width="30" alt="Verwijder" title="Verwijder {{ u.name }} uit Tikker"/></a></td>
+                    <td><a href="/admin/users/delete/{{ u.id }}"><span class="fa fa-times fa-lg" style="color:red;"></span></a></td>
                 </tr>
                 {% endfor %}
             </table>
