@@ -383,8 +383,9 @@ def admin_users_delete(userid):
     if request.remote_addr != "127.0.0.1":
         abort(403)
     user = User.query.get(userid)
+    group = Usergroup.query.get(user.usergroup_id)
     if user.balance == 0.0:
-        message = "gebruiker " + user.name + " wilt verwijderen? Alle historie gaat hierbij verloren! <br><br>Let erop "
+        message = "gebruiker " + user.name + "(van de groep " + group.name + ") wilt verwijderen? Alle historie gaat hierbij verloren!"
         agree_url = url_for("admin_users_delete_exec", userid=userid)
         return_url = url_for("admin_users")
         return render_template("verify.html", title="Bevestigen", message=message, user=user, agree_url=agree_url,
@@ -425,10 +426,18 @@ def admin_transactions():
                            Product=Product), 200
 
 
+@register_breadcrumb(app, '.admin.transactions.confirm', "Bevestigen", order=2)
 @app.route('/admin/transactions/delete/<int:tranid>')
 def admin_transactions_delete(tranid):
     transaction = Transaction.query.get(tranid)
-    message = "transactie met ID " + str(transaction.id) + " wilt verwijderen?"
+    u = User.query.get(transaction.user_id)
+    if transaction.purchase_id is not None:
+        purchase = Purchase.query.get(transaction.purchase_id)
+        product = Product.query.get(purchase.product_id)
+        message = "transactie met ID " + "{} ({}x {} voor {})".format(str(transaction.id), str(round_up(purchase.amount)), product.name, u.name) + " wilt verwijderen?"
+    else:
+        upgr = Upgrade.query.get(transaction.upgrade_id)
+        message = "transactie met ID " + "{} ({} € {} voor {})".format(str(transaction.id), upgr.description, round_up(upgr.amount), u.name) + " wilt verwijderen?"
     agree_url = url_for("admin_transactions_delete_exec", tranid=tranid)
     return_url = url_for("admin_transactions")
     return render_template("verify.html", title="Bevestigen", message=message, transaction=transaction,
@@ -530,6 +539,7 @@ def admin_usergroups():
                            Usergroup=Usergroup), 200
 
 
+@register_breadcrumb(app, '.admin.usergroups.confirm', 'Bevestigen', order=2)
 @app.route('/admin/usergroups/delete/<int:usergroupid>')
 def admin_usergroups_delete(usergroupid):
     if request.remote_addr != "127.0.0.1":

@@ -111,6 +111,7 @@
                         <li>De lijst met transacties in het gebruikersoverzicht en in het adminpaneel heeft nu verschillende pagina's met transacties, waardoor hij sneller laadt</li>
                         <li>In het administratorpaneel staat nu naast de aantallen inventaris ook de waarde van deze inventaris</li>
                         <li>Een error verschijnt nu bovenin het scherm wanneer er een fout wordt gemaakt in een formulier</li>
+                        <li>Het bevestigen-scherm wanneer iets wordt verwijderd, laat ook zien wat je precies gaat verwijderen (naast alleen een ID)</li>
                         <li>Bug gefixt die Tikker liet vastlopen wanneer iemand was ingelogd met Spotify en de internetverbinding tijdelijk wegviel</li>
                         <li>Prijskolommen in tabellen hebben nu een minimale breedte om te voorkomen dat het euro teken en de prijs beiden op een aparte lijn komen te staan</li>
                     </ul>
@@ -415,7 +416,7 @@
                     </div>
                 </div>
                 <div class="row" style="align-items: center">
-                    <div class="col">
+                    <div class="col align-self-start">
                         <div>
                             <img id="menu-toggle" src="{% if request.cookies.get('dark-mode') == 'True' %}{{ url_for('.static', filename='img/menu-dark.svg') }}{% else %}{{ url_for('.static', filename='img/menu.svg') }}{% endif %}" style="margin-right: 5px;" width="32px" height="32px">
                             {%- for breadcrumb in breadcrumbs -%}
