@@ -131,6 +131,14 @@ def calculate_pagination_with_basequery(query, request_obj):
     # Return this object
     return pagination
 
+def flash_form_errors(errors):
+    if len(errors.keys()) > 0:
+        print(errors)
+        for k, v in errors.items():
+            for error in v:
+                flash("Fout in formulier: {} - {}".format(k, error), "danger")
+
+
 @app.route('/')
 @app.route('/index')
 @app.route('/drink')
@@ -165,6 +173,7 @@ def upgrade():
         socket.update_stats()
 
         return redirect(url_for('index'))
+    flash_form_errors(form.errors)
     return render_template('upgrade.html', title='Opwaarderen', h1="Opwaarderen", form=form)
 
 
@@ -362,12 +371,13 @@ def admin_users():
         socket.update_stats()
 
         return redirect(url_for('admin_users'))
-    print(form.errors)
+    flash_form_errors(form.errors)
     return render_template("admin/manusers.html", title="Gebruikersbeheer", h1="Gebruikersbeheer",
                            backurl=url_for('index'), User=User,
                            Usergroup=Usergroup, form=form), 200
 
 
+@register_breadcrumb(app, '.admin.users.confirm', "Bevestigen", order=2)
 @app.route('/admin/users/delete/<int:userid>')
 def admin_users_delete(userid):
     if request.remote_addr != "127.0.0.1":
@@ -451,6 +461,7 @@ def admin_drinks():
             return redirect(url_for('admin_drinks'))
         else:
             flash(form.errors, "danger")
+    flash_form_errors(form.errors)
     return render_template('admin/mandrinks.html', title="Productbeheer", h1="Productbeheer", Product=Product,
                            form=form), 200
 
@@ -488,6 +499,8 @@ def admin_drinks_edit(drinkid):
         alert = (dbhandler.editdrink_image(drinkid, form2.image.data, form2.hoverimage.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_drinks'))
+    flash_form_errors(form.errors)
+    flash_form_errors(form2.errors)
     return render_template('admin/editdrink.html', title="{} bewerken".format(product.name),
                            h1="Pas {} (ID: {}) aan".format(product.name, product.id), product=product, form=form,
                            form2=form2, recipe=recipe[:-2]), 200
@@ -512,6 +525,7 @@ def admin_usergroups():
         alert = (dbhandler.addusergroup(form.name.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_usergroups'))
+    flash_form_errors(form.errors)
     return render_template("admin/manusergroups.html", title="Groepen", h1="Groepenbeheer", form=form,
                            Usergroup=Usergroup), 200
 
@@ -557,6 +571,7 @@ def admin_inventory():
         flash(alert[0], alert[1])
         return redirect(url_for('admin_inventory'))
 
+    flash_form_errors(form.errors)
     return render_template("admin/maninventory.html", title="Inventarisbeheer", h1="Inventarisbeheer",
                            backurl=url_for('index'), Product=Product,
                            Inventory=Inventory, form=form), 200
@@ -593,6 +608,7 @@ def payout_profit():
                                          form.verification.data)
         flash(alert[0], alert[1])
         return redirect(url_for('payout_profit'))
+    flash_form_errors(form.errors)
     return render_template("admin/manprofit.html", title="Winst uitkeren", h1="Winst uitkeren", Usergroup=Usergroup,
                            form=form), 200
 
@@ -624,6 +640,7 @@ def borrel_mode():
         # Add whether borrel mode is still enabled
         borrel_data['enabled'] = dbhandler.borrel_mode_enabled
 
+    flash_form_errors(form.errors)
     return render_template('admin/borrelmode.html', title="Borrel Modus beheren", h1="Borrel modus", form=form,
                            borrel_data=borrel_data), 200
 
