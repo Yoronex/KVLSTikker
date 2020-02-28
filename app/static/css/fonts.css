@@ -1,20 +1,20 @@
 @font-face {
     font-family: standardtext;
-    src: url(../font/body_breeserif.ttf);
+    src: url(../webfonts/body_breeserif.ttf);
     font-size: 20px;
 }
 
 @font-face {
     font-family: menu-items;
-    src: url(../font/body_breeserif.ttf);
+    src: url(../webfonts/body_breeserif.ttf);
 }
 
 @font-face {
     font-family: title;
-    src: url(../font/Blanka-Regular.otf);
+    src: url(../webfonts/Blanka-Regular.otf);
 }
 
 @font-face {
     font-family: subtitle;
-    src: url(../font/LemonMilk.otf);
+    src: url(../webfonts/LemonMilk.otf);
 }
