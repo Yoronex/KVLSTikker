@@ -48,7 +48,8 @@ function addToCart(u_id, user_name, shared) {
         var cell3 = row.insertCell(price_loc);
 
         var minusimg = $('body').data('minus-img');
-        cell0.innerHTML = "<a onclick='removeFromCart(" + user_id + ")' onmouseover=\"\" style=\"cursor: pointer;\"><img src='" + minusimg + "' alt=\"DEL\" title=\"Verwijder één\"></a>";
+        //cell0.innerHTML = "<a onclick='removeFromCart(" + user_id + ")' onmouseover=\"\" style=\"cursor: pointer;\"><img src='" + minusimg + "' alt=\"DEL\" title=\"Verwijder één\"></a>";
+        cell0.innerHTML = "<a onclick='removeFromCart(" + user_id + ")' onmouseover=\"\" style=\"cursor: pointer;\"><span class='fa fa-minus fa-lg' style='color: orange;'></span></a>";
         cell0.style.width = "15%";
         cell1.innerHTML = user_name;
         cell1.style.width = "50%";
@@ -78,7 +79,8 @@ function addToCart(u_id, user_name, shared) {
         var cell3 = row.insertCell(price_loc);
 
         var minusimg = $('body').data('minus-img');
-        cell0.innerHTML = "<a onclick='removeFromPart(" + user_id + ")' onmouseover=\"\" style=\"cursor: pointer;\"><img src='" + minusimg + "' alt=\"DEL\" title=\"Verwijder één\"></a>";
+        //cell0.innerHTML = "<a onclick='removeFromPart(" + user_id + ")' onmouseover=\"\" style=\"cursor: pointer;\"><img src='" + minusimg + "' alt=\"DEL\" title=\"Verwijder één\"></a>";
+        cell0.innerHTML = "<a onclick='removeFromCart(" + user_id + ")' onmouseover=\"\" style=\"cursor: pointer;\"><span class='fa fa-minus fa-lg' style='color: orange;'></span></a>";
         cell0.style.width = "15%";
         cell1.innerHTML = user_name;
         cell1.style.width = "50%";

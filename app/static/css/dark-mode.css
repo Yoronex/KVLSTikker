@@ -69,6 +69,29 @@ a {
     color: grey;
 }
 
+.edit-symbol {
+    color: white;
+}
+
 .modal {
     color: black !important;
+}
+
+.page-item > .page-link {
+    background-color: #343a40;
+    color: white;
+}
+
+.page-item.disabled > .page-link {
+    background-color: var(--grey);
+    color: white;
+}
+
+.pagination > li > a:focus,
+.pagination > li > a:hover,
+.pagination > li > span:focus,
+.pagination > li > span:hover
+{
+    color: #5a5a5a;
+    background-color: #eee;
 }

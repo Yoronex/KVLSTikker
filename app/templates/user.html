@@ -25,9 +25,12 @@
                 <col class="second-table-column">
                 <col>
                 <col class="second-table-column">
-                <col>
-                <col class="second-table-column">
+                <col style="min-width: 5rem">
+                <col class="second-table-column" style="min-width: 5rem">
             </colgroup>
+            <tr>
+                <td colspan="6">{% with textUnder=true %}{% include 'pagination.html' %}{% endwith %}</td>
+            </tr>
             <tr>
                 <th>ID</th>
                 <th>Datum</th>
@@ -60,6 +63,9 @@
                 {% endif %}
             </tr>
             {% endfor %}
+            <tr>
+                <td colspan="6">{% with textUnder=false %}{% include 'pagination.html' %}{% endwith %}</td>
+            </tr>
         </table>
     </div>
     <div class="col-xl-6">

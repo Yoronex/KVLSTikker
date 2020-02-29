@@ -1,6 +1,6 @@
 {% extends 'bootstrap/base.html' %}
 
-{% set version = "1.4.3.0" %}
+{% set version = "1.4.4.0" %}
 
 {% block title %}
 {% if title %}Tikker - {{ title }}
@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="{{url_for('.static', filename='css/styles.css')}}">
     <link rel="stylesheet" href="{{url_for('.static', filename='css/menu.css')}}">
     <link rel="stylesheet" href="{{url_for('.static', filename='css/fonts.css')}}">
+    <link rel="stylesheet" href="{{ url_for('.static', filename='css/font-awesome.css') }}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
 {% endblock %}
 
@@ -105,11 +106,23 @@
                     </ul>
                     <hr>
                     <h5>Changelog</h5>
-                    <b>Versie 1.4.3.1</b>: Hotfix
+                    <b>Versie 1.4.4.0 (29/02/2020)</b>: Bugfixes en kleine verbeteringen
+                    <ul>
+                        <li>De lijst met transacties in het gebruikersoverzicht en in het adminpaneel heeft nu verschillende pagina's met transacties, waardoor hij sneller laadt</li>
+                        <li>In het administratorpaneel staat nu naast de aantallen inventaris ook de waarde van deze inventaris</li>
+                        <li>Een error verschijnt nu bovenin het scherm wanneer er een fout wordt gemaakt in een formulier</li>
+                        <li>Alle client-instellingen verplaatst vanaf het hoofdmenu naar een aparte pagina</li>
+                        <li>Het bevestigen-scherm wanneer iets wordt verwijderd, laat ook zien wat je precies gaat verwijderen (naast alleen een ID)</li>
+                        <li>Alle symbolen in Tikker zijn vervangen door tekst-symbolen in plaats van afbeeldingen</li>
+                        <li>Prijskolommen in tabellen hebben nu een minimale breedte om te voorkomen dat het euro teken en de prijs beiden op een aparte lijn komen te staan</li>
+                        <li>Bug gefixt die Tikker liet vastlopen wanneer iemand was ingelogd met Spotify en de internetverbinding tijdelijk wegviel</li>
+                        <li>Bug gefixt waardoor Tikker BigScreen niet kon starten wanneer er geen internetverbinding was</li>
+                    </ul>
+                    <b>Versie 1.4.3.1 (14/02/2020)</b>: Hotfix
                     <ul>
                         <li>Bug gefixt waardoor het opkomstdiner en gedeelde producten niet afgetikt konden worden</li>
                     </ul>
-                    <b>Versie 1.4.3.0</b>: Rondjes, bugfixes en code opgeruimd
+                    <b>Versie 1.4.3.0 (14/02/2020)</b>: Rondjes, bugfixes en code opgeruimd
                     <ul>
                         <li>Socket waarop BigScreen communiceert met Tikker aangepast. <u>Tikker BigScreen moet ook geupdate worden!</u></li>
                         <li>Borrel modus kan nu aangezet worden vanuit het Administratorpaneel</li>
@@ -125,7 +138,7 @@
                         <li>Bug gefixt die het opkomstdiner meetelde bij het aantal gekochte drankjes op BigScreen</li>
                         <li>Bug gefixt die gedeelde aankopen niet meetelde in de statistieken</li>
                     </ul>
-                    <b>Versie 1.4.2</b>: Biertje kwartiertje en bugfixes
+                    <b>Versie 1.4.2 (25/01/2020)</b>: Biertje kwartiertje en bugfixes
                     <ul>
                         <li>Biertje Kwartiertje toegevoegd aan BigScreen</li>
                         <li>Inventariscorrectie genereert nu een rapport in het .docx formaat in de map 'documents'</li>
@@ -339,9 +352,9 @@
                     V{{ version }}
                 </div>
                 <div class="sidebar-menubuttons">
-                    <a href="{{ url_for('admin') }}" class="btn btn-green">Admin</a>
-                    <button type="button" class="btn btn-yellow" data-toggle="modal" data-target="#about">Over</button>
-                    <button type="button" class="btn btn-green" data-toggle="modal" data-target="#shutdown-modal">Afsluiten</button>
+                    <a href="{{ url_for('admin') }}" class="btn btn-green"><span class="fa fa-cog fa-2x"></span></a>
+                    <button type="button" class="btn btn-yellow" data-toggle="modal" data-target="#about"><span class="fa fa-info-circle fa-2x"></span></button>
+                    <button type="button" class="btn btn-green" data-toggle="modal" data-target="#shutdown-modal"><span class="fa fa-power-off fa-2x"></span></button>
                 </div>
             </div>
 
@@ -349,29 +362,7 @@
                 <a href="{{ url_for('index') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Home</a>
                 <a href="{{ url_for('balance') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Gebruikersoverzicht</a>
                 <a href="{{ url_for('stats_home') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Statistieken</a>
-                <a onclick="toggle_confetti()" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}" style="cursor:pointer; color: #495057;" >Confetti
-                    {% if request.cookies.get('confetti') == 'True' %}
-                    uit
-                    {% else %}
-                    aan
-                    {% endif %}
-                </a>
-                <a onclick="toggle_darkmode()" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}" style="cursor:pointer; color: #495057;" >
-                    {% if request.cookies.get('dark-mode') == 'True' %}
-                    Light Mode
-                    {% else %}
-                    Dark Mode
-                    {% endif %}
-                </a>
-                {% if snow == "True" %}
-                <a onclick="toggle_snow()" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}" style="cursor:pointer; color: #495057;" >Sneeuw
-                    {% if request.cookies.get('snow') == 'False' %}
-                    aan
-                    {% else %}
-                    uit
-                    {% endif %}
-                {% endif %}
-                </a>
+                <a href="{{ url_for('client_settings') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Browserinstellingen</a>
             </div>
             <div style="position: absolute; bottom: 0;">
                 <img src="{{ url_for('.static', filename='img/NIX18.svg') }}" style="text-align: center; margin: 1rem;"
@@ -406,9 +397,10 @@
                     </div>
                 </div>
                 <div class="row" style="align-items: center">
-                    <div class="col">
+                    <div class="col align-self-start">
                         <div>
-                            <img id="menu-toggle" src="{% if request.cookies.get('dark-mode') == 'True' %}{{ url_for('.static', filename='img/menu-dark.svg') }}{% else %}{{ url_for('.static', filename='img/menu.svg') }}{% endif %}" style="margin-right: 5px;" width="32px" height="32px">
+                            <!--<img id="menu-toggle" src="{% if request.cookies.get('dark-mode') == 'True' %}{{ url_for('.static', filename='img/menu-dark.svg') }}{% else %}{{ url_for('.static', filename='img/menu.svg') }}{% endif %}" style="margin-right: 5px;" width="32px" height="32px">-->
+                            <span id="menu-toggle" class="fa fa-bars fa-lg" style="margin-right: 5px;"></span>
                             {%- for breadcrumb in breadcrumbs -%}
                             <a href="{{ breadcrumb.url }}">{{ breadcrumb.text }}</a>
                             {{ '/ ' if not loop.last }}

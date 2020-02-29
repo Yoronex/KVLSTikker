@@ -1,12 +1,12 @@
 import os
 
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField, SelectMultipleField, widgets, IntegerField, DecimalField, BooleanField, FileField, TextAreaField, PasswordField
+from wtforms import StringField, SubmitField, SelectField, SelectMultipleField, IntegerField, BooleanField, FileField, TextAreaField, PasswordField
 from wtforms.fields.html5 import DateField
-from wtforms.validators import ValidationError, DataRequired, EqualTo, Email
+from wtforms.validators import DataRequired, Email
 from app.models import User, Usergroup, Product
 from sqlalchemy import and_
-from app import db, app
+from app import app
 
 
 # users = []

@@ -1,0 +1,15 @@
+<nav aria-label="Page navigation">
+    <ul class="pagination justify-content-center">
+        <li class="page-item  {% if pag.currentPage == 1 %}disabled{% endif %}"><a class="page-link" href="?page={{ pag.currentPage - 1 }}"><span class="fa fa-angle-double-left"></span></a></li>
+        {% for i in range(pag.minPage, pag.maxPage + 1)%}
+        <li class="page-item {% if i == pag.currentPage %}disabled current{% else %}middle{% endif %}">
+            <a class="page-link" {% if i == pag.minPage and i != 1 %}href="?page=1">...
+            {% elif i == pag.maxPage and i != pag.pages %}href="?page={{ pag.pages }}">...
+            {% else %}href="?page={{ i }}">{{ i }}{% endif %}</a></li>
+        {% endfor %}
+        <li class="page-item {% if pag.currentPage == pag.pages %}disabled{% endif %}"><a class="page-link" href="?page={{ pag.currentPage + 1 }}"><span class="fa fa-angle-double-right"></span></a></li>
+    </ul>
+</nav>
+{% if textUnder %}
+<div style="text-align: center">{{ pag.records }}</div>
+{% endif %}

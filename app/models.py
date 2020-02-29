@@ -1,7 +1,4 @@
-from datetime import datetime
 from app import db
-import pickle
-from sqlalchemy import PickleType, and_
 
 
 def dump_datetime(value):

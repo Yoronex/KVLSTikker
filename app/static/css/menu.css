@@ -4,7 +4,7 @@ Sidebar source: https://startbootstrap.com/templates/simple-sidebar/
 
 #sidebar-wrapper {
     min-height: 100vh;
-    margin-left: -20rem;
+    margin-left: -20.1rem;
     -webkit-transition: margin .25s ease-out;
     -moz-transition: margin .25s ease-out;
     -o-transition: margin .25s ease-out;
@@ -46,7 +46,7 @@ Sidebar source: https://startbootstrap.com/templates/simple-sidebar/
 }
 
 .sidebar-menubuttons .btn:last-child {
-    margin-right: 0px;
+    margin-right: 0;
 }
 
 .sidebar-tikker-name {
@@ -55,7 +55,7 @@ Sidebar source: https://startbootstrap.com/templates/simple-sidebar/
     font-size: 50px;
     text-align: center;
     font-weight: 600;
-    margin-bottom: 0px;
+    margin-bottom: 0;
     font-family: title;
 }
 
@@ -64,7 +64,7 @@ Sidebar source: https://startbootstrap.com/templates/simple-sidebar/
     text-align: center;
     font-weight: 100;
     margin-bottom: 7px;
-    margin-top: 0px;
+    margin-top: 0;
     font-family: subtitle;
 }
 
@@ -100,6 +100,10 @@ Sidebar source: https://startbootstrap.com/templates/simple-sidebar/
     }
 
     #wrapper.toggled #sidebar-wrapper {
-        margin-left: -20rem;
+        margin-left: -20.1rem;
     }
+}
+
+.border-right {
+    border-right: 0.1rem solid #dee2e6 !important;
 }

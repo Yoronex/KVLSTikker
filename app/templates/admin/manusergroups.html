@@ -26,7 +26,7 @@
                     <td>{{ u.name }}</td>
                     <td><span style="color: green;font-weight:bold;">€ {{ '%.2f' % u.profit }}</span></td>
                     <td>{{ u.users.all()|length }}</td>
-                    <td><a href="/admin/usergroups/delete/{{ u.id }}"><img src="{{ url_for('.static', filename='img/redcross.png') }}" height="30" width="30" alt="Verwijder" title="Verwijder {{ u.name }} uit Tikker"/></a></td>
+                    <td><a href="/admin/usergroups/delete/{{ u.id }}"><span class="fa fa-times fa-lg" style="color:red;"></span></a></td>
                 </tr>
                 {% endfor %}
             </table>

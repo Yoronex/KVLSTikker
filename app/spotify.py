@@ -1,6 +1,6 @@
 from app import app
 from spotipy import Spotify, oauth2, SpotifyException
-from flask import render_template, redirect, url_for, flash
+from flask import redirect, url_for, flash
 import os
 import wget
 from datetime import datetime
@@ -15,13 +15,11 @@ sp_oauth = oauth2.SpotifyOAuth(app.config['SPOTIPY_CLIENT_ID'], app.config['SPOT
                                app.config['SPOTIPY_REDIRECT_URI'], scope=app.config['SPOTIPY_SCOPE'], cache_path=CACHE)
 history = []
 
+
 def logout():
     global sp, current_user
     sp = None
     current_user = ""
-
-    #if os.path.exists(CACHE):
-    #    os.remove(CACHE)
 
 
 def set_cache(cache):
@@ -51,7 +49,7 @@ def login(request):
 
     if access_token:
         # print("Access token available! Trying to get user information...")
-        sp = Spotify(access_token)
+        sp = Spotify(access_token, requests_timeout=1)
         results = sp.current_user()
         current_user = results['display_name']
         flash("Ingelogd op Spotify als {}".format(results['display_name']), "success")

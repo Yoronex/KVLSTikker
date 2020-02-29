@@ -63,3 +63,26 @@ body {
 a {
     color: var(--urlgrey);
 }
+
+.edit-symbol {
+    color: black;
+}
+
+.page-item > .page-link {
+    background-color: lightgrey;
+    color: black;
+}
+
+.page-item.disabled > .page-link {
+    background-color: white;
+    color: black;
+}
+
+.pagination > li > a:focus,
+.pagination > li > a:hover,
+.pagination > li > span:focus,
+.pagination > li > span:hover
+{
+    color: white;
+    background-color: #444;
+}

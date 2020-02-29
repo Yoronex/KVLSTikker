@@ -1,19 +1,17 @@
-from flask import render_template, flash, redirect, url_for, request, abort, jsonify, json, make_response
-from sqlalchemy import and_
-from app import app, stats, socket, spotify, socketio, dbhandler, emailhandler, cart
+from flask import render_template, flash, redirect, url_for, request, abort, jsonify, make_response
+from app import app, stats, socket, spotify, socketio, dbhandler, emailhandler, cart, round_up, round_down
 from app.forms import *
 from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory
 from flask_breadcrumbs import register_breadcrumb
 import copy
-import collections
-from spotipy import oauth2
-import spotipy.util as util
 import os
-import math
 
 from datetime import datetime, timedelta
 from dateutil import tz
-from docx import Document
+
+
+page_size = 100
+pagination_range = 4
 
 
 def is_filled(data):
@@ -94,6 +92,53 @@ if len(birthdays) > 0:
     showed_birthdays = False
 
 
+def calculate_pagination_with_basequery(query, request_obj):
+    # If no page id is provided...
+    if request_obj.args.get('page') is None:
+        # We set it to 1
+        page = 1
+    else:
+        # Otherwise, we get it from the parameters and transform it into an integer
+        page = int(request_obj.args.get('page'))
+    # Get the total amount of rows for this table
+    total_amount_of_entries = query.count()
+    # Calculate the total amount of pages
+    total_amount_of_pages = int(round_up(total_amount_of_entries / page_size, 0))
+    # Calculate the offset in number of rows in a page
+    offset_difference = total_amount_of_entries % page_size
+    # Calculate the offset in number of pages
+    offset = max(0, total_amount_of_pages - page)
+    # Calculate the real offset in number of rows
+    real_offset = offset * page_size - (page_size - offset_difference)
+    # The offset cannot be negative, so if this is the case, we need to decrease the page size
+    if real_offset < 0:
+        real_page_size = page_size  + real_offset
+        real_offset = 0
+    # If the offset is not negative, we simply copy the page size
+    else:
+        real_page_size = page_size
+    # Create the data object that contains all necessary information
+    pagination = {'pages': total_amount_of_pages,
+                  'currentPage': page,
+                  'minPage': max(1, int(page - pagination_range)),
+                  'maxPage': min(total_amount_of_pages, page + pagination_range),
+                  'offset': real_offset,
+                  'pageSize': real_page_size,
+                  'records': '{} ... {} van de {}'.format(page_size * (page - 1) + 1,
+                                                          page_size * (page - 1) + real_page_size,
+                                                          total_amount_of_entries),
+                 }
+    # Return this object
+    return pagination
+
+def flash_form_errors(errors):
+    if len(errors.keys()) > 0:
+        print(errors)
+        for k, v in errors.items():
+            for error in v:
+                flash("Fout in formulier: {} - {}".format(k, error), "danger")
+
+
 @app.route('/')
 @app.route('/index')
 @app.route('/drink')
@@ -128,6 +173,7 @@ def upgrade():
         socket.update_stats()
 
         return redirect(url_for('index'))
+    flash_form_errors(form.errors)
     return render_template('upgrade.html', title='Opwaarderen', h1="Opwaarderen", form=form)
 
 
@@ -155,7 +201,10 @@ def view_user_dlc(*args, **kwargs):
 @register_breadcrumb(app, '.user.id', '', dynamic_list_constructor=view_user_dlc, order=2)
 def user(userid):
     user = User.query.get(userid)
-    transactions = user.transactions.order_by(Transaction.id.desc()).all()
+
+    query = user.transactions
+    pagination = calculate_pagination_with_basequery(query, request)
+    transactions = query.limit(pagination['pageSize']).offset(pagination['offset']).all()[::-1]
     upgrades = user.upgrades.all()
 
     count = {}
@@ -171,7 +220,7 @@ def user(userid):
 
     return render_template('user.html', title=user.name, h1="Informatie over " + user.name, user=user,
                            transactions=transactions, Purchase=Purchase, upgrades=upgrades, Product=Product,
-                           Upgrade=Upgrade, ids=ids, data=values, labels=labels, url_prefix=""), 200
+                           Upgrade=Upgrade, ids=ids, data=values, labels=labels, url_prefix="", pag=pagination), 200
 
 
 @app.route('/purchasehistory')
@@ -268,6 +317,12 @@ def purchase_dinner_from_cart(cart_string):
     return redirect(url_for('index'))
 
 
+@register_breadcrumb(app, '.settings', 'Browserinstellingen', order=1)
+@app.route('/settings')
+def client_settings():
+    return render_template('settings.html', title="Browserinstellingen", h1="Browserinstellingen")
+
+
 ##
 #
 # Admin Panel
@@ -281,9 +336,12 @@ def admin():
         abort(403)
 
     products = []
+    total_p_value = 0
     for p in Product.query.filter(and_(Product.recipe_input == None), (Product.purchaseable == True)).all():
         result = dbhandler.get_inventory_stock(p.id)
         result[0]['name'] = p.name
+        result[0]['inventory_value'] = round_down(dbhandler.calc_inventory_value(p.id))
+        total_p_value += result[0]['inventory_value']
         products.append(result[0])
 
     transactions = {}
@@ -302,7 +360,7 @@ def admin():
     transactions['revenue'] = transactions['upgrades_value'] - transactions['purchases_value']
 
     return render_template('admin/admin.html', title='Admin paneel', h1="Beheerderspaneel", Usergroup=Usergroup,
-                           products=products, transactions=transactions), 200
+                           products=products, transactions=transactions, value=total_p_value), 200
 
 
 @app.route('/admin/users', methods=['GET', 'POST'])
@@ -319,19 +377,21 @@ def admin_users():
         socket.update_stats()
 
         return redirect(url_for('admin_users'))
-    print(form.errors)
+    flash_form_errors(form.errors)
     return render_template("admin/manusers.html", title="Gebruikersbeheer", h1="Gebruikersbeheer",
                            backurl=url_for('index'), User=User,
                            Usergroup=Usergroup, form=form), 200
 
 
+@register_breadcrumb(app, '.admin.users.confirm', "Bevestigen", order=2)
 @app.route('/admin/users/delete/<int:userid>')
 def admin_users_delete(userid):
     if request.remote_addr != "127.0.0.1":
         abort(403)
     user = User.query.get(userid)
+    group = Usergroup.query.get(user.usergroup_id)
     if user.balance == 0.0:
-        message = "gebruiker " + user.name + " wilt verwijderen? Alle historie gaat hierbij verloren! <br><br>Let erop "
+        message = "gebruiker " + user.name + "(van de groep " + group.name + ") wilt verwijderen? Alle historie gaat hierbij verloren!"
         agree_url = url_for("admin_users_delete_exec", userid=userid)
         return_url = url_for("admin_users")
         return render_template("verify.html", title="Bevestigen", message=message, user=user, agree_url=agree_url,
@@ -362,16 +422,28 @@ def admin_users_delete_exec(userid):
 def admin_transactions():
     if request.remote_addr != "127.0.0.1":
         abort(403)
-    transactions = reversed(Transaction.query.all())
+
+    query = Transaction.query
+    pagination = calculate_pagination_with_basequery(query, request)
+    transactions = query.limit(pagination['pageSize']).offset(pagination['offset']).all()[::-1]
+
     return render_template('admin/mantransactions.html', title="Transactiebeheer", h1="Alle transacties", User=User,
-                           transactions=transactions, Purchase=Purchase, Upgrade=Upgrade,
+                           transactions=transactions, Purchase=Purchase, Upgrade=Upgrade, pag=pagination,
                            Product=Product), 200
 
 
+@register_breadcrumb(app, '.admin.transactions.confirm', "Bevestigen", order=2)
 @app.route('/admin/transactions/delete/<int:tranid>')
 def admin_transactions_delete(tranid):
     transaction = Transaction.query.get(tranid)
-    message = "transactie met ID " + str(transaction.id) + " wilt verwijderen?"
+    u = User.query.get(transaction.user_id)
+    if transaction.purchase_id is not None:
+        purchase = Purchase.query.get(transaction.purchase_id)
+        product = Product.query.get(purchase.product_id)
+        message = "transactie met ID " + "{} ({}x {} voor {})".format(str(transaction.id), str(round_up(purchase.amount)), product.name, u.name) + " wilt verwijderen?"
+    else:
+        upgr = Upgrade.query.get(transaction.upgrade_id)
+        message = "transactie met ID " + "{} ({} € {} voor {})".format(str(transaction.id), upgr.description, round_up(upgr.amount), u.name) + " wilt verwijderen?"
     agree_url = url_for("admin_transactions_delete_exec", tranid=tranid)
     return_url = url_for("admin_transactions")
     return render_template("verify.html", title="Bevestigen", message=message, transaction=transaction,
@@ -404,6 +476,7 @@ def admin_drinks():
             return redirect(url_for('admin_drinks'))
         else:
             flash(form.errors, "danger")
+    flash_form_errors(form.errors)
     return render_template('admin/mandrinks.html', title="Productbeheer", h1="Productbeheer", Product=Product,
                            form=form), 200
 
@@ -441,6 +514,8 @@ def admin_drinks_edit(drinkid):
         alert = (dbhandler.editdrink_image(drinkid, form2.image.data, form2.hoverimage.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_drinks'))
+    flash_form_errors(form.errors)
+    flash_form_errors(form2.errors)
     return render_template('admin/editdrink.html', title="{} bewerken".format(product.name),
                            h1="Pas {} (ID: {}) aan".format(product.name, product.id), product=product, form=form,
                            form2=form2, recipe=recipe[:-2]), 200
@@ -465,10 +540,12 @@ def admin_usergroups():
         alert = (dbhandler.addusergroup(form.name.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_usergroups'))
+    flash_form_errors(form.errors)
     return render_template("admin/manusergroups.html", title="Groepen", h1="Groepenbeheer", form=form,
                            Usergroup=Usergroup), 200
 
 
+@register_breadcrumb(app, '.admin.usergroups.confirm', 'Bevestigen', order=2)
 @app.route('/admin/usergroups/delete/<int:usergroupid>')
 def admin_usergroups_delete(usergroupid):
     if request.remote_addr != "127.0.0.1":
@@ -510,6 +587,7 @@ def admin_inventory():
         flash(alert[0], alert[1])
         return redirect(url_for('admin_inventory'))
 
+    flash_form_errors(form.errors)
     return render_template("admin/maninventory.html", title="Inventarisbeheer", h1="Inventarisbeheer",
                            backurl=url_for('index'), Product=Product,
                            Inventory=Inventory, form=form), 200
@@ -546,6 +624,7 @@ def payout_profit():
                                          form.verification.data)
         flash(alert[0], alert[1])
         return redirect(url_for('payout_profit'))
+    flash_form_errors(form.errors)
     return render_template("admin/manprofit.html", title="Winst uitkeren", h1="Winst uitkeren", Usergroup=Usergroup,
                            form=form), 200
 
@@ -577,6 +656,7 @@ def borrel_mode():
         # Add whether borrel mode is still enabled
         borrel_data['enabled'] = dbhandler.borrel_mode_enabled
 
+    flash_form_errors(form.errors)
     return render_template('admin/borrelmode.html', title="Borrel Modus beheren", h1="Borrel modus", form=form,
                            borrel_data=borrel_data), 200
 
@@ -763,18 +843,6 @@ def shutdown():
                            message="Tikker wordt nu afgesloten. Je kan dit venster sluiten.", gif_url="")
 
 
-@app.route('/testemail/<int:mail>')
-def test_emailing(mail):
-    if int(mail) == 1:
-        emailhandler.test_debt_email()
-    elif int(mail) == 2:
-        emailhandler.test_overview_email()
-    elif int(mail) == 3:
-        emailhandler.test_dinner_overview_email()
-    elif int(mail) == 4:
-        emailhandler.test_treasurer_email()
-    return redirect(url_for('index'))
-
 @app.route('/error/403')
 def show_401():
     message = "Je bezoekt Tikker niet vanaf de computer waar Tikker op is geïnstalleerd. Je hebt daarom geen toegang tot deze pagina."
@@ -911,14 +979,6 @@ def stop_biertje_kwartiertje():
     return redirect(url_for("bigscreen"))
 
 
-@app.route("/admin/bigscreen/biertjekwartiertje/test")
-def test_biertje_kwartiertje():
-    print(dbhandler.biertje_kwartiertje_participants)
-    print(dbhandler.biertje_kwartiertje_time)
-    print(dbhandler.biertje_kwartiertje_drink)
-    return redirect(url_for("bigscreen"))
-
-
 @app.route("/api/spotify/login")
 def api_spotify_login():
     return spotify.login(request)
@@ -971,56 +1031,3 @@ def api_disable_snow():
 def api_reload_bigscreen():
     socket.send_reload()
     return redirect(url_for('bigscreen'))
-
-
-@app.route('/testaddquotes')
-def test_add_quotes():
-    quotes = ['Roy: Kathelijn belde, er wordt te laf gezopen!',
-              'Als ik zou willen dat je het begreep, had ik het wel beter uitgelegd.',
-              'Het enige wat je met liegen bereikt is niet geloofd worden als je de waarheid spreekt.',
-              'Logica brengt je van A naar B. Verbeelding brengt je overal.',
-              'Een mens heeft twee oren en één mond om twee keer zoveel te luisteren dan te praten.',
-              'De aarde biedt voldoende om ieders behoefte te bevredigen maar niet ieders hebzucht.']
-    for q in quotes:
-        dbhandler.addquote(q)
-
-    return redirect(url_for('index'))
-
-
-@app.route('/testinterrupt')
-def test_interrupt():
-    socket.send_interrupt({"name": "Message", "data": "Dit is een interrupt"})
-    return redirect(url_for('index'))
-
-
-@app.route('/testdocument')
-def test_document():
-    doc = Document()
-    doc.add_heading("Test document", 0)
-    doc.add_heading("Door Roy", 1)
-
-    doc.add_paragraph('Een paragraaf')
-
-    doc.add_paragraph('Een', style='List Number')
-    doc.add_paragraph('Twee', style='List Number')
-    doc.add_paragraph('Drie', style='List Number')
-
-    records = [
-        [3, '101', 'Spam'],
-        [7, '422', 'Eggs'],
-        [4, '631', 'Spam, spam, eggs, and spam']
-    ]
-
-    table = doc.add_table(rows=0, cols=3)
-    for tuple in records:
-        print(tuple)
-        print()
-        row_cells = table.add_row().cells
-        row_cells[0].text = str(tuple[0])
-        row_cells[1].text = tuple[1]
-        row_cells[2].text = tuple[2]
-
-    doc.add_page_break()
-
-    doc.save(os.path.join(app.config['DOCUMENT_FOLDER'], 'demo.docx'))
-    return True
