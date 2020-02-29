@@ -68,6 +68,16 @@ function toggle_snow() {
     location.reload();
 }
 
+function toggle_hoverimages() {
+    let cookie = getCookie('hover');
+    if (cookie === "True") {
+        setCookie('hover', 'False', 1000)
+    } else {
+        setCookie('hover', 'True', 1000)
+    }
+    location.reload();
+}
+
 function getCookie(cname) {
     var name = cname + "=";
     var decodedCookie = decodeURIComponent(document.cookie);

@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-xl img-thumbnail">
+            <table style="width: 100%">
+                <tr>
+                    <th>Dark/Light mode</th>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">Wissel tussen dark mode en light mode<br><br></td>
+                </tr>
+                <tr>
+                    <td>
+                        <button onclick="toggle_darkmode()" class="btn btn-block btn-green">
+                            {% if request.cookies.get('dark-mode') == 'True' %}
+                            Light Mode
+                            {% else %}
+                            Dark Mode
+                            {% endif %}
+                        </button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-xl img-thumbnail">
+            <table style="width: 100%">
+                <tr>
+                    <th>Confetti</th>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">Confetti op de homepagina<br><br></td>
+                </tr>
+                <tr>
+                    <td>
+                        <button onclick="toggle_confetti()" class="btn btn-block btn-yellow">Confetti
+                            {% if request.cookies.get('confetti') == 'True' %}
+                            uit
+                            {% else %}
+                            aan
+                            {% endif %}
+                        </button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-xl img-thumbnail">
+            <table style="width: 100%">
+                <tr>
+                    <th>Hoverafbeeldingen</th>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">Andere afbeelding wanneer je met je muis over een product gaat</td>
+                </tr>
+                <tr>
+                    <td>
+                        <button onclick="toggle_hoverimages()" class="btn btn-block btn-green">Hoverafbeeldingen
+                            {% if request.cookies.get('hover') == 'True' %}
+                            uit
+                            {% else %}
+                            aan
+                            {% endif %}
+                        </button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        {% if snow == "True" %}
+        <div class="col-xl img-thumbnail">
+            <table style="width: 100%">
+                <tr>
+                    <th>Sneeuw</th>
+                </tr>
+                <tr>
+                    <td style="text-align: center;">Sneeuw op de homepagina<br></td>
+                </tr>
+                <tr>
+                    <td>
+                        <button onclick="toggle_snow()" class="btn btn-block btn-yellow">Sneeuw
+                            {% if request.cookies.get('snow') == 'True' %}
+                            uit
+                            {% else %}
+                            aan
+                            {% endif %}
+                        </button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

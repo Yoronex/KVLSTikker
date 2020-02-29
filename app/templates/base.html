@@ -1,6 +1,6 @@
 {% extends 'bootstrap/base.html' %}
 
-{% set version = "1.4.3.0" %}
+{% set version = "1.4.4.0" %}
 
 {% block title %}
 {% if title %}Tikker - {{ title }}
@@ -106,15 +106,17 @@
                     </ul>
                     <hr>
                     <h5>Changelog</h5>
-                    <b>Versie 1.4.3.2</b>: Bugfixes
+                    <b>Versie 1.4.4.0 (29/02/2020)</b>: Bugfixes en kleine verbeteringen
                     <ul>
                         <li>De lijst met transacties in het gebruikersoverzicht en in het adminpaneel heeft nu verschillende pagina's met transacties, waardoor hij sneller laadt</li>
                         <li>In het administratorpaneel staat nu naast de aantallen inventaris ook de waarde van deze inventaris</li>
                         <li>Een error verschijnt nu bovenin het scherm wanneer er een fout wordt gemaakt in een formulier</li>
+                        <li>Alle client-instellingen verplaatst vanaf het hoofdmenu naar een aparte pagina</li>
                         <li>Het bevestigen-scherm wanneer iets wordt verwijderd, laat ook zien wat je precies gaat verwijderen (naast alleen een ID)</li>
                         <li>Alle symbolen in Tikker zijn vervangen door tekst-symbolen in plaats van afbeeldingen</li>
-                        <li>Bug gefixt die Tikker liet vastlopen wanneer iemand was ingelogd met Spotify en de internetverbinding tijdelijk wegviel</li>
                         <li>Prijskolommen in tabellen hebben nu een minimale breedte om te voorkomen dat het euro teken en de prijs beiden op een aparte lijn komen te staan</li>
+                        <li>Bug gefixt die Tikker liet vastlopen wanneer iemand was ingelogd met Spotify en de internetverbinding tijdelijk wegviel</li>
+                        <li>Bug gefixt waardoor Tikker BigScreen niet kon starten wanneer er geen internetverbinding was</li>
                     </ul>
                     <b>Versie 1.4.3.1 (14/02/2020)</b>: Hotfix
                     <ul>
@@ -360,29 +362,7 @@
                 <a href="{{ url_for('index') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Home</a>
                 <a href="{{ url_for('balance') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Gebruikersoverzicht</a>
                 <a href="{{ url_for('stats_home') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Statistieken</a>
-                <a onclick="toggle_confetti()" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}" style="cursor:pointer; color: #495057;" >Confetti
-                    {% if request.cookies.get('confetti') == 'True' %}
-                    uit
-                    {% else %}
-                    aan
-                    {% endif %}
-                </a>
-                <a onclick="toggle_darkmode()" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}" style="cursor:pointer; color: #495057;" >
-                    {% if request.cookies.get('dark-mode') == 'True' %}
-                    Light Mode
-                    {% else %}
-                    Dark Mode
-                    {% endif %}
-                </a>
-                {% if snow == "True" %}
-                <a onclick="toggle_snow()" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}" style="cursor:pointer; color: #495057;" >Sneeuw
-                    {% if request.cookies.get('snow') == 'False' %}
-                    aan
-                    {% else %}
-                    uit
-                    {% endif %}
-                {% endif %}
-                </a>
+                <a href="{{ url_for('client_settings') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Browserinstellingen</a>
             </div>
             <div style="position: absolute; bottom: 0;">
                 <img src="{{ url_for('.static', filename='img/NIX18.svg') }}" style="text-align: center; margin: 1rem;"

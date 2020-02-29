@@ -317,6 +317,12 @@ def purchase_dinner_from_cart(cart_string):
     return redirect(url_for('index'))
 
 
+@register_breadcrumb(app, '.settings', 'Browserinstellingen', order=1)
+@app.route('/settings')
+def client_settings():
+    return render_template('settings.html', title="Browserinstellingen", h1="Browserinstellingen")
+
+
 ##
 #
 # Admin Panel

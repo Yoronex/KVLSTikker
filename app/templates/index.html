@@ -22,8 +22,8 @@
         {% for p in Product.query.filter(Product.purchaseable == True).order_by(Product.order.asc()).all() %}
             <div class="front-image">
                 <a href="/drink/{{ p.id }}">
-                    <img src="{{ url_for('.static', filename='products/{}'.format(p.image) ) }}" title="{{ p.name }} voor €{{ '%.2f' % p.price }}" style="max-width:100%;max-height:100%;">
-                    <img src="{{ url_for('.static', filename='products/{}'.format(p.hoverimage) ) }}" title="{{ p.name }} voor €{{ '%.2f' % p.price }}" class="img-top" style="max-width:100%;max-height:100%;">
+                    <img alt="{{ p.name }}" src="{{ url_for('.static', filename='products/{}'.format(p.image) ) }}" title="{{ p.name }} voor €{{ '%.2f' % p.price }}" style="max-width:100%;max-height:100%;">
+                    {% if not request.cookies.get('hover') == 'False' %}<img alt="{{ p.name }}" src="{{ url_for('.static', filename='products/{}'.format(p.hoverimage) ) }}" title="{{ p.name }} voor €{{ '%.2f' % p.price }}" class="img-top" style="max-width:100%;max-height:100%;">{% endif %}
                 </a>
             </div>
         {% endfor %}
