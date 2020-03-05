@@ -21,12 +21,12 @@ last_calendar_update = datetime.strptime('1970-01-01', "%Y-%m-%d")
 
 @socketio.on('connect', namespace='/bigscreen')
 def test_connect():
-    print('Tikker BigScreen connected')
+    app.logger.info('Tikker BigScreen connected')
 
 
 @socketio.on('disconnect', namespace='/bigscreen')
 def test_disconnect():
-    print('Tikker BigScreen disconnected')
+    app.logger.info('Tikker BigScreen disconnected')
 
 
 @socketio.on('init', namespace='/bigscreen')
@@ -223,6 +223,17 @@ def get_slide_data(name):
 
         return {'upcoming_events': True,
                 'calendar': items}
+
+    elif name == "Birthdays":
+        upcoming_birthdays = dbhandler.upcoming_birthdays()
+        result = []
+
+        for u in upcoming_birthdays:
+            result.append({'user': u['user'],
+                           'age': u['age'],
+                           'birthday': u['birthday'].strftime("%d/%m/%Y"),
+                           'days': u['days']})
+        return result[:10]
 
     return {}
 
