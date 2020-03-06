@@ -6,9 +6,6 @@
     <script src="{{url_for('.static', filename='js/cart.js')}}"></script>
     <script>
         initCart({{ drink.price|tojson }});
-        $(function() {
-            $('#toggle-one').bootstrapToggle();
-          })
     </script>
 {% endblock %}
 
