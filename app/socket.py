@@ -10,6 +10,8 @@ import pytz
 import urllib.request
 import copy
 
+bigscreen_connected = False
+last_updated_slide = ""
 most_drank = 0
 second_most_drank = 0
 third_most_drank = 0
@@ -20,13 +22,17 @@ last_calendar_update = datetime.strptime('1970-01-01', "%Y-%m-%d")
 
 
 @socketio.on('connect', namespace='/bigscreen')
-def test_connect():
+def connected():
+    global bigscreen_connected
     app.logger.info('Tikker BigScreen connected')
+    bigscreen_connected = True
 
 
 @socketio.on('disconnect', namespace='/bigscreen')
-def test_disconnect():
+def disconnected():
+    global bigscreen_connected
     app.logger.info('Tikker BigScreen disconnected')
+    bigscreen_connected = False
 
 
 @socketio.on('init', namespace='/bigscreen')
@@ -66,9 +72,13 @@ def get_spotify_data():
 
 @socketio.on('slide_data', namespace='/bigscreen')
 def update_slide_data(msg):
+    global last_updated_slide
     name = msg["name"]
+    app.logger.info("Received request to update slide {}".format(name))
+    last_updated_slide = name
     emit('slide_data', {"name": name,
                         "data": get_slide_data(name)})
+    app.logger.info("Sent slide update response for slide {}".format(name))
 
 
 def get_slide_data(name):
@@ -251,8 +261,14 @@ def most_drank_data(drinkid):
 
 
 def update_stats():
+    global last_updated_slide
     daily, maxim = get_stats()
+    app.logger.info("Update stats and recent slide")
     socketio.emit('stats', {"daily": daily, "max": maxim}, namespace='/bigscreen')
+    socketio.emit('slide_data', {"name": last_updated_slide,
+                                 "data": get_slide_data(last_updated_slide)}, namespace='/bigscreen')
+    app.logger.info("Finished updating stats and recent slide")
+
 
 
 def get_stats():

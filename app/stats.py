@@ -328,7 +328,9 @@ def most_bought_of_one_product_by_users_from_group(drinkid, groupid, parsedbegin
 
 def most_bought_products_by_users(parsedbegin, parsedend):
     count = {}
-    purchases = Purchase.query.filter(and_(Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend, Purchase.product_id != settings['dinner_product_id'])).all()
+    purchases = Purchase.query.filter(and_(Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend,
+                                           Purchase.product_id != settings['dinner_product_id'],
+                                           Purchase.price > 0)).all()
     for pur in purchases:
         if pur.product_id not in count:
             count[pur.product_id] = pur.amount
