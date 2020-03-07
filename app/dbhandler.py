@@ -999,3 +999,22 @@ def is_birthday():
             age = int((today - u.birthday).days / days_in_year)
             birthdays.append({"user": u, "age": age})
     return birthdays
+
+
+def upcoming_birthdays():
+    today = datetime.today()
+    birthday_groups = json.loads(settings['birthday_groups'])
+    days_in_year = 365.2425
+    birthdays = []
+    for u in User.query.all():
+        if u.usergroup_id in birthday_groups:
+            bday = datetime(today.year, u.birthday.month, u.birthday.day)
+            new_age = int(round_up((today - u.birthday).days / days_in_year, 0))
+            if bday < today:
+                bday = datetime(today.year + 1, u.birthday.month, u.birthday.day)
+            diff = (bday - today).days + 1
+            birthdays.append({'user': u.name,
+                              'birthday': bday,
+                              'age': new_age,
+                              'days': diff})
+    return sorted(birthdays, key=lambda i: i['birthday'])

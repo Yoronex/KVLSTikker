@@ -1,6 +1,6 @@
 {% extends 'bootstrap/base.html' %}
 
-{% set version = "1.4.4.0" %}
+{% set version = "1.4.4.1" %}
 
 {% block title %}
 {% if title %}Tikker - {{ title }}
@@ -106,6 +106,12 @@
                     </ul>
                     <hr>
                     <h5>Changelog</h5>
+                    <b>Versie 1.4.4.1</b>: Bugfixes
+                    <ul>
+                        <li>De laatst geupdate slide wordt nu bij elke statistieken-update ook geupdate, waardoor de slides niet meer achter zouden moeten lopen</li>
+                        <li>Bug gefixt waardoor een rondje dubbel telde bij de "Totaal gedronken" statistieken op BigScreen</li>
+                        <li>Bug gefixt waardoor bij een gezamelijke transactie bij verwijderen uit de winkelwagen de aantallen en bedragen niet meer omhoog gingen</li>
+                    </ul>
                     <b>Versie 1.4.4.0 (29/02/2020)</b>: Bugfixes en kleine verbeteringen
                     <ul>
                         <li>De lijst met transacties in het gebruikersoverzicht en in het adminpaneel heeft nu verschillende pagina's met transacties, waardoor hij sneller laadt</li>

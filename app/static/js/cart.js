@@ -33,7 +33,6 @@ function addToCart(u_id, user_name, shared) {
     shared = (shared === 'True');
 
     if(shared === false) {
-        //prod_price = p_price;
         var user_id = parseInt(u_id);
         if (user_id in cartList) {
             changeCartAmount(user_id, cartList[user_id], 1);
@@ -48,7 +47,6 @@ function addToCart(u_id, user_name, shared) {
         var cell3 = row.insertCell(price_loc);
 
         var minusimg = $('body').data('minus-img');
-        //cell0.innerHTML = "<a onclick='removeFromCart(" + user_id + ")' onmouseover=\"\" style=\"cursor: pointer;\"><img src='" + minusimg + "' alt=\"DEL\" title=\"Verwijder één\"></a>";
         cell0.innerHTML = "<a onclick='removeFromCart(" + user_id + ")' onmouseover=\"\" style=\"cursor: pointer;\"><span class='fa fa-minus fa-lg' style='color: orange;'></span></a>";
         cell0.style.width = "15%";
         cell1.innerHTML = user_name;
@@ -58,13 +56,9 @@ function addToCart(u_id, user_name, shared) {
         cell3.innerHTML = "€" + parseFloat(Math.ceil(prod_price * 100) / 100).toFixed(2).toString();
         cell3.style.width = "20%";
 
-        //var temp = [];
-        //temp["id"] = user_id;
-        //temp["row"] = row;
         cartList[user_id] = row;
         document.getElementById("submitbutton").style.visibility = "visible";
     } else {
-        //prod_price = p_price;
         var user_id = parseInt(u_id);
         if (user_id in cartList) {
             changeCartPart(user_id, cartList[user_id], 1);
@@ -79,8 +73,7 @@ function addToCart(u_id, user_name, shared) {
         var cell3 = row.insertCell(price_loc);
 
         var minusimg = $('body').data('minus-img');
-        //cell0.innerHTML = "<a onclick='removeFromPart(" + user_id + ")' onmouseover=\"\" style=\"cursor: pointer;\"><img src='" + minusimg + "' alt=\"DEL\" title=\"Verwijder één\"></a>";
-        cell0.innerHTML = "<a onclick='removeFromCart(" + user_id + ")' onmouseover=\"\" style=\"cursor: pointer;\"><span class='fa fa-minus fa-lg' style='color: orange;'></span></a>";
+        cell0.innerHTML = "<a onclick='removeFromPart(" + user_id + ")' onmouseover=\"\" style=\"cursor: pointer;\"><span class='fa fa-minus fa-lg' style='color: orange;'></span></a>";
         cell0.style.width = "15%";
         cell1.innerHTML = user_name;
         cell1.style.width = "50%";
@@ -91,16 +84,11 @@ function addToCart(u_id, user_name, shared) {
 
         updateCart();
 
-        //var temp = [];
-        //temp["id"] = user_id;
-        //temp["row"] = row;
         cartList[user_id] = row;
-        //document.getElementById("submitbutton").style.visibility = "visible";
     }
 }
 
 function changeCartAmount(user_id, row, amount) {
-    //var row = document.getElementById("cart").rows[loc];
     var count_cell = row.cells[count_loc];
     var count = parseInt(count_cell.innerHTML) + amount;
     row.cells[count_loc].innerHTML = count.toString() + "x";
@@ -119,14 +107,9 @@ function removeFromCart(u_id) {
     } else {
         changeCartAmount(user_id, cartList[user_id], -1)
     }
-
-    //if (cartList.length === 0) {
-    //    document.getElementById("submitbutton").style.visibility = "hidden";
-    //}
 }
 
 function changeCartPart(user_id, row, amount) {
-    //var row = document.getElementById("cart").rows[loc];
     var count_cell = row.cells[count_loc];
     var count = parseInt(count_cell.innerHTML) + amount;
     row.cells[count_loc].innerHTML = count.toString() + "/" + total.toString();
@@ -151,10 +134,6 @@ function removeFromPart(u_id) {
     } else {
         changeCartPart(user_id, cartList[user_id], -1)
     }
-
-    //if (cartList.length === 0) {
-    //    document.getElementById("submitbutton").style.visibility = "hidden";
-    //}
 }
 
 function updateCart() {
