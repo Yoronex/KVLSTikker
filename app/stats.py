@@ -104,6 +104,7 @@ def reset_daily_stats():
     daily_stats["shots"] = 0
     daily_stats["purchases"] = 0
     daily_stats["rounds"] = 0
+    daily_stats_seen_users = set({})
 
 
 def update_daily_stats(key, update_val):
@@ -330,7 +331,7 @@ def most_bought_products_by_users(parsedbegin, parsedend):
     count = {}
     purchases = Purchase.query.filter(and_(Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend,
                                            Purchase.product_id != settings['dinner_product_id'],
-                                           Purchase.price > 0)).all()
+                                           Purchase.round == False)).all()
     for pur in purchases:
         if pur.product_id not in count:
             count[pur.product_id] = pur.amount

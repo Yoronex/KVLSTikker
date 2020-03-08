@@ -263,8 +263,8 @@ def addbalance(user_id, description, amount):
     # Update the daily stats accordingly
     stats.update_daily_stats('euros', upgrade.amount)
 
-    return "Gebruiker {} heeft succesvol opgewaardeerd met €{}".format(user.name, str("%.2f" % upgrade.amount)
-                                                                       .replace(".", ",")), "success"
+    return upgrade
+    return user.name, str("%.2f" % upgrade.amount).replace(".", ",")
 
 
 def parse_recipe(recipe):

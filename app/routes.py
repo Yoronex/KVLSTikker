@@ -167,8 +167,16 @@ def upgrade():
         if amount < 0.0:
             flash("Opwaardering kan niet negatief zijn!", "danger")
             return render_template('upgrade.html', title='Opwaarderen', form=form)
-        alert = (dbhandler.addbalance(form.user.data, form.description.data, amount))
-        flash(alert[0], alert[1])
+
+        upgrade = (dbhandler.addbalance(form.user.data, form.description.data, amount))
+        user = User.query.get(upgrade.user_id)
+
+        if upgrade.description == "Opwaardering":
+            socket.send_transaction("{} heeft opgewaardeerd met € {}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ",")))
+            flash("Gebruiker {} heeft succesvol opgewaardeerd met € {}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ",")), "success")
+        else:
+            socket.send_transaction("{} heeft € {} teruggekregen ({})".format(user.name, str("%.2f" % upgrade.amount).replace(".", ","), upgrade.description))
+            flash("Gebruiker {} heeft succesvol € {} teruggekregen voor: {}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ","), upgrade.description), "success")
 
         socket.update_stats()
 
