@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block scripts %}
+    {{ super() }}
+    <script type="text/javascript" src="{{url_for('.static', filename='js/soundboard.js')}}"></script>\
+    <script>
+        loadArrayFromDict({{ sounds|tojson }})
+    </script>
+{% endblock %}
+
+{% block styles %}
+    {{super()}}
+    <style>
+    #soundboard {
+        text-align: center;
+        margin: 1rem;
+    }
+
+    .playing{
+        background: var(--grey);
+        transform: scale(1.5);
+        animation: 0.05s infinite alternate waggle;
+    }
+
+
+    @keyframes waggle {
+        from{transform: rotate(5grad)}
+        to{transform: rotate(-5grad)}
+
+    }
+    </style>
+{% endblock %}
+{% block app_content %}
+    <div id="soundboard">
+    {% for s in sounds %}
+        {% if loop.index % 2 == 0 %}
+        <button class="btn btn-yellow soundbutton" data-key="{{ s.keyboard_code }}">{{ s.name }} - ({{ s.keyboard_key }})</button>
+        {% else %}
+        <button class="btn btn-green soundbutton" data-key="{{ s.keyboard_code }}">{{ s.name }} - ({{ s.keyboard_key }})</button>
+        {% endif %}
+    {% endfor %}
+    </div>
+
+    <div id="audio-container">
+    </div>
+{% endblock %}

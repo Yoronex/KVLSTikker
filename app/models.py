@@ -155,3 +155,21 @@ class Quote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, index=True, nullable=False)
     value = db.Column(db.String)
+
+
+class Sound(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String)
+    keyboard_key = db.Column(db.String)
+    keyboard_code = db.Column(db.Integer)
+    filename = db.Column(db.String)
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'keyboard_key': self.keyboard_key,
+            'keyboard_code': self.keyboard_code,
+            'url': "/static/soundboard/" + self.filename
+        }

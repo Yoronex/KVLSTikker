@@ -408,6 +408,17 @@ def addquote(q):
     db.session.commit()
 
 
+def add_sound(name, key, code, file):
+    sound = Sound(name=name, keyboard_key=key, keyboard_code=code)
+    db.session.add(sound)
+    db.session.commit()
+
+    filename, extension = os.path.splitext(secure_filename(file.filename))
+    sound.filename = str(sound.id) + "_" + filename + extension
+    file.save(os.path.join(app.config['SOUNDBOARD_FOLDER'], sound.filename))
+    db.session.commit()
+
+
 def deluser(user_id):
     user = User.query.get(user_id)
     name = user.name
@@ -495,6 +506,13 @@ def delusergroup(usergroup_id):
     db.session.delete(usergroup)
     db.session.commit()
     return "Groep {} verwijderd".format(usergroup.name), "success"
+
+
+def del_sound(sound_id):
+    sound = Sound.query.get(sound_id)
+    db.session.delete(sound)
+    db.session.commit()
+    return "Geluid {} verwijderd".format(sound.name), "success"
 
 
 def editdrink_attr(product_id, name, price, category, order, purchaseable, recipe, inventory_warning, alcohol, volume,

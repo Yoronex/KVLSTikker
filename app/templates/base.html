@@ -1,6 +1,6 @@
 {% extends 'bootstrap/base.html' %}
 
-{% set version = "1.4.4.1" %}
+{% set version = "1.5.0.0" %}
 
 {% block title %}
 {% if title %}Tikker - {{ title }}
@@ -106,8 +106,15 @@
                     </ul>
                     <hr>
                     <h5>Changelog</h5>
-                    <b>Versie 1.4.4.2</b>: Bugfixes
+                    <b>Versie 1.5.0.0</b>:
                     <ul>
+                        <li>Soundboard toegevoegd
+                            <ul>
+                                <li>Geluiden kunnen afgespeeld worden vanaf de "Soundboard" pagina met de knop of het toetsenbord</li>
+                                <li>Geluiden kunnen samen met een toets toegevoegd worden via het administratorpaneel</li>
+                                <li>Geluiden kunnen verwijderd worden via het administratorpaneel</li>
+                            </ul>
+                        </li>
                         <li>Opwaarderingen komen nu ook langs in Tikker BigScreen</li>
                         <li>Bug gefixt waardoor een rondje dubbel telde bij de "Totaal gedronken" statistieken op BigScreen</li>
                     </ul>
@@ -374,6 +381,7 @@
                 <a href="{{ url_for('balance') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Gebruikersoverzicht</a>
                 <a href="{{ url_for('stats_home') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Statistieken</a>
                 <a href="{{ url_for('client_settings') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Browserinstellingen</a>
+                <a href="{{ url_for('soundboard') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Soundboard</a>
             </div>
             <div style="position: absolute; bottom: 0;">
                 <img src="{{ url_for('.static', filename='img/NIX18.svg') }}" style="text-align: center; margin: 1rem;"

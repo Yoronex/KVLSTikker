@@ -1,0 +1,7 @@
+CREATE TABLE sound (
+    id INTEGER PRIMARY KEY,
+    name VARCHAR(64),
+    keyboard_key VARCHAR(64),
+    keyboard_code INTEGER,
+    filename VARCHAR(64)
+);

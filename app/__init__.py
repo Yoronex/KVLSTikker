@@ -34,17 +34,9 @@ app.config.from_object(Config)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}, r"/socket.io/*": {"origins": "*"}})
 socketio = SocketIO(app, cors_allowed_origins="*")  # Needs to be changed later for Tikker BigScreen
 
-if not os.path.exists(app.config['ALBUM_COVER_FOLDER']):
-    os.makedirs(app.config['ALBUM_COVER_FOLDER'])
-
-if not os.path.exists(app.config['BACKUP_FOLDER']):
-    os.makedirs(app.config['BACKUP_FOLDER'])
-
-if not os.path.exists(app.config['SPOTIFY_CACHE_FOLDER']):
-    os.makedirs(app.config['SPOTIFY_CACHE_FOLDER'])
-
-if not os.path.exists(app.config['DOCUMENT_FOLDER']):
-    os.makedirs(app.config['DOCUMENT_FOLDER'])
+for path in [app.config['ALBUM_COVER_FOLDER'], app.config['BACKUP_FOLDER'], app.config['SPOTIFY_CACHE_FOLDER'], app.config['DOCUMENT_FOLDER'], app.config['SOUNDBOARD_FOLDER']]:
+    if not os.path.exists(path):
+        os.makedirs(path)
 
 list_of_files = os.listdir(app.config['BACKUP_FOLDER'])
 if len(list_of_files) >= app.config['MAX_BACKUPS']:
@@ -68,6 +60,7 @@ else:
     EN_SNOW = True
 
 from app import routes, models
+from app.models import *
 
 if not app.debug:
     if not os.path.exists(app.config["LOG_FOLDER"]):

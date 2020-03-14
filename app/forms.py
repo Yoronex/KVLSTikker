@@ -211,3 +211,11 @@ class BorrelModeForm(FlaskForm):
             for u in group.users:
                 users.append((str(u.id), "{} ({})".format(u.name, group.name)))
         self.user.choices = users
+
+
+class SoundBoardForm(FlaskForm):
+    name = StringField("Naam", validators=[DataRequired()])
+    key = StringField("Toetsenbord toets")
+    code = StringField("Javascript Toetscode")
+    file = FileField("Audiobestand", validators=[DataRequired()])
+    submit = SubmitField("Versturen")

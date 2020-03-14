@@ -1,7 +1,7 @@
 from flask import render_template, flash, redirect, url_for, request, abort, jsonify, make_response
 from app import app, stats, socket, spotify, socketio, dbhandler, emailhandler, cart, round_up, round_down
 from app.forms import *
-from app.models import User, Usergroup, Product, Purchase, Upgrade, Transaction, Inventory
+from app.models import *
 from flask_breadcrumbs import register_breadcrumb
 import copy
 import os
@@ -329,6 +329,13 @@ def purchase_dinner_from_cart(cart_string):
 @app.route('/settings')
 def client_settings():
     return render_template('settings.html', title="Browserinstellingen", h1="Browserinstellingen")
+
+
+@register_breadcrumb(app, '.soundboard', 'Soundboard', order=1)
+@app.route('/soundboard')
+def soundboard():
+    sounds = [s.serialize for s in Sound.query.all()]
+    return render_template('soundboard.html', title="Soundboard", h1="Soundboard", sounds=sounds)
 
 
 ##
@@ -675,6 +682,40 @@ def disable_borrel_mode():
     flash("Borrel mode uitgeschakeld", "success")
     return redirect(url_for('borrel_mode'))
 
+
+@register_breadcrumb(app, '.admin.soundboard', 'Soundboard', order=2)
+@app.route('/admin/soundboard', methods=['GET', 'POST'])
+def admin_soundboard():
+    form = SoundBoardForm()
+    if form.validate_on_submit():
+        dbhandler.add_sound(form.name.data, form.key.data, form.code.data, form.file.data)
+        flash('Geluid {} succesvol toegevoegd'.format(form.name.data), 'success')
+
+    flash_form_errors(form.errors)
+    return render_template('admin/mansounds.html', title="Beheer soundboard", h1="Beheer soundboard", form=form,
+                           Sound=Sound)
+
+
+@register_breadcrumb(app, '.admin.soundboard.confirm', 'Bevestigen', order=3)
+@app.route('/admin/soundboard/delete/<int:sound_id>')
+def admin_soundboard_delete(sound_id):
+    if request.remote_addr != "127.0.0.1":
+        abort(403)
+    sound = Sound.query.get(sound_id)
+    message = "geluid " + sound.name + " wilt verwijderen?"
+    agree_url = url_for("admin_soundboard_delete_exec", sound_id=sound_id)
+    return_url = url_for("admin_soundboard")
+    return render_template("verify.html", title="Bevestigen", message=message, user=user, agree_url=agree_url,
+                           return_url=return_url), 200
+
+
+@app.route('/admin/soundboard/delete/<int:sound_id>/exec')
+def admin_soundboard_delete_exec(sound_id):
+    if request.remote_addr != "127.0.0.1":
+        abort(403)
+    alert = (dbhandler.del_sound(sound_id))
+    flash(alert[0], alert[1])
+    return redirect(url_for('admin_soundboard'))
 
 @app.route('/admin/recalcmax')
 def recalculate_max_stats():
