@@ -23,6 +23,7 @@ from flask_bootstrap import Bootstrap
 from flask_breadcrumbs import Breadcrumbs
 from flask_mail import Mail
 from logging.handlers import RotatingFileHandler
+from flask_babel import Babel
 import os
 import zipfile
 from datetime import datetime
@@ -33,6 +34,7 @@ app = Flask(__name__)
 app.config.from_object(Config)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}, r"/socket.io/*": {"origins": "*"}})
 socketio = SocketIO(app, cors_allowed_origins="*")  # Needs to be changed later for Tikker BigScreen
+babel = Babel(app, default_locale='nl', default_timezone='CET')
 
 for path in [app.config['ALBUM_COVER_FOLDER'], app.config['BACKUP_FOLDER'], app.config['SPOTIFY_CACHE_FOLDER'], app.config['DOCUMENT_FOLDER'], app.config['SOUNDBOARD_FOLDER']]:
     if not os.path.exists(path):

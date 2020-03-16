@@ -156,33 +156,59 @@ def index():
     return resp
 
 
-@app.route('/upgrade', methods=['GET', 'POST'])
-@register_breadcrumb(app, '.upgrade', 'Opwaarderen', order=1)
+@app.route('/admin/upgrade', methods=['GET', 'POST'])
+@register_breadcrumb(app, '.admin.upgrade', 'Opwaarderen', order=2)
 def upgrade():
     if request.remote_addr != "127.0.0.1":
         abort(403)
-    form = UpgradeBalanceForm()
-    if form.validate_on_submit():
-        amount = float(form.amount.data.replace(",", "."))
+
+    # Create the two forms that will be included
+    upgr_form = UpgradeBalanceForm()
+    decl_form = DeclarationForm()
+
+    # If one of the forms has been submitted
+    if (upgr_form.upgr_submit.data and upgr_form.validate_on_submit()) or \
+            (decl_form.decl_submit.data and decl_form.validate_on_submit()):
+        # Change the decimal amount to a float
+        amount = float(upgr_form.amount.data)
+
+        # The amount cannot be negative!
         if amount < 0.0:
             flash("Opwaardering kan niet negatief zijn!", "danger")
-            return render_template('upgrade.html', title='Opwaarderen', form=form)
+            return render_template('upgrade.html', title='Opwaarderen', h1="Opwaarderen",
+                                   upgr_form=upgr_form, decl_form=decl_form)
 
-        upgrade = (dbhandler.addbalance(form.user.data, form.description.data, amount))
-        user = User.query.get(upgrade.user_id)
+        # If the upgrade form has been filled in...
+        if upgr_form.upgr_submit.data and upgr_form.validate_on_submit():
+            # Add the upgrade to the database
+            upgrade = (dbhandler.addbalance(int(upgr_form.user.data), "Opwaardering", amount))
+            # Get the user for the messages that now follow
+            user = User.query.get(upgrade.user_id)
 
-        if upgrade.description == "Opwaardering":
             socket.send_transaction("{} heeft opgewaardeerd met € {}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ",")))
             flash("Gebruiker {} heeft succesvol opgewaardeerd met € {}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ",")), "success")
+
+        # If the declaration form has been filled in
         else:
+            # Add the upgrade to the database
+            upgrade = (dbhandler.add_declaration(int(decl_form.user.data), decl_form.description.data,
+                                                 amount, int(decl_form.payer.data)))
+            # Get the user for the messages that now follow
+            user = User.query.get(upgrade.user_id)
+
             socket.send_transaction("{} heeft € {} teruggekregen ({})".format(user.name, str("%.2f" % upgrade.amount).replace(".", ","), upgrade.description))
             flash("Gebruiker {} heeft succesvol € {} teruggekregen voor: {}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ","), upgrade.description), "success")
 
+        # Update the daily stats
         socket.update_stats()
 
-        return redirect(url_for('index'))
-    flash_form_errors(form.errors)
-    return render_template('upgrade.html', title='Opwaarderen', h1="Opwaarderen", form=form)
+        return redirect(url_for('admin'))
+
+    # Show errors if there are any
+    flash_form_errors(upgr_form.errors)
+    flash_form_errors(decl_form.errors)
+    return render_template('upgrade.html', title='Opwaarderen', h1="Opwaarderen",
+                           upgr_form=upgr_form, decl_form=decl_form)
 
 
 @app.route('/balance')

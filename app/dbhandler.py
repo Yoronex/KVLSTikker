@@ -258,7 +258,7 @@ def addpurchase(drink_id, user_id, quantity, rondje, price_per_one):
     return quantity, drink.name, user.name, "success"
 
 
-def addbalance(user_id, description, amount):
+def addbalance(user_id, description, amount, profit_id=None):
     # Create an upgrade entry and add it to the database
     upgrade = Upgrade(user_id=user_id, description=description, timestamp=datetime.now(), amount=amount)
     db.session.add(upgrade)
@@ -269,8 +269,7 @@ def addbalance(user_id, description, amount):
     user.balance = user.balance + float(amount)
     # Create a transaction object with the new balance and the upgrade entry and add it to the database
     transaction = Transaction(user_id=user_id, timestamp=datetime.now(), upgrade_id=upgrade.id,
-                              balchange=upgrade.amount,
-                              newbal=user.balance)
+                              balchange=upgrade.amount, profit_id=profit_id, newbal=user.balance)
     db.session.add(transaction)
     db.session.commit()
 
@@ -278,7 +277,32 @@ def addbalance(user_id, description, amount):
     stats.update_daily_stats('euros', upgrade.amount)
 
     return upgrade
-    return user.name, str("%.2f" % upgrade.amount).replace(".", ",")
+
+
+def add_declaration(user_id, description, amount, group_id):
+    # If the group is not 0 aka the bar...
+    if group_id is not 0:
+        # Get the group and the user for this declaration
+        group = Usergroup.query.get(group_id)
+        user = User.query.get(user_id)
+        # Decrease its profit with the declarated amount
+        group.profit -= amount
+        # Create the (negative) profit record
+        profit = Profit(profitgroup_id=group_id, timestamp=datetime.now(), percentage=1.0, change=-amount, new=group.profit,
+                        description=description + " voor " + user.name)
+        # Add it to the database
+        db.session.add(profit)
+        db.session.commit()
+
+        # Get the ID for when the balance gets added
+        profit_id = profit.id
+    else:
+        # No profit has been removed, so the profit_id does not exist
+        profit_id = None
+
+    # Add the balance
+    return addbalance(user_id, description, amount, profit_id)
+
 
 
 def parse_recipe(recipe):
@@ -460,7 +484,13 @@ def deluser(user_id):
         return "Gebruiker {} verwijderd".format(name), "success"
 
 
-def del_profit(profit):
+def del_profit(profit_id):
+    # Find the profit object
+    profit = Profit.query.get(profit_id)
+    # Get the profit group and undo the added profit
+    profitgroup = Usergroup.query.get(profit.profitgroup_id)
+    profitgroup.profit -= profit.change
+
     # For all newer recorded profits for the same group...
     for p in Profit.query.filter(Profit.profitgroup_id == profit.profitgroup_id, Profit.timestamp > profit.timestamp).all():
         # Reduce its new profit balance with the value of the to-be removed row
@@ -478,6 +508,12 @@ def deltransaction(transaction_id):
 
     # If the transaction is an upgrade...
     if transaction.purchase_id is None:
+
+        # If this upgrade was a declaration to a user group, we have to undo this declaration
+        if transaction.profit_id is not None:
+            # Delete the profit object
+            del_profit(transaction.profit_id)
+
         # Get the upgrade object and delete it!
         # The balance will be changed later
         upgrade = Upgrade.query.get(transaction.upgrade_id)
@@ -491,12 +527,8 @@ def deltransaction(transaction_id):
             # This is the first step, that removes too much profit
             profitgroup.profit = profitgroup.profit - purchase.price * purchase.amount
         else:
-            # If this is not the case, find the profit object
-            profit = Profit.query.get(transaction.profit_id)
-            # Reduce its profit accordingly
-            profitgroup.profit = profitgroup.profit - profit.change
-            # Delete the profit object
-            del_profit(profit)
+            # If this is not the case, delete the profit object
+            del_profit(transaction.profit_id)
 
         inv_usage = Inventory_usage.query.filter(Inventory_usage.purchase_id == purchase.id).all()
         if type(inv_usage) is not list:

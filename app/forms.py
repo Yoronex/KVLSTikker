@@ -2,16 +2,19 @@ import os
 
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, SelectField, SelectMultipleField, IntegerField, BooleanField, FileField, TextAreaField, PasswordField
-from wtforms.fields.html5 import DateField
+from wtforms.fields.html5 import DateField, DecimalField
 from wtforms.validators import DataRequired, Email
 from app.models import User, Usergroup, Product
 from sqlalchemy import and_
 from app import app
 
 
-# users = []
-# for u in User.query.order_by(User.usergroup_id.asc()).all():
-#    users.append((str(u.id), u.name + " (" + Usergroup.query.get(u.usergroup_id).name + ")"))
+class FlexibleDecimalField(DecimalField):
+    def process_formdata(self, valuelist):
+        if valuelist:
+            valuelist[0] = valuelist[0].replace(",", ".")
+        return super(FlexibleDecimalField, self).process_formdata(valuelist)
+
 
 class LoginForm(FlaskForm):
     username = StringField('Gebruikersnaam', validators=[DataRequired()])
@@ -20,11 +23,6 @@ class LoginForm(FlaskForm):
 
 
 class UserRegistrationForm(FlaskForm):
-    # groups = [(str(g.id), g.name) for g in Usergroup.query.all()]
-    # groups = []
-    # for g in Usergroup.query.all():
-    #    groups.append((str(g.id), g.name))
-
     name = StringField('Naam', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
     group = SelectField('Groep')
@@ -37,14 +35,6 @@ class UserRegistrationForm(FlaskForm):
         choices = [(str(g.id), g.name) for g in Usergroup.query.all()]
         self.group.choices = choices
         self.profitgroup.choices = choices
-
-    def updategroups(self):
-        global groups
-        global group
-        groups = [(str(g.id), g.name) for g in Usergroup.query.all()]
-        group = SelectField('Groep', choices=groups)
-        # for g in Usergroup.query.all():
-        #    groups.append((str(g.id), g.name))
 
 
 class UserGroupRegistrationForm(FlaskForm):
@@ -83,9 +73,8 @@ class DrinkForm(FlaskForm):
 
 class UpgradeBalanceForm(FlaskForm):
     user = SelectField('Naam', validators=[DataRequired()])
-    description = SelectField('Beschrijving', validators=[DataRequired()], choices=[("Opwaardering", "Opwaardering"), ("Vergoeding inkoop", "Vergoeding inkoop"), ("Vergoeding diner", "Vergoeding diner")])
-    amount = StringField('Bedrag (in Tikker)', validators=[DataRequired()])
-    submit = SubmitField('Versturen')
+    amount = FlexibleDecimalField('Bedrag (in Tikker)', validators=[DataRequired()], places=2)
+    upgr_submit = SubmitField('Versturen')
 
     def __init__(self, *args, **kwargs):
         super(UpgradeBalanceForm, self).__init__(*args, **kwargs)
@@ -93,6 +82,25 @@ class UpgradeBalanceForm(FlaskForm):
         for u in User.query.order_by(User.usergroup_id.asc()).all():
             users.append((str(u.id), u.name + " (" + Usergroup.query.get(u.usergroup_id).name + ")"))
         self.user.choices = users
+
+
+class DeclarationForm(FlaskForm):
+    user = SelectField('Naam', validators=[DataRequired()])
+    amount = FlexibleDecimalField('Bedrag', validators=[DataRequired()])
+    description = SelectField('Beschrijving', validators=[DataRequired()], choices=[("Vergoeding inkoop", "Vergoeding inkoop"), ("Vergoeding diner", "Vergoeding diner"), ("Vergoeding opkomst", "Vergoeding opkomst")])
+    payer = SelectField('Wie vergoedt?', validators=[DataRequired()])
+    decl_submit = SubmitField('Versturen')
+
+    def __init__(self, *args, **kwargs):
+        super(DeclarationForm, self).__init__(*args, **kwargs)
+        users = []
+        groups = [("0", "de Bar")]
+        for u in User.query.order_by(User.usergroup_id.asc()).all():
+            users.append((str(u.id), u.name + " (" + Usergroup.query.get(u.usergroup_id).name + ")"))
+        for g in Usergroup.query.all():
+            groups.append((str(g.id), g.name))
+        self.user.choices = users
+        self.payer.choices = groups
 
 
 class ChangeDrinkForm(FlaskForm):
