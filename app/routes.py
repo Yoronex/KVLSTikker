@@ -506,10 +506,9 @@ def admin_drinks():
     form = DrinkForm()
     if request.method == "POST":
         if form.validate_on_submit():
-            alert = (dbhandler.adddrink(form.name.data, float(form.price.data.replace(",", ".")), form.category.data, int(form.pos.data) + 1,
-                                         form.image.data,
-                                         form.hoverimage.data, form.recipe.data, form.inventory_warning.data,
-                                         form.alcohol.data, form.volume.data, form.unit.data))
+            alert = (dbhandler.adddrink(form.name.data, float(form.price.data), form.category.data, int(form.pos.data) + 1,
+                                        form.image.data, form.hoverimage.data, form.recipe.data, form.inventory_warning.data,
+                                        float(form.alcohol.data), form.volume.data, form.unit.data))
             flash(alert[0], alert[1])
 
             socket.update_stats()
@@ -542,10 +541,10 @@ def admin_drinks_edit(drinkid):
             recipe = recipe + str(value) + "x" + str(key) + ", "
 
     if form.submit1.data and form.validate_on_submit():
-        alert = (dbhandler.editdrink_attr(drinkid, form.name.data, float(form.price.data.replace(",", ".")),
-                                           form.category.data, int(form.pos.data) + 1,
-                                           form.purchaseable.data, form.recipe.data, form.inventory_warning.data,
-                                           form.alcohol.data, form.volume.data, form.unit.data))
+        alert = (dbhandler.editdrink_attr(drinkid, form.name.data, float(form.price.data),
+                                          form.category.data, int(form.pos.data) + 1,
+                                          form.purchaseable.data, form.recipe.data, int(form.inventory_warning.data),
+                                          float(form.alcohol.data), int(form.volume.data), form.unit.data))
         flash(alert[0], alert[1])
 
         socket.update_stats()
@@ -623,8 +622,8 @@ def admin_inventory():
         abort(403)
     form = AddInventoryForm()
     if form.validate_on_submit():
-        alert = (dbhandler.add_inventory(int(form.product.data), int(form.quantity.data),
-                                          float(form.purchase_price.data.replace(",", ".")), form.note.data))
+        alert = (dbhandler.add_inventory(int(form.product.data), form.quantity.data,
+                                         float(form.purchase_price.data), form.note.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_inventory'))
 
@@ -661,8 +660,7 @@ def payout_profit():
         abort(403)
     form = PayOutProfitForm()
     if form.validate_on_submit():
-        alert = dbhandler.payout_profit(int(form.usergroup.data), float(form.amount.data.replace(",", ".")),
-                                         form.verification.data)
+        alert = dbhandler.payout_profit(int(form.usergroup.data), float(form.amount.data), form.verification.data)
         flash(alert[0], alert[1])
         return redirect(url_for('payout_profit'))
     flash_form_errors(form.errors)

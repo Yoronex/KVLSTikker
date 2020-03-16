@@ -385,14 +385,13 @@ def adddrink(name, price, category, order, image, hoverimage, recipe, inventory_
     else:
         # We set the default values of volume and alcohol if none is given
         if volume is "":
-            volume = "0"
+            volume = 0
         if alcohol is "":
-            alcohol = "0"
+            alcohol = 0
         # Then, we create a new product in the database
         product = Product(name=name, price=price, category=category, order=order, purchaseable=True, image="",
-                          hoverimage="",
-                          inventory_warning=inventory_warning, volume=int(float(volume)), unit=unit,
-                          alcohol=float(alcohol.replace(",", ".").replace("%", "").replace(" ", "")) / 100)
+                          hoverimage="", inventory_warning=inventory_warning, volume=volume, unit=unit,
+                          alcohol=alcohol / 100)
     db.session.add(product)
     db.session.commit()
 
@@ -638,10 +637,10 @@ def editdrink_attr(product_id, name, price, category, order, purchaseable, recip
     product.recipe_input = result_recipe
     product.inventory_warning = inventory_warning
     if alcohol != "":
-        product.alcohol = float(str(alcohol).replace(",", ".").replace("%", "").replace(" ", "")) / 100
+        product.alcohol = alcohol / 100
     else:
         product.alcohol = None
-    product.volume = int(float(volume))
+    product.volume = volume
     product.unit = unit
     db.session.commit()
 

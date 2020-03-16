@@ -16,11 +16,6 @@ class FlexibleDecimalField(DecimalField):
         return super(FlexibleDecimalField, self).process_formdata(valuelist)
 
 
-class LoginForm(FlaskForm):
-    username = StringField('Gebruikersnaam', validators=[DataRequired()])
-    password = PasswordField('Wachtwoord', validators=[DataRequired()])
-    submit = SubmitField('Log in')
-
 
 class UserRegistrationForm(FlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
@@ -44,15 +39,15 @@ class UserGroupRegistrationForm(FlaskForm):
 
 class DrinkForm(FlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
-    price = StringField('Prijs', validators=[DataRequired()])
+    price = FlexibleDecimalField('Prijs', validators=[DataRequired()], places=2)
     category = SelectField('Categorie', choices=[("", ""), ("Bieren", "Bieren"), ("Mixjes", "Mixjes"), ("Shots", "Shots")])
     pos = SelectField('Positie', validators=[DataRequired()])
     image = FileField('Afbeelding (statisch)', validators=[DataRequired()])
     hoverimage = FileField('Afbeelding (hover)')
     recipe = StringField('Recept')
     inventory_warning = IntegerField('Inventaris waarschuwing', default=0)
-    alcohol = StringField('Alcoholpercentage (in %)')
-    volume = StringField('Hoeveelheid (in milliliters)')
+    alcohol = FlexibleDecimalField('Alcoholpercentage (in %)', places=2)
+    volume = FlexibleDecimalField('Hoeveelheid (in milliliters)')
     unit = StringField('Hoeveelheid (e.g. 1 flesje, 1 shotje, etc)')
     submit_drink = SubmitField('Verstuur')
 
@@ -105,14 +100,14 @@ class DeclarationForm(FlaskForm):
 
 class ChangeDrinkForm(FlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
-    price = StringField('Prijs', validators=[DataRequired()])
+    price = FlexibleDecimalField('Prijs', validators=[DataRequired()])
     category = SelectField('Categorie', choices=[("", ""), ("Bieren", "Bieren"), ("Mixjes", "Mixjes"), ("Shots", "Shots")])
     pos = SelectField('Positie', validators=[DataRequired()])
     purchaseable = BooleanField('Beschikbaar', default=True)
     recipe = StringField('Recept')
     inventory_warning = IntegerField('Inventaris waarschuwing')
-    alcohol = StringField('Alcoholpercentage (in %)', default=0)
-    volume = StringField('Hoeveelheid (in milliliters)', default=0)
+    alcohol = FlexibleDecimalField('Alcoholpercentage (in %)', default=0)
+    volume = FlexibleDecimalField('Hoeveelheid (in milliliters)', default=0)
     unit = StringField('Hoeveelheid (e.g. 1 flesje, 1 shotje, etc)')
     submit1 = SubmitField('Versturen')
 
@@ -139,8 +134,8 @@ class ChangeDrinkImageForm(FlaskForm):
 
 class AddInventoryForm(FlaskForm):
     product = SelectField('Product', validators=[DataRequired()])
-    quantity = StringField('Aantal', validators=[DataRequired()])
-    purchase_price = StringField('Inkoopprijs per stuk', validators=[DataRequired()])
+    quantity = IntegerField('Aantal', validators=[DataRequired()])
+    purchase_price = FlexibleDecimalField('Inkoopprijs per stuk', validators=[DataRequired()])
     note = TextAreaField('Notities')
     submit_inventory = SubmitField('Verstuur')
 
@@ -154,7 +149,7 @@ class AddInventoryForm(FlaskForm):
 
 class PayOutProfitForm(FlaskForm):
     usergroup = SelectField('Groep', validators=[DataRequired()])
-    amount = StringField('Bedrag', validators=[DataRequired()])
+    amount = FlexibleDecimalField('Bedrag', validators=[DataRequired()])
     verification = PasswordField('Verificatiecode', validators=[DataRequired()])
     submit_payout = SubmitField('Verstuur')
 
@@ -204,7 +199,7 @@ class RoundForm(FlaskForm):
 class BorrelModeForm(FlaskForm):
     products = SelectMultipleField("Producten")
     user = SelectField("Wie trakteert?")
-    amount = StringField("Hoeveel")
+    amount = IntegerField("Hoeveel")
     submit = SubmitField("Versturen")
 
     def __init__(self, *args, **kwargs):
@@ -224,6 +219,6 @@ class BorrelModeForm(FlaskForm):
 class SoundBoardForm(FlaskForm):
     name = StringField("Naam", validators=[DataRequired()])
     key = StringField("Toetsenbord toets")
-    code = StringField("Javascript Toetscode")
+    code = IntegerField("Javascript Toetscode")
     file = FileField("Audiobestand", validators=[DataRequired()])
     submit = SubmitField("Versturen")
