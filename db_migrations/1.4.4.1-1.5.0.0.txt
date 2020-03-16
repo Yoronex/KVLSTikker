@@ -5,3 +5,14 @@ CREATE TABLE sound (
     keyboard_code INTEGER,
     filename VARCHAR(64)
 );
+CREATE TABLE profit (
+    id INTEGER PRIMARY KEY,
+    profitgroup_id INTEGER NOT NULL,
+    timestamp DATETIME NOT NULL,
+    percentage FLOAT,
+    change FLOAT,
+    new FLOAT,
+    description VARCHAR(64)
+);
+ALTER TABLE transaction
+ADD FOREIGN KEY profit_id REFERENCES profit(id);

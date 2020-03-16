@@ -33,3 +33,4 @@ class Config(object):
     SPOTIPY_CACHE = '.spotipyoauthcache'
     CALENDAR_URL = 'https://drive.kvls.nl/remote.php/dav/public-calendars/BKWDW9PJT2mmoRa4?export'
     CALENDAR_UPDATE_INTERVAL = 30 * 60
+    PROFIT_PERCENTAGE = 0.8

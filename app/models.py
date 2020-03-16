@@ -112,12 +112,23 @@ class Purchase(db.Model):
         return '<Purchase {} by {}>'.format(self.product_id, self.user_id)
 
 
+class Profit(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    profitgroup_id = db.Column(db.Integer, nullable=False)
+    timestamp = db.Column(db.DateTime, index=True, nullable=False)
+    percentage = db.Column(db.Float)
+    change = db.Column(db.Float)
+    new = db.Column(db.Float)
+    description = db.Column(db.String)
+
+
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, index=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     purchase_id = db.Column(db.Integer, db.ForeignKey('purchase.id'))
     upgrade_id = db.Column(db.Integer, db.ForeignKey('upgrade.id'))
+    profit_id = db.Column(db.Integer, db.ForeignKey('profit.id'))
     balchange = db.Column(db.Float)
     newbal = db.Column(db.Float)
 
