@@ -16,3 +16,15 @@ CREATE TABLE profit (
 );
 ALTER TABLE transaction
 ADD FOREIGN KEY profit_id REFERENCES profit(id);
+
+ALTER TABLE quote
+ADD author VARCHAR(64);
+ALTER TABLE quote
+ADD approved BOOLEAN NOT NULL;
+
+UPDATE quote
+SET approved = 1
+WHERE approved IS null;
+UPDATE quote
+SET author = "onbekend"
+WHERE author IS null;

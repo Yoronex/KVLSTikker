@@ -115,6 +115,13 @@
                                 <li>Geluiden kunnen verwijderd worden via het administratorpaneel</li>
                             </ul>
                         </li>
+                        <li>Quotes toevoegen groots aangepast
+                            <ul>
+                                <li>Iedereen kan nu quotes toevoegen vanaf het hoofdmenu</li>
+                                <li>Quotes moeten goedgekeurd worden vanaf het BigScreen Administratorpaneel</li>
+                                <li>Quotes kunnen verwijderd worden. Dit is permanent!</li>
+                            </ul>
+                        </li>
                         <li>Mutaties in de winstpotjes worden nu bijgehouden in de database
                             <ul>
                                 <li>Gebruikers kunnen nu declaraties doen aan een speltak en het geld terugkrijgen als Tikker saldo</li>
@@ -388,8 +395,9 @@
                 <a href="{{ url_for('index') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Home</a>
                 <a href="{{ url_for('balance') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Gebruikersoverzicht</a>
                 <a href="{{ url_for('stats_home') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Statistieken</a>
-                <a href="{{ url_for('client_settings') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Browserinstellingen</a>
+                <a href="{{ url_for('add_user_quote') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Citaat toevoegen</a>
                 <a href="{{ url_for('soundboard') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Soundboard</a>
+                <a href="{{ url_for('client_settings') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Browserinstellingen</a>
             </div>
             <div style="position: absolute; bottom: 0;">
                 <img src="{{ url_for('.static', filename='img/NIX18.svg') }}" style="text-align: center; margin: 1rem;"

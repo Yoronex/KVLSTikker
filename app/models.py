@@ -166,6 +166,8 @@ class Quote(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     timestamp = db.Column(db.DateTime, index=True, nullable=False)
     value = db.Column(db.String)
+    author = db.Column(db.String)
+    approved = db.Column(db.Boolean, default=False, nullable=False)
 
 
 class Sound(db.Model):

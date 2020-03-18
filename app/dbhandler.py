@@ -439,10 +439,25 @@ def addusergroup(name):
     return "Groep {} succesvol aangemaakt".format(usergroup.name), "success"
 
 
-def addquote(q):
-    quote = Quote(timestamp=datetime.now(), value=q)
+def addquote(q, author):
+    quote = Quote(timestamp=datetime.now(), value=q, author=author, approved=False)
     db.session.add(quote)
     db.session.commit()
+    return "Quote succesvol aangevraagd. Na goedkeuring wordt hij toegevoegd!", "success"
+
+
+def approve_quote(q_id):
+    quote = Quote.query.get(q_id)
+    quote.approved = True
+    db.session.commit()
+    return "Quote met ID {} succesvol goedgekeurd!".format(quote.id), "success"
+
+
+def del_quote(q_id):
+    quote = Quote.query.get(q_id)
+    db.session.delete(quote)
+    db.session.commit()
+    return "Quote met ID {} succesvol verwijderd!".format(quote.id), 'success'
 
 
 def add_sound(name, key, code, file):

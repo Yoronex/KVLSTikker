@@ -156,61 +156,6 @@ def index():
     return resp
 
 
-@app.route('/admin/upgrade', methods=['GET', 'POST'])
-@register_breadcrumb(app, '.admin.upgrade', 'Opwaarderen', order=2)
-def upgrade():
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
-
-    # Create the two forms that will be included
-    upgr_form = UpgradeBalanceForm()
-    decl_form = DeclarationForm()
-
-    # If one of the forms has been submitted
-    if (upgr_form.upgr_submit.data and upgr_form.validate_on_submit()) or \
-            (decl_form.decl_submit.data and decl_form.validate_on_submit()):
-        # Change the decimal amount to a float
-        amount = float(upgr_form.amount.data)
-
-        # The amount cannot be negative!
-        if amount < 0.0:
-            flash("Opwaardering kan niet negatief zijn!", "danger")
-            return render_template('upgrade.html', title='Opwaarderen', h1="Opwaarderen",
-                                   upgr_form=upgr_form, decl_form=decl_form)
-
-        # If the upgrade form has been filled in...
-        if upgr_form.upgr_submit.data and upgr_form.validate_on_submit():
-            # Add the upgrade to the database
-            upgrade = (dbhandler.addbalance(int(upgr_form.user.data), "Opwaardering", amount))
-            # Get the user for the messages that now follow
-            user = User.query.get(upgrade.user_id)
-
-            socket.send_transaction("{} heeft opgewaardeerd met € {}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ",")))
-            flash("Gebruiker {} heeft succesvol opgewaardeerd met € {}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ",")), "success")
-
-        # If the declaration form has been filled in
-        else:
-            # Add the upgrade to the database
-            upgrade = (dbhandler.add_declaration(int(decl_form.user.data), decl_form.description.data,
-                                                 amount, int(decl_form.payer.data)))
-            # Get the user for the messages that now follow
-            user = User.query.get(upgrade.user_id)
-
-            socket.send_transaction("{} heeft € {} teruggekregen ({})".format(user.name, str("%.2f" % upgrade.amount).replace(".", ","), upgrade.description))
-            flash("Gebruiker {} heeft succesvol € {} teruggekregen voor: {}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ","), upgrade.description), "success")
-
-        # Update the daily stats
-        socket.update_stats()
-
-        return redirect(url_for('admin'))
-
-    # Show errors if there are any
-    flash_form_errors(upgr_form.errors)
-    flash_form_errors(decl_form.errors)
-    return render_template('upgrade.html', title='Opwaarderen', h1="Opwaarderen",
-                           upgr_form=upgr_form, decl_form=decl_form)
-
-
 @app.route('/balance')
 @register_breadcrumb(app, '.balance', "Saldo's", order=1)
 def balance():
@@ -363,6 +308,18 @@ def soundboard():
     sounds = [s.serialize for s in Sound.query.all()]
     return render_template('soundboard.html', title="Soundboard", h1="Soundboard", sounds=sounds)
 
+
+@register_breadcrumb(app, '.quote', 'Quote toevoegen', order=1)
+@app.route('/quote', methods=['GET', 'POST'])
+def add_user_quote():
+    form = AddQuoteForm()
+
+    if form.validate_on_submit():
+        alert = dbhandler.addquote(form.quote.data, form.author.data)
+        flash(alert[0], alert[1])
+        return redirect(url_for('index'))
+
+    return render_template('quote.html', title="Citaat toevoegen", h1="Citaat toevoegen", form=form)
 
 ##
 #
@@ -651,6 +608,61 @@ def admin_correct_inventory():
     return render_template("admin/inventorycorrection.html", title="Inventaris correctie", h1="Inventaris correctie",
                            Product=Product, products=products, Usergroup=Usergroup, inventories=inventories,
                            usergroup_ids=usergroup_ids)
+
+
+@app.route('/admin/upgrade', methods=['GET', 'POST'])
+@register_breadcrumb(app, '.admin.upgrade', 'Opwaarderen', order=2)
+def upgrade():
+    if request.remote_addr != "127.0.0.1":
+        abort(403)
+
+    # Create the two forms that will be included
+    upgr_form = UpgradeBalanceForm()
+    decl_form = DeclarationForm()
+
+    # If one of the forms has been submitted
+    if (upgr_form.upgr_submit.data and upgr_form.validate_on_submit()) or \
+            (decl_form.decl_submit.data and decl_form.validate_on_submit()):
+        # Change the decimal amount to a float
+        amount = float(upgr_form.amount.data)
+
+        # The amount cannot be negative!
+        if amount < 0.0:
+            flash("Opwaardering kan niet negatief zijn!", "danger")
+            return render_template('upgrade.html', title='Opwaarderen', h1="Opwaarderen",
+                                   upgr_form=upgr_form, decl_form=decl_form)
+
+        # If the upgrade form has been filled in...
+        if upgr_form.upgr_submit.data and upgr_form.validate_on_submit():
+            # Add the upgrade to the database
+            upgrade = (dbhandler.addbalance(int(upgr_form.user.data), "Opwaardering", amount))
+            # Get the user for the messages that now follow
+            user = User.query.get(upgrade.user_id)
+
+            socket.send_transaction("{} heeft opgewaardeerd met € {}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ",")))
+            flash("Gebruiker {} heeft succesvol opgewaardeerd met € {}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ",")), "success")
+
+        # If the declaration form has been filled in
+        else:
+            # Add the upgrade to the database
+            upgrade = (dbhandler.add_declaration(int(decl_form.user.data), decl_form.description.data,
+                                                 amount, int(decl_form.payer.data)))
+            # Get the user for the messages that now follow
+            user = User.query.get(upgrade.user_id)
+
+            socket.send_transaction("{} heeft € {} teruggekregen ({})".format(user.name, str("%.2f" % upgrade.amount).replace(".", ","), upgrade.description))
+            flash("Gebruiker {} heeft succesvol € {} teruggekregen voor: {}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ","), upgrade.description), "success")
+
+        # Update the daily stats
+        socket.update_stats()
+
+        return redirect(url_for('admin'))
+
+    # Show errors if there are any
+    flash_form_errors(upgr_form.errors)
+    flash_form_errors(decl_form.errors)
+    return render_template('upgrade.html', title='Opwaarderen', h1="Opwaarderen",
+                           upgr_form=upgr_form, decl_form=decl_form)
 
 
 @register_breadcrumb(app, '.admin.profit', 'Winst uitkeren', order=2)
@@ -990,7 +1002,8 @@ def bigscreen():
         bk = {'playing': False}
 
     if form_quote.submit_quote.data and form_quote.validate_on_submit():
-        dbhandler.addquote(form_quote.quote.data)
+        alert = dbhandler.addquote(form_quote.quote.data, form_quote.author.data)
+        flash(alert[0], alert[1])
 
         return redirect(url_for('bigscreen'))
     if form_interrupt.submit_interrupt.data and form_interrupt.validate_on_submit():
@@ -1009,6 +1022,56 @@ def bigscreen():
     return render_template('admin/bigscreen.html', title="BigScreen Beheer", h1="BigScreen Beheer", form_quote=form_quote, bk=bk,
                            form_interrupt=form_interrupt, form_spotify=form_spotify, spusername=spotify.current_user), 200
 
+
+@register_breadcrumb(app, '.admin.bigscreen.quotes', 'Quotes', order=3)
+@app.route('/admin/bigscreen/quotes', methods=['GET'])
+def admin_quotes():
+    if request.remote_addr != "127.0.0.1":
+        abort(403)
+
+    if 'all' in request.args:
+        quotes = Quote.query.all()
+        all_quotes = True
+    else:
+        quotes = Quote.query.filter(Quote.approved == False).all()
+        all_quotes = False
+
+    return render_template('admin/manquotes.html', title="Citaatbeheer", h1="Citaatbeheer", quotes=quotes,
+                           all_quotes=all_quotes)
+
+
+@register_breadcrumb(app, '.admin.bigscreen.quotes.confirm', 'Bevestigen', order=4)
+@app.route('/admin/bigscreen/quotes/delete/<int:q_id>')
+def admin_quotes_delete(q_id):
+    if request.remote_addr != "127.0.0.1":
+        abort(403)
+
+    q = Quote.query.get(q_id)
+    message = 'quote met ID {} ({}) door {}'.format(str(q.id), q.value, q.author)
+    agree_url = url_for('admin_quotes_delete_exec', q_id=q_id)
+    return_url = url_for('admin_quotes')
+    return render_template('verify.html', title='Bevestigen', message=message, agree_url=agree_url,
+                           return_url=return_url)
+
+
+@app.route('/admin/bigscreen/quotes/delete/<int:q_id>/exec')
+def admin_quotes_delete_exec(q_id):
+    if request.remote_addr != "127.0.0.1":
+        abort(403)
+
+    alert = dbhandler.del_quote(q_id)
+    flash(alert[0], alert[1])
+    return redirect(url_for('admin_quotes'))
+
+
+@app.route('/admin/bigscreen/quotes/approve/<int:q_id>')
+def admin_quotes_approve(q_id):
+    if request.remote_addr != "127.0.0.1":
+        abort(403)
+
+    alert = dbhandler.approve_quote(q_id)
+    flash(alert[0], alert[1])
+    return redirect(url_for('admin_quotes'))
 
 @register_breadcrumb(app, '.admin.bigscreen.bk', 'Biertje Kwartiertje', order=3)
 @app.route("/admin/bigscreen/biertjekwartiertje")

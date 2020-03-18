@@ -13,9 +13,6 @@
 
 {% block app_content %}
     <div class="row">
-        <!--<div class="col-xl-3">
-            <a href="{{ url_for('api_spotify_login') }}" class="btn btn-block btn-green">Spotify login</a>
-        </div>-->
         <div class="col-xl-3">
             <a href="{{ url_for('api_disable_snow') }}" class="btn btn-block btn-green">Sneeuw uit</a>
         </div>
@@ -24,6 +21,9 @@
         </div>
         <div class="col-xl-3">
             <a href="{{ url_for('biertje_kwartiertje') }}" class="btn btn-block btn-green">Biertje Kwartiertje</a>
+        </div>
+        <div class="col-xl-3">
+            <a href="{{ url_for('admin_quotes') }}" class="btn btn-block btn-yellow">Beheer citaten</a>
         </div>
     </div>
 

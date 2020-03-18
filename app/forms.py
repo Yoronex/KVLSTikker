@@ -163,7 +163,15 @@ class PayOutProfitForm(FlaskForm):
 
 class AddQuoteForm(FlaskForm):
     quote = TextAreaField('Quote', validators=[DataRequired()])
+    author = SelectField('Wie ben je?', validators=[DataRequired()])
     submit_quote = SubmitField('Verstuur')
+
+    def __init__(self, *args, **kwargs):
+        super(AddQuoteForm, self).__init__(*args, **kwargs)
+        users = []
+        for u in User.query.order_by(User.usergroup_id.asc()).all():
+            users.append((str(u.name), u.name + " (" + Usergroup.query.get(u.usergroup_id).name + ")"))
+        self.author.choices = users
 
 
 class SlideInterruptForm(FlaskForm):

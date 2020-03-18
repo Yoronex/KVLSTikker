@@ -118,7 +118,8 @@ def get_slide_data(name):
                 "prices": prices}
 
     elif name == "Quote":
-        quotes = Quote.query.all()
+        quotes = Quote.query.filter(Quote.approved == True).all()
+        print(quotes)
         q = quotes[randrange(len(quotes))]
         return q.value
 
@@ -268,7 +269,6 @@ def update_stats():
     socketio.emit('slide_data', {"name": last_updated_slide,
                                  "data": get_slide_data(last_updated_slide)}, namespace='/bigscreen')
     app.logger.info("Finished updating stats and recent slide")
-
 
 
 def get_stats():
