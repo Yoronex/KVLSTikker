@@ -5,30 +5,27 @@
     <div class="row">
         <div class="col-md-6">
             <h2>Alle groepen</h2>
-            <table>
-                <colgroup>
-                    <col>
-                    <col class="second-table-column">
-                    <col>
-                    <col class="second-table-column">
-                    <col>
-                </colgroup>
-                <tr>
-                    <th>ID</th>
-                    <th>Naam</th>
-                    <th>Winst</th>
-                    <th>Gebruikers</th>
-                    <th></th>
-                </tr>
-                {% for u in Usergroup.query.all() %}
-                <tr>
-                    <td>{{ u.id }}</td>
-                    <td>{{ u.name }}</td>
-                    <td><span style="color: green;font-weight:bold;">€ {{ '%.2f' % u.profit }}</span></td>
-                    <td>{{ u.users.all()|length }}</td>
-                    <td><a href="/admin/usergroups/delete/{{ u.id }}"><span class="fa fa-times fa-lg" style="color:red;"></span></a></td>
-                </tr>
-                {% endfor %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Naam</th>
+                        <th>Winst</th>
+                        <th>Gebruikers</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in Usergroup.query.all() %}
+                    <tr>
+                        <td>{{ u.id }}</td>
+                        <td>{{ u.name }}</td>
+                        <td><span style="color: green;font-weight:bold;">€ {{ '%.2f' % u.profit }}</span></td>
+                        <td>{{ u.users.all()|length }}</td>
+                        <td><a href="/admin/usergroups/delete/{{ u.id }}"><span class="fa fa-times fa-lg" style="color:red;"></span></a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
             </table>
         </div>
         <div class="col-md-5">

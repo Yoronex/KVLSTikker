@@ -10,36 +10,32 @@
         {% else %}
         <h2>Alle quotes</h2>
         {% endif %}
-        <table>
-            <colgroup>
-                <col>
-                <col class="second-table-column">
-                <col>
-                <col class="second-table-column">
-                <col>
-                <col class="second-table-column">
-            </colgroup>
-            <tr>
-                <th>ID</th>
-                <th>Datum</th>
-                <th>Tijd</th>
-                <th>Auteur</th>
-                <th>Quote</th>
-                <th></th>
-            </tr>
-            {% for q in quotes %}
-            <tr>
-                <td>{{ q.id }}</td>
-                <td>{{ q.timestamp.strftime("%Y-%m-%d") }}</td>
-                <td>{{ q.timestamp.strftime("%H:%M:%S") }}</td>
-                <td>{{ q.author }}</td>
-                <td>{{ q.value }}</td>
-                <td><a href="{{ url_for('admin_quotes_delete', q_id=q.id) }}" title="Quote verwijderen"><span class="fa fa-times fa-lg" style="color: red;"></span></a>
-                {% if q.approved == false %}
-                <a href="{{ url_for('admin_quotes_approve', q_id=q.id) }}" title="Quote goedkeuren"><span class="fa fa-check fa-lg" style="color: green;"></span></a></td>
-                {% endif %}
-            </tr>
-            {% endfor %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Datum</th>
+                    <th>Tijd</th>
+                    <th>Auteur</th>
+                    <th>Quote</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for q in quotes %}
+                <tr>
+                    <td>{{ q.id }}</td>
+                    <td>{{ q.timestamp.strftime("%Y-%m-%d") }}</td>
+                    <td>{{ q.timestamp.strftime("%H:%M:%S") }}</td>
+                    <td>{{ q.author }}</td>
+                    <td>{{ q.value }}</td>
+                    <td><a href="{{ url_for('admin_quotes_delete', q_id=q.id) }}" title="Quote verwijderen"><span class="fa fa-times fa-lg" style="color: red;"></span></a>
+                    {% if q.approved == false %}
+                    <a href="{{ url_for('admin_quotes_approve', q_id=q.id) }}" title="Quote goedkeuren"><span class="fa fa-check fa-lg" style="color: green;"></span></a></td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
         </table>
     </div>
 </div>

@@ -64,10 +64,6 @@ a {
     color: var(--urlgrey);
 }
 
-.edit-symbol {
-    color: black;
-}
-
 .page-item > .page-link {
     background-color: lightgrey;
     color: black;
@@ -85,4 +81,17 @@ a {
 {
     color: white;
     background-color: #444;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: rgba(0,0,0,0.05);
+}
+
+.table > tbody > tr.item-unavailable,
+.table > tbody > tr.item-unavailable > td > a > i.edit-symbol{
+    color: rgba(0, 0, 0, 0.5);
+}
+
+.table > tbody > tr.item-available > td > a > i.edit-symbol {
+    color: black;
 }

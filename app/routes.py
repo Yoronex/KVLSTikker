@@ -202,13 +202,6 @@ def user(userid):
                            Upgrade=Upgrade, ids=ids, data=values, labels=labels, url_prefix="", pag=pagination), 200
 
 
-@app.route('/purchasehistory')
-def purchasehistory():
-    return render_template('purchasehistory.html', title='Aankoophistorie', h1="Aankoophistorie", User=User,
-                           Product=Product,
-                           Purchase=Purchase), 200
-
-
 def view_drink_dlc(*args, **kwargs):
     drink_id = request.view_args['drinkid']
     product = Product.query.get(drink_id)
