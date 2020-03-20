@@ -622,7 +622,7 @@ def upgrade():
         # The amount cannot be negative!
         if amount < 0.0:
             flash("Opwaardering kan niet negatief zijn!", "danger")
-            return render_template('upgrade.html', title='Opwaarderen', h1="Opwaarderen",
+            return render_template('admin/upgrade.html', title='Opwaarderen', h1="Opwaarderen",
                                    upgr_form=upgr_form, decl_form=decl_form)
 
         # If the upgrade form has been filled in...
@@ -654,7 +654,7 @@ def upgrade():
     # Show errors if there are any
     flash_form_errors(upgr_form.errors)
     flash_form_errors(decl_form.errors)
-    return render_template('upgrade.html', title='Opwaarderen', h1="Opwaarderen",
+    return render_template('admin/upgrade.html', title='Opwaarderen', h1="Opwaarderen",
                            upgr_form=upgr_form, decl_form=decl_form)
 
 
@@ -1080,19 +1080,29 @@ def biertje_kwartiertje():
         for j in range(0, i['amount']):
             already_playing.append({'id': i['user_id'], 'name': User.query.get(i['user_id']).name})
 
-    return render_template('admin/biertjekwartiertje.html', title="Biertje Kwartiertje", h1="Biertje kwartiertje instellen", drink=drink,
-                           usergroups=usergroups, shared=False, User=User, products=products, already_playing=already_playing), 200
+    if len(dbhandler.biertje_kwartiertje_participants) > 0:
+        playtime = dbhandler.biertje_kwartiertje_time
+    else:
+        playtime = 15
+
+    return render_template('admin/biertjekwartiertje.html', title="Biertje Kwartiertje",
+                           h1="Biertje kwartiertje instellen", drink=drink, usergroups=usergroups, shared=False,
+                           User=User, products=products, already_playing=already_playing, playtime=playtime), 200
 
 
 @app.route("/admin/bigscreen/biertjekwartiertje/<cart_string>")
 def start_biertje_kwartiertje(cart_string):
+    old_participants = dbhandler.biertje_kwartiertje_participants
     parsed_cart = cart.parse_cart_string(cart_string, -1)
     dbhandler.biertje_kwartiertje_participants = parsed_cart['orders']
 
     if len(dbhandler.biertje_kwartiertje_participants) > 0:
         dbhandler.biertje_kwartiertje_time = int(request.args['time'])
         dbhandler.biertje_kwartiertje_drink = int(request.args['drink'])
-        socket.start_biertje_kwartiertje()
+        # If biertje kwartiertje has not started yet, we need to update it on BigScreen
+        if len(old_participants) == 0:
+            # Start biertje kwartiertje (aka update it with the time)
+            socket.update_biertje_kwartiertje()
     else:
         stop_biertje_kwartiertje()
 
@@ -1105,6 +1115,12 @@ def stop_biertje_kwartiertje():
     dbhandler.biertje_kwartiertje_time = 0
     dbhandler.biertje_kwartiertje_drink = -1
     socket.stop_biertje_kwartiertje()
+    return redirect(url_for("bigscreen"))
+
+
+@app.route("/admin/bigscreen/biertjekwartiertje/update")
+def update_biertje_kwartiertje():
+    socket.update_biertje_kwartiertje()
     return redirect(url_for("bigscreen"))
 
 

@@ -23,6 +23,7 @@
     <div class="row">
         <div class="col-xl">
             <h2>Opwaarderen</h2>
+            <p>Wanneer je geld hebt overgemaakt of de Tikkie van de penningmeester hebt betaald, kun je hieronder het opgewaardeerde bedrag invoeren.</p>
             <form class="form form-horizontal" method="post" role="form">
                 {{ upgr_form.hidden_tag() }}
                 {{ wtf.form_errors(upgr_form, hiddens="only") }}
@@ -37,6 +38,8 @@
         </div>
         <div class="col-xl">
             <h2>Declareren</h2>
+            <p>Wanneer je kosten hebt gemaakt door bijvoorbeeld drank in te kopen voor de bar of iets voor een opkomst hebt gekocht, kun je hieronder je geld terugkrijgen in de vorm van Tikker saldo.
+            Je kan je geld terugvragen aan de bar of aan een speltak.</p>
             {{ wtf.quick_form(decl_form) }}
         </div>
     </div>

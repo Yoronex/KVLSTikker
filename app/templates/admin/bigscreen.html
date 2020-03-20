@@ -101,7 +101,10 @@
                     <td style="text-align: left">{{ bk['playtime'] }} minuten</td>
                 </tr>
                 <tr>
-                    <td colspan="2" style="text-align: center"><a style="font-size:1rem" href="{{ url_for('stop_biertje_kwartiertje') }}" class="btn btn-block btn-green">Stoppen</a></td>
+                    <td colspan="2" style="text-align: center"><a style="font-size:1rem" href="{{ url_for('update_biertje_kwartiertje') }}" class="btn btn-block btn-green">Klok resetten</a></td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="text-align: center"><a style="font-size:1rem" href="{{ url_for('stop_biertje_kwartiertje') }}" class="btn btn-block btn-yellow">Stoppen</a></td>
                 </tr>
                 {% else %}
                 <tr>

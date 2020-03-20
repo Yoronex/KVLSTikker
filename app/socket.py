@@ -59,6 +59,7 @@ def update_spotify_request():
 
 @socketio.on('biertje_kwartiertje_exec', namespace='/bigscreen')
 def biertje_kwartiertje_purchase():
+    update_biertje_kwartiertje()
     drink_id = dbhandler.biertje_kwartiertje_drink
     cart.purchase_from_orders(dbhandler.biertje_kwartiertje_participants, drink_id)
 
@@ -303,7 +304,7 @@ def disable_snow():
     socketio.emit('snow', None, namespace='/bigscreen')
 
 
-def start_biertje_kwartiertje():
+def update_biertje_kwartiertje():
     socketio.emit('biertje_kwartiertje_start', {'minutes': dbhandler.biertje_kwartiertje_time}, namespace='/bigscreen')
 
 

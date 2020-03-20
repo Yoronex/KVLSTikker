@@ -7,6 +7,7 @@
 <script>
     biertjekwartiertje = true;
     initCart(0, {{ already_playing|tojson }});
+    document.getElementById('playtime').value = {{ playtime|tojson }};
 </script>
 {% endblock %}
 
