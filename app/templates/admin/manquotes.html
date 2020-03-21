@@ -5,7 +5,7 @@
 <div class="row">
     <div class="col-xl">
         {% if all_quotes != true %}
-        <p>Alle goedgekeurde quotes zijn nu niet zichtbaar. Wil je ze toch zien? <a href="?all=true">Klik dan hier!</a></p>
+        <p>Alle goedgekeurde quotes zijn nu niet zichtbaar. Wil je ze toch zien? <a onclick="updateQueryStringParameter('all', 'true')">Klik dan hier!</a></p>
         <h2>Nog goed te keuren quotes</h2>
         {% else %}
         <h2>Alle quotes</h2>

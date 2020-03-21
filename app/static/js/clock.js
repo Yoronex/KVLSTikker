@@ -150,3 +150,14 @@ function pingTikker() {
     xhr.send(null);
     var t = setTimeout(pingTikker, 15000);
 }
+
+function updateQueryStringParameter(key, value) {
+    let uri = document.location.href;
+    let re = new RegExp("([?&])" + key + "=.*?(&|$)", "i");
+    let separator = uri.indexOf('?') !== -1 ? "&" : "?";
+    if (uri.match(re)) {
+        document.location.href = uri.replace(re, '$1' + key + "=" + value + '$2');
+    } else {
+        document.location.href = uri + separator + key + "=" + value;
+    }
+}
