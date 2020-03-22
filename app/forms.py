@@ -16,8 +16,12 @@ class FlexibleDecimalField(DecimalField):
         return super(FlexibleDecimalField, self).process_formdata(valuelist)
 
 
+class ExtendedFlaskForm(FlaskForm):
+    def get_fields(self):
+        return list(self.data.keys())[:-1]
 
-class UserRegistrationForm(FlaskForm):
+
+class UserRegistrationForm(ExtendedFlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
     email = StringField('Email', validators=[DataRequired(), Email()])
     group = SelectField('Groep')
@@ -32,12 +36,12 @@ class UserRegistrationForm(FlaskForm):
         self.profitgroup.choices = choices
 
 
-class UserGroupRegistrationForm(FlaskForm):
+class UserGroupRegistrationForm(ExtendedFlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
     submit_usergroup = SubmitField('Verstuur')
 
 
-class DrinkForm(FlaskForm):
+class DrinkForm(ExtendedFlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
     price = FlexibleDecimalField('Prijs', validators=[DataRequired()], places=2)
     category = SelectField('Categorie', choices=[("", ""), ("Bieren", "Bieren"), ("Mixjes", "Mixjes"), ("Shots", "Shots")])
@@ -66,7 +70,7 @@ class DrinkForm(FlaskForm):
         self.pos.default = len(positions) - 1
 
 
-class UpgradeBalanceForm(FlaskForm):
+class UpgradeBalanceForm(ExtendedFlaskForm):
     user = SelectField('Naam', validators=[DataRequired()])
     amount = FlexibleDecimalField('Bedrag (in Tikker)', validators=[DataRequired()], places=2)
     upgr_submit = SubmitField('Versturen')
@@ -79,7 +83,7 @@ class UpgradeBalanceForm(FlaskForm):
         self.user.choices = users
 
 
-class DeclarationForm(FlaskForm):
+class DeclarationForm(ExtendedFlaskForm):
     user = SelectField('Naam', validators=[DataRequired()])
     amount = FlexibleDecimalField('Bedrag', validators=[DataRequired()])
     description = SelectField('Beschrijving', validators=[DataRequired()], choices=[("Vergoeding inkoop", "Vergoeding inkoop"), ("Vergoeding diner", "Vergoeding diner"), ("Vergoeding opkomst", "Vergoeding opkomst")])
@@ -98,7 +102,7 @@ class DeclarationForm(FlaskForm):
         self.payer.choices = groups
 
 
-class ChangeDrinkForm(FlaskForm):
+class ChangeDrinkForm(ExtendedFlaskForm):
     name = StringField('Naam', validators=[DataRequired()])
     price = FlexibleDecimalField('Prijs', validators=[DataRequired()])
     category = SelectField('Categorie', choices=[("", ""), ("Bieren", "Bieren"), ("Mixjes", "Mixjes"), ("Shots", "Shots")])
@@ -126,13 +130,13 @@ class ChangeDrinkForm(FlaskForm):
         self.pos.default = len(positions) - 1
 
 
-class ChangeDrinkImageForm(FlaskForm):
+class ChangeDrinkImageForm(ExtendedFlaskForm):
     image = FileField('Afbeelding (statisch)')
     hoverimage = FileField('Afbeelding (hover)')
     submit2 = SubmitField('Uploaden')
 
 
-class AddInventoryForm(FlaskForm):
+class AddInventoryForm(ExtendedFlaskForm):
     product = SelectField('Product', validators=[DataRequired()])
     quantity = IntegerField('Aantal', validators=[DataRequired()])
     purchase_price = FlexibleDecimalField('Inkoopprijs per stuk', validators=[DataRequired()])
@@ -147,7 +151,7 @@ class AddInventoryForm(FlaskForm):
         self.product.choices = products
 
 
-class PayOutProfitForm(FlaskForm):
+class PayOutProfitForm(ExtendedFlaskForm):
     usergroup = SelectField('Groep', validators=[DataRequired()])
     amount = FlexibleDecimalField('Bedrag', validators=[DataRequired()])
     verification = PasswordField('Verificatiecode', validators=[DataRequired()])
@@ -161,7 +165,7 @@ class PayOutProfitForm(FlaskForm):
         self.usergroup.choices = usergroups
 
 
-class AddQuoteForm(FlaskForm):
+class AddQuoteForm(ExtendedFlaskForm):
     quote = TextAreaField('Quote', validators=[DataRequired()])
     author = SelectField('Wie ben je?', validators=[DataRequired()])
     submit_quote = SubmitField('Verstuur')
@@ -174,12 +178,12 @@ class AddQuoteForm(FlaskForm):
         self.author.choices = users
 
 
-class SlideInterruptForm(FlaskForm):
+class SlideInterruptForm(ExtendedFlaskForm):
     interrupt = TextAreaField('Bericht', validators=[DataRequired()])
     submit_interrupt = SubmitField('Verstuur')
 
 
-class ChooseSpotifyUser(FlaskForm):
+class ChooseSpotifyUser(ExtendedFlaskForm):
     spotify_user = SelectField('Account')
     spotify_user_name = StringField('Naam voor nieuwe gebruiker')
     spotify_submit = SubmitField('Log in')
@@ -192,7 +196,7 @@ class ChooseSpotifyUser(FlaskForm):
         self.spotify_user.choices = names
 
 
-class RoundForm(FlaskForm):
+class RoundForm(ExtendedFlaskForm):
     round_giver = SelectField("")
 
     def __init__(self, *args, **kwargs):
@@ -204,7 +208,7 @@ class RoundForm(FlaskForm):
         self.round_giver.choices = users
 
 
-class BorrelModeForm(FlaskForm):
+class BorrelModeForm(ExtendedFlaskForm):
     products = SelectMultipleField("Producten")
     user = SelectField("Wie trakteert?")
     amount = IntegerField("Hoeveel")
@@ -224,9 +228,29 @@ class BorrelModeForm(FlaskForm):
         self.user.choices = users
 
 
-class SoundBoardForm(FlaskForm):
+class SoundBoardForm(ExtendedFlaskForm):
     name = StringField("Naam", validators=[DataRequired()])
     key = StringField("Toetsenbord toets")
     code = IntegerField("Javascript Toetscode")
     file = FileField("Audiobestand", validators=[DataRequired()])
     submit = SubmitField("Versturen")
+
+
+class TransactionFilterForm(ExtendedFlaskForm):
+    transaction_type = SelectField("Transactiesoort", choices=(('all', 'Alle'), ('upgr', 'Opwaarderingen'), ('pur', 'Aankopen')))
+    transaction_user = SelectField("Gebruiker")
+    purchase_product = SelectField("Product")
+    purchase_round = SelectField("Rondje", choices=(('all', 'Alle'), ('1', 'Ja'), ('0', 'Nee')))
+
+    def __init__(self, *args, **kwargs):
+        super(TransactionFilterForm, self).__init__(*args, **kwargs)
+        product_list = [('0', "Alle")]
+        for p in Product.query.all():
+            product_list.append((str(p.id), "{}".format(p.name)))
+        self.purchase_product.choices = product_list
+
+        users = [('0', 'Iedereen')]
+        for group in Usergroup.query.all():
+            for u in group.users:
+                users.append((str(u.id), "{} ({})".format(u.name, group.name)))
+        self.transaction_user.choices = users

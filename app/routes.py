@@ -9,7 +9,6 @@ import os
 from datetime import datetime, timedelta
 from dateutil import tz
 
-
 page_size = 100
 pagination_range = 4
 
@@ -112,7 +111,7 @@ def calculate_pagination_with_basequery(query, request_obj):
     real_offset = offset * page_size - (page_size - offset_difference)
     # The offset cannot be negative, so if this is the case, we need to decrease the page size
     if real_offset < 0:
-        real_page_size = page_size  + real_offset
+        real_page_size = page_size + real_offset
         real_offset = 0
     # If the offset is not negative, we simply copy the page size
     else:
@@ -127,9 +126,10 @@ def calculate_pagination_with_basequery(query, request_obj):
                   'records': '{} ... {} van de {}'.format(page_size * (page - 1) + 1,
                                                           page_size * (page - 1) + real_page_size,
                                                           total_amount_of_entries),
-                 }
+                  }
     # Return this object
     return pagination
+
 
 def flash_form_errors(errors):
     if len(errors.keys()) > 0:
@@ -314,6 +314,7 @@ def add_user_quote():
 
     return render_template('quote.html', title="Citaat toevoegen", h1="Citaat toevoegen", form=form)
 
+
 ##
 #
 # Admin Panel
@@ -362,7 +363,7 @@ def admin_users():
     form = UserRegistrationForm()
     if form.validate_on_submit():
         alert = (dbhandler.adduser(form.name.data, form.email.data, form.group.data, form.profitgroup.data,
-                                    form.birthday.data))
+                                   form.birthday.data))
         flash(alert[0], alert[1])
 
         socket.update_stats()
@@ -415,12 +416,35 @@ def admin_transactions():
         abort(403)
 
     query = Transaction.query
+
+    if 'transaction_type' in request.args:
+        t_type = request.args.get('transaction_type')
+        if t_type == 'upgr':
+            query = query.filter(Transaction.upgrade_id != None)
+        elif t_type == 'pur':
+            query = query.filter(Transaction.purchase_id != None)
+
+    if 'transaction_user' in request.args and int(request.args.get('transaction_user')) > 0:
+        query = query.filter(Transaction.user_id == int(request.args.get('transaction_user')))
+
+    if 'purchase_product' in request.args and int(request.args.get('transaction_product')) > 0:
+        query = query.filter(Transaction.purchase.has(product_id=int(request.args.get('transaction_product'))))
+
+    if 'purchase_round' in request.args:
+        t_round = request.args.get('transaction_round')
+        if t_round == '1':
+            query = query.filter(Transaction.purchase.has(round=True))
+        elif t_round == '0':
+            query = query.filter(Transaction.purchase.has(round=False))
+
     pagination = calculate_pagination_with_basequery(query, request)
     transactions = query.limit(pagination['pageSize']).offset(pagination['offset']).all()[::-1]
+    filters = TransactionFilterForm()
+
 
     return render_template('admin/mantransactions.html', title="Transactiebeheer", h1="Alle transacties", User=User,
                            transactions=transactions, Purchase=Purchase, Upgrade=Upgrade, pag=pagination,
-                           Product=Product), 200
+                           Product=Product, filters=filters), 200
 
 
 @register_breadcrumb(app, '.admin.transactions.confirm', "Bevestigen", order=2)
@@ -431,10 +455,14 @@ def admin_transactions_delete(tranid):
     if transaction.purchase_id is not None:
         purchase = Purchase.query.get(transaction.purchase_id)
         product = Product.query.get(purchase.product_id)
-        message = "transactie met ID " + "{} ({}x {} voor {})".format(str(transaction.id), str(round_up(purchase.amount)), product.name, u.name) + " wilt verwijderen?"
+        message = "transactie met ID " + "{} ({}x {} voor {})".format(str(transaction.id),
+                                                                      str(round_up(purchase.amount)), product.name,
+                                                                      u.name) + " wilt verwijderen?"
     else:
         upgr = Upgrade.query.get(transaction.upgrade_id)
-        message = "transactie met ID " + "{} ({} € {} voor {})".format(str(transaction.id), upgr.description, round_up(upgr.amount), u.name) + " wilt verwijderen?"
+        message = "transactie met ID " + "{} ({} € {} voor {})".format(str(transaction.id), upgr.description,
+                                                                       round_up(upgr.amount),
+                                                                       u.name) + " wilt verwijderen?"
     agree_url = url_for("admin_transactions_delete_exec", tranid=tranid)
     return_url = url_for("admin_transactions")
     return render_template("verify.html", title="Bevestigen", message=message, transaction=transaction,
@@ -456,9 +484,10 @@ def admin_drinks():
     form = DrinkForm()
     if request.method == "POST":
         if form.validate_on_submit():
-            alert = (dbhandler.adddrink(form.name.data, float(form.price.data), form.category.data, int(form.pos.data) + 1,
-                                        form.image.data, form.hoverimage.data, form.recipe.data, form.inventory_warning.data,
-                                        float(form.alcohol.data), form.volume.data, form.unit.data))
+            alert = (
+                dbhandler.adddrink(form.name.data, float(form.price.data), form.category.data, int(form.pos.data) + 1,
+                                   form.image.data, form.hoverimage.data, form.recipe.data, form.inventory_warning.data,
+                                   float(form.alcohol.data), form.volume.data, form.unit.data))
             flash(alert[0], alert[1])
 
             socket.update_stats()
@@ -632,8 +661,10 @@ def upgrade():
             # Get the user for the messages that now follow
             user = User.query.get(upgrade.user_id)
 
-            socket.send_transaction("{} heeft opgewaardeerd met € {}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ",")))
-            flash("Gebruiker {} heeft succesvol opgewaardeerd met € {}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ",")), "success")
+            socket.send_transaction("{} heeft opgewaardeerd met € {}"
+                                    .format(user.name, str("%.2f" % upgrade.amount).replace(".", ",")))
+            flash("Gebruiker {} heeft succesvol opgewaardeerd met € {}"
+                  .format(user.name,str("%.2f" % upgrade.amount).replace(".", ",")), "success")
 
         # If the declaration form has been filled in
         else:
@@ -643,8 +674,11 @@ def upgrade():
             # Get the user for the messages that now follow
             user = User.query.get(upgrade.user_id)
 
-            socket.send_transaction("{} heeft € {} teruggekregen ({})".format(user.name, str("%.2f" % upgrade.amount).replace(".", ","), upgrade.description))
-            flash("Gebruiker {} heeft succesvol € {} teruggekregen voor: {}".format(user.name, str("%.2f" % upgrade.amount).replace(".", ","), upgrade.description), "success")
+            socket.send_transaction("{} heeft € {} teruggekregen ({})"
+                                    .format(user.name, str("%.2f" % upgrade.amount).replace(".", ","),
+                                            upgrade.description))
+            flash("Gebruiker {} heeft succesvol € {} teruggekregen voor: {}"
+                  .format(user.name, str("%.2f" % upgrade.amount).replace(".", ","), upgrade.description), "success")
 
         # Update the daily stats
         socket.update_stats()
@@ -745,6 +779,7 @@ def admin_soundboard_delete_exec(sound_id):
     alert = (dbhandler.del_sound(sound_id))
     flash(alert[0], alert[1])
     return redirect(url_for('admin_soundboard'))
+
 
 @app.route('/admin/recalcmax')
 def recalculate_max_stats():
@@ -890,8 +925,10 @@ def stats_drink_group(drinkid, groupid, begindate, enddate):
     parsedbegin = datetime.strptime(begindate, "%Y-%m-%d")
     parsedend = datetime.strptime(enddate, "%Y-%m-%d")
 
-    idsu, valuesu, labelsu = stats.most_bought_of_one_product_by_users_from_group(drinkid, groupid, parsedbegin, parsedend)
-    idsg, valuesg, labelsg = stats.most_bought_of_one_product_by_groups_from_group(drinkid, groupid, parsedbegin, parsedend)
+    idsu, valuesu, labelsu = stats.most_bought_of_one_product_by_users_from_group(drinkid, groupid, parsedbegin,
+                                                                                  parsedend)
+    idsg, valuesg, labelsg = stats.most_bought_of_one_product_by_groups_from_group(drinkid, groupid, parsedbegin,
+                                                                                   parsedend)
 
     return render_template("stats/statsproduct.html",
                            title='Statistieken over {} voor {}'.format(product.name, usergroup.name),
@@ -1006,14 +1043,18 @@ def bigscreen():
 
     if form_spotify.spotify_submit.data and form_spotify.validate_on_submit():
         if form_spotify.spotify_user.data != '0':
-            spotify.set_cache(os.path.join(app.config['SPOTIFY_CACHE_FOLDER'], '.spotifyoauthcache-' + form_spotify.spotify_user.data))
+            spotify.set_cache(os.path.join(app.config['SPOTIFY_CACHE_FOLDER'],
+                                           '.spotifyoauthcache-' + form_spotify.spotify_user.data))
             return redirect(url_for('api_spotify_login'))
         elif form_spotify.spotify_user.data == "0" and form_spotify.spotify_user_name.data != "":
-            spotify.set_cache(os.path.join(app.config['SPOTIFY_CACHE_FOLDER'], '.spotifyoauthcache-' + form_spotify.spotify_user_name.data))
+            spotify.set_cache(os.path.join(app.config['SPOTIFY_CACHE_FOLDER'],
+                                           '.spotifyoauthcache-' + form_spotify.spotify_user_name.data))
             return redirect(url_for('api_spotify_login'))
 
-    return render_template('admin/bigscreen.html', title="BigScreen Beheer", h1="BigScreen Beheer", form_quote=form_quote, bk=bk,
-                           form_interrupt=form_interrupt, form_spotify=form_spotify, spusername=spotify.current_user), 200
+    return render_template('admin/bigscreen.html', title="BigScreen Beheer", h1="BigScreen Beheer",
+                           form_quote=form_quote, bk=bk,
+                           form_interrupt=form_interrupt, form_spotify=form_spotify,
+                           spusername=spotify.current_user), 200
 
 
 @register_breadcrumb(app, '.admin.bigscreen.quotes', 'Quotes', order=3)
@@ -1065,6 +1106,7 @@ def admin_quotes_approve(q_id):
     alert = dbhandler.approve_quote(q_id)
     flash(alert[0], alert[1])
     return redirect(url_for('admin_quotes'))
+
 
 @register_breadcrumb(app, '.admin.bigscreen.bk', 'Biertje Kwartiertje', order=3)
 @app.route("/admin/bigscreen/biertjekwartiertje")

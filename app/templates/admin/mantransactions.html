@@ -1,46 +1,56 @@
 {% extends "base.html" %}
 
 {% block app_content %}
-    <table class="table table-striped">
-        <thead>
-            <tr>
-                <td colspan="7">{% with textUnder=true %}{% include 'pagination.html' %}{% endwith %}</td>
-            </tr>
-            <tr>
-                <th>ID</th>
-                <th>Datum</th>
-                <th>Tijd</th>
-                <th>Persoon</th>
-                <th>Wat</th>
-                <th>Hoeveel</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for t in transactions %}
-            <tr>
-                <td>{{ t.id }}</td>
-                <td>{{ t.timestamp.strftime("%Y-%m-%d") }}</td>
-                <td>{{ t.timestamp.strftime("%H:%M:%S") }}</td>
-                <td>{{ User.query.get(t.user_id).name }} (ID: {{ t.user_id }})</td>
-                {% if t.purchase_id is not none %}
-                <td>{{ Purchase.query.get(t.purchase_id).amount }}x {{ Product.query.get(Purchase.query.get(t.purchase_id).product_id).name }} (ID: {{ t.purchase_id }})</td>
-                {% else %}
-                <td>{{ Upgrade.query.get(t.upgrade_id).description }} (ID: {{ t.upgrade_id }})</td>
-                {% endif %}
-                {% if t.balchange < 0 %}
-                <td><span style="color: red;font-weight:bold;">€ {{ '%.2f' % t.balchange }}</span></td>
-                {% else %}
-                <td><span style="color: green;font-weight:bold;">€ {{ '%.2f' % t.balchange }}</span></td>
-                {% endif %}
-                <td><a href="/admin/transactions/delete/{{ t.id }}"><span class="fa fa-times fa-lg" style="color: red;"></span></a></td>
-            </tr>
-            {% endfor %}
-        </tbody>
-        <tfoot>
-            <tr>
-                <td colspan="7" style="margin-top: 5px">{% include 'pagination.html' %}</td>
-            </tr>
-        </tfoot>
-    </table>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xl-10">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <td colspan="7">{% with textUnder=true %}{% include 'pagination.html' %}{% endwith %}</td>
+                        </tr>
+                        <tr>
+                            <th>ID</th>
+                            <th>Datum</th>
+                            <th>Tijd</th>
+                            <th>Persoon</th>
+                            <th>Wat</th>
+                            <th>Hoeveel</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in transactions %}
+                        <tr>
+                            <td>{{ t.id }}</td>
+                            <td>{{ t.timestamp.strftime("%Y-%m-%d") }}</td>
+                            <td>{{ t.timestamp.strftime("%H:%M:%S") }}</td>
+                            <td>{{ User.query.get(t.user_id).name }} (ID: {{ t.user_id }})</td>
+                            {% if t.purchase_id is not none %}
+                            <td>{{ Purchase.query.get(t.purchase_id).amount }}x {{ Product.query.get(Purchase.query.get(t.purchase_id).product_id).name }} (ID: {{ t.purchase_id }})</td>
+                            {% else %}
+                            <td>{{ Upgrade.query.get(t.upgrade_id).description }} (ID: {{ t.upgrade_id }})</td>
+                            {% endif %}
+                            {% if t.balchange < 0 %}
+                            <td><span style="color: red;font-weight:bold;">€ {{ '%.2f' % t.balchange }}</span></td>
+                            {% else %}
+                            <td><span style="color: green;font-weight:bold;">€ {{ '%.2f' % t.balchange }}</span></td>
+                            {% endif %}
+                            <td><a href="/admin/transactions/delete/{{ t.id }}"><span class="fa fa-times fa-lg" style="color: red;"></span></a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="7" style="margin-top: 5px">{% include 'pagination.html' %}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <div class="col-xl">
+                {% include 'tablefilters.html' %}
+            </div>
+        </div>
+    </div>
+
 {% endblock %}
