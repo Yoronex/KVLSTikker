@@ -139,6 +139,30 @@ def flash_form_errors(errors):
                 flash("Fout in formulier: {} - {}".format(k, error), "danger")
 
 
+def apply_filters(query):
+    if 'f_transaction_type' in request.args:
+        t_type = request.args.get('f_transaction_type')
+        if t_type == 'upgr':
+            query = query.filter(Transaction.upgrade_id != None)
+        elif t_type == 'pur':
+            query = query.filter(Transaction.purchase_id != None)
+
+    if 'f_transaction_user' in request.args and int(request.args.get('f_transaction_user')) > 0:
+        query = query.filter(Transaction.user_id == int(request.args.get('f_transaction_user')))
+
+    if 'f_transaction_product' in request.args and int(request.args.get('f_transaction_product')) > 0:
+        query = query.filter(Transaction.purchase.has(product_id=int(request.args.get('f_transaction_product'))))
+
+    if 'f_transaction_round' in request.args:
+        t_round = request.args.get('f_transaction_round')
+        if t_round == '1':
+            query = query.filter(Transaction.purchase.has(round=True))
+        elif t_round == '0':
+            query = query.filter(Transaction.purchase.has(round=False))
+
+    return query
+
+
 @app.route('/')
 @app.route('/index')
 @app.route('/drink')
@@ -416,31 +440,11 @@ def admin_transactions():
         abort(403)
 
     query = Transaction.query
-
-    if 'transaction_type' in request.args:
-        t_type = request.args.get('transaction_type')
-        if t_type == 'upgr':
-            query = query.filter(Transaction.upgrade_id != None)
-        elif t_type == 'pur':
-            query = query.filter(Transaction.purchase_id != None)
-
-    if 'transaction_user' in request.args and int(request.args.get('transaction_user')) > 0:
-        query = query.filter(Transaction.user_id == int(request.args.get('transaction_user')))
-
-    if 'purchase_product' in request.args and int(request.args.get('transaction_product')) > 0:
-        query = query.filter(Transaction.purchase.has(product_id=int(request.args.get('transaction_product'))))
-
-    if 'purchase_round' in request.args:
-        t_round = request.args.get('transaction_round')
-        if t_round == '1':
-            query = query.filter(Transaction.purchase.has(round=True))
-        elif t_round == '0':
-            query = query.filter(Transaction.purchase.has(round=False))
+    query = apply_filters(query)
 
     pagination = calculate_pagination_with_basequery(query, request)
     transactions = query.limit(pagination['pageSize']).offset(pagination['offset']).all()[::-1]
     filters = TransactionFilterForm()
-
 
     return render_template('admin/mantransactions.html', title="Transactiebeheer", h1="Alle transacties", User=User,
                            transactions=transactions, Purchase=Purchase, Upgrade=Upgrade, pag=pagination,

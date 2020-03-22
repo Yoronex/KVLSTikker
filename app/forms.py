@@ -237,20 +237,20 @@ class SoundBoardForm(ExtendedFlaskForm):
 
 
 class TransactionFilterForm(ExtendedFlaskForm):
-    transaction_type = SelectField("Transactiesoort", choices=(('all', 'Alle'), ('upgr', 'Opwaarderingen'), ('pur', 'Aankopen')))
-    transaction_user = SelectField("Gebruiker")
-    purchase_product = SelectField("Product")
-    purchase_round = SelectField("Rondje", choices=(('all', 'Alle'), ('1', 'Ja'), ('0', 'Nee')))
+    f_transaction_type = SelectField("Transactiesoort", choices=(('all', 'Alle'), ('upgr', 'Opwaarderingen'), ('pur', 'Aankopen')))
+    f_transaction_user = SelectField("Gebruiker")
+    f_transaction_product = SelectField("Product")
+    f_transaction_round = SelectField("Rondje", choices=(('all', 'Alle'), ('1', 'Ja'), ('0', 'Nee')))
 
     def __init__(self, *args, **kwargs):
         super(TransactionFilterForm, self).__init__(*args, **kwargs)
         product_list = [('0', "Alle")]
         for p in Product.query.all():
             product_list.append((str(p.id), "{}".format(p.name)))
-        self.purchase_product.choices = product_list
+        self.f_transaction_product.choices = product_list
 
         users = [('0', 'Iedereen')]
         for group in Usergroup.query.all():
             for u in group.users:
                 users.append((str(u.id), "{} ({})".format(u.name, group.name)))
-        self.transaction_user.choices = users
+        self.f_transaction_user.choices = users
