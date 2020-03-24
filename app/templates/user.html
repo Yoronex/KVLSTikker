@@ -16,72 +16,75 @@
 {% endblock %}
 
 {% block app_content %}
-<div class="row">
-    <div class="col-xl-6">
-        <h2>Transacties</h2>
-        <table class="table table-striped">
-            <colgroup>
-                <col>
-                <col>
-                <col>
-                <col>
-                <col style="min-width: calc(5rem + 2 * 0.8rem)">
-                <col style="min-width: calc(5rem + 2 * 0.8rem)">
-            </colgroup>
-            <thead>
-                <tr>
-                    <td colspan="6">{% with textUnder=true %}{% include 'pagination.html' %}{% endwith %}</td>
-                </tr>
-                <tr>
-                    <th>ID</th>
-                    <th>Datum</th>
-                    <th>Tijd</th>
-                    <th>Wat</th>
-                    <th>Hoeveel</th>
-                    <th>Saldo</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for t in transactions %}
-                <tr>
-                    <td>{{ t.id }}</td>
-                    <td>{{ t.timestamp.strftime("%Y-%m-%d") }}</td>
-                    <td>{{ t.timestamp.strftime("%H:%M:%S") }}</td>
-                    {% if t.purchase_id is not none %}
-                    <td>{{ Purchase.query.get(t.purchase_id).amount }}x {{
-                        Product.query.get(Purchase.query.get(t.purchase_id).product_id).name }}
-                    </td>
-                    {% else %}
-                    <td>{{ Upgrade.query.get(t.upgrade_id).description }}</td>
-                    {% endif %}
-                    {% if t.balchange < 0 %}
-                    <td><span style="color: red;font-weight:bold;">€{{ '%.2f' % t.balchange }}</span></td>
-                    {% else %}
-                    <td><span style="color: green;font-weight:bold;">€{{ '%.2f' % t.balchange }}</span></td>
-                    {% endif %}
-                    {% if t.newbal < 0 %}
-                    <td><span style="color: red;font-weight:bold;">€{{ '%.2f' % t.newbal }}</span></td>
-                    {% else %}
-                    <td><span style="color: green;font-weight:bold;">€{{ '%.2f' % t.newbal }}</span></td>
-                    {% endif %}
-                </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr>
-                    <td colspan="6">{% with textUnder=false %}{% include 'pagination.html' %}{% endwith %}</td>
-                </tr>
-            </tfoot>
-        </table>
+    <div class="row">
+        <div class="col-xl-6">
+            <h2>Transacties</h2>
+            {% include 'tablefilters_vert.html' %}
+            <table class="table table-striped">
+                <colgroup>
+                    <col>
+                    <col>
+                    <col>
+                    <col>
+                    <col style="min-width: calc(4.6rem + 2 * 0.8rem)">
+                    <col style="min-width: calc(4.6rem + 2 * 0.8rem)">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <td colspan="6">{% with textUnder=true %}{% include 'pagination.html' %}{% endwith %}</td>
+                    </tr>
+                    <tr>
+                        <th>ID</th>
+                        <th>Datum</th>
+                        <th>Tijd</th>
+                        <th>Wat</th>
+                        <th>Hoeveel</th>
+                        <th>Saldo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transactions %}
+                    <tr>
+                        <td>{{ t.id }}</td>
+                        <td>{{ t.timestamp.strftime("%Y-%m-%d") }}</td>
+                        <td>{{ t.timestamp.strftime("%H:%M:%S") }}</td>
+                        {% if t.purchase_id is not none %}
+                            {% with purchase = t.purchase %}
+                            <td>{{ purchase.amount }}x {{ purchase.product.name }}</td>
+                            {% endwith %}
+                        {% else %}
+                            {% with upgrade = t.upgrade %}
+                            <td>{{ upgrade.description }}</td>
+                            {% endwith %}
+                        {% endif %}
+                        {% if t.balchange < 0 %}
+                        <td><span style="color: red;font-weight:bold;">€{{ '%.2f' % t.balchange }}</span></td>
+                        {% else %}
+                        <td><span style="color: green;font-weight:bold;">€{{ '%.2f' % t.balchange }}</span></td>
+                        {% endif %}
+                        {% if t.newbal < 0 %}
+                        <td><span style="color: red;font-weight:bold;">€{{ '%.2f' % t.newbal }}</span></td>
+                        {% else %}
+                        <td><span style="color: green;font-weight:bold;">€{{ '%.2f' % t.newbal }}</span></td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="6">{% with textUnder=false %}{% include 'pagination.html' %}{% endwith %}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <div class="col-xl-6">
+            <h2>Statistieken</h2>
+            <p style="font-size: 14px"><i>Voor meer en uitgebreidere statistieken, <a href="{{ url_for('stats_user_redirect', userid=user.id) }}">klik hier om naar de statistieken te gaan.</a></i></p>
+            <h3>Verdeling gekochte producten</h3>
+            <h4>Staafdiagram</h4>
+            <canvas class="graph" id="bar"></canvas>
+            <h4>Cirkeldiagram</h4>
+            <canvas class="graph" id="pie"></canvas>
+        </div>
     </div>
-    <div class="col-xl-6">
-        <h2>Statistieken</h2>
-        <p style="font-size: 14px"><i>Voor meer en uitgebreidere statistieken, <a href="{{ url_for('stats_user_redirect', userid=user.id) }}">klik hier om naar de statistieken te gaan.</a></i></p>
-        <h3>Verdeling gekochte producten</h3>
-        <h4>Staafdiagram</h4>
-        <canvas class="graph" id="bar"></canvas>
-        <h4>Cirkeldiagram</h4>
-        <canvas class="graph" id="pie"></canvas>
-    </div>
-</div>
 {% endblock %}

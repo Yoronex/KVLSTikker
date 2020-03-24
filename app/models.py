@@ -75,7 +75,7 @@ class Product(db.Model):
     inventory_warning = db.Column(db.Integer, nullable=True)
     order = db.Column(db.Integer)
     default_quantity = db.Column(db.Integer)
-    category = db.Column(db.String)
+    category = db.Column(db.String, default="")
 
     def __repr__(self):
         return '<Product {} voor {}>'.format(self.name, self.price)

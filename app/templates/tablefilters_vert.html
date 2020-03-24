@@ -1,0 +1,28 @@
+{% import 'bootstrap/wtf.html' as wtf %}
+
+<div class="img-thumbnail">
+    <h3>Filters</h3>
+    <form>
+        <div class="form-row">
+            {% for f in filters.get_fields() %}
+            <div class="col">
+                {{ wtf.form_field(filters[f]) }}
+            </div>
+            {% endfor %}
+        </div>
+</form>
+</div>
+
+<script>
+    {% for f in filters.get_fields() %}
+        document.getElementById('{{ f }}').onchange = function() {
+            let value = document.getElementById('{{ f }}').value;
+            console.log("Changed field {{ f }} => " + value);
+            updateQueryStringParameter('{{ f }}', value);
+        };
+
+        {% if f in request.args %}
+            document.getElementById('{{ f }}').value = '{{ request.args.get(f) }}';
+        {% endif %}
+    {% endfor %}
+</script>

@@ -257,6 +257,11 @@ th {
     padding-left: 3px;
 }
 
+.table > thead > tr:first-child > td,
+.table > thead > tr:first-child > th {
+    border-top: none;
+}
+
 .table > thead > tr > th {
     text-align: left;
 }

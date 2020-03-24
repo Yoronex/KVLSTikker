@@ -3,10 +3,12 @@
 
 {% block app_content %}
     <div class="row">
-        <div class="col-xl-6">
+        <div class="col-xl-8">
             <h2>Alle producten</h2>
+            {% include 'tablefilters_vert.html' %}
             <table class="table table-striped">
                 <colgroup>
+                    <col>
                     <col>
                     <col>
                     <col>
@@ -21,6 +23,7 @@
                         <th>ID</th>
                         <th>Pos</th>
                         <th>Naam</th>
+                        <th>Categorie</th>
                         <th>Prijs</th>
                         <th>Inv W.</th>
                         <th>Ingrediënten</th>
@@ -29,12 +32,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for d in Product.query.order_by(Product.order.asc()).all() %}
+                    {% for d in products %}
                     {% if d.purchaseable is sameas false %}
                     <tr class="item-unavailable">
                         <td>{{ d.id }}</td>
                         <td>{{ d.order }}</td>
                         <td>{{ d.name }}</td>
+                        <td>{{ d.category }}</td>
                         <td>€ {{ '%.2f' % d.price }}</td>
                         <td>{{ d.inventory_warning }}</td>
                         {% if d.recipe_input is not none %}
@@ -51,6 +55,7 @@
                         <td>{{ d.id }}</td>
                         <td>{{ d.order }}</td>
                         <td>{{ d.name }}</td>
+                        <td>{{ d.category }}</td>
                         <td>€ {{ '%.2f' % d.price }}</td>
                         <td>{{ d.inventory_warning }}</td>
                         {% if d.recipe_input is not none %}
@@ -64,7 +69,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="col-xl-5">
+        <div class="col-xl">
             <h2>Voeg een product toe</h2>
             {{ wtf.quick_form(form) }}
             <p>Recept syntax: {aantal}x{product}, {aantal}x{product}, ...<br>Voorbeeld: 1x1, 2x3, 1x23</p>

@@ -246,7 +246,7 @@ class TransactionFilterForm(ExtendedFlaskForm):
         super(TransactionFilterForm, self).__init__(*args, **kwargs)
         product_list = [('0', "Alle")]
         for p in Product.query.all():
-            product_list.append((str(p.id), "{}".format(p.name)))
+            product_list.append((str(p.id), p.name))
         self.f_transaction_product.choices = product_list
 
         users = [('0', 'Iedereen')]
@@ -254,3 +254,35 @@ class TransactionFilterForm(ExtendedFlaskForm):
             for u in group.users:
                 users.append((str(u.id), "{} ({})".format(u.name, group.name)))
         self.f_transaction_user.choices = users
+
+
+class UserTransactionFilterForm(ExtendedFlaskForm):
+    f_transaction_type = SelectField("Transactiesoort", choices=(('all', 'Alle'), ('upgr', 'Opwaarderingen'), ('pur', 'Aankopen')))
+    f_transaction_product = SelectField("Product")
+    f_transaction_round = SelectField("Rondje", choices=(('all', 'Alle'), ('1', 'Ja'), ('0', 'Nee')))
+
+    def __init__(self, *args, **kwargs):
+        super(UserTransactionFilterForm, self).__init__(*args, **kwargs)
+        product_list = [('0', "Alle")]
+        for p in Product.query.all():
+            product_list.append((str(p.id), p.name))
+        self.f_transaction_product.choices = product_list
+
+
+class UsersFilterForm(ExtendedFlaskForm):
+    f_user_usergroup = SelectField("Groep")
+    f_user_profitgroup = SelectField("Winstgroep")
+
+    def __init__(self, *args, **kwargs):
+        super(UsersFilterForm, self).__init__(*args, **kwargs)
+        group_list = [('0', 'Alle')]
+        for g in Usergroup.query.all():
+            group_list.append((str(g.id), g.name))
+        self.f_user_usergroup.choices = group_list
+        self.f_user_profitgroup.choices = group_list
+
+
+class ProductFilterForm(ExtendedFlaskForm):
+    f_product_category = SelectField("Categorie", choices=(('all', 'Alle'), ('Bieren', 'Bieren'), ('Shots', 'Shots'),
+                                                           ('Mixjes', 'Mixjes')))
+    f_product_purchaseable = SelectField("Beschikbaar", choices=(('all', 'Alle'), ('1', 'Ja'), ('0', 'Nee')))

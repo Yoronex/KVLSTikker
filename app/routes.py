@@ -160,6 +160,20 @@ def apply_filters(query):
         elif t_round == '0':
             query = query.filter(Transaction.purchase.has(round=False))
 
+    if 'f_user_usergroup' in request.args and int(request.args.get('f_user_usergroup')) > 0:
+        query = query.filter(User.usergroup_id == int(request.args.get('f_user_usergroup')))
+    if 'f_user_profitgroup' in request.args and int(request.args.get('f_user_profitgroup')) > 0:
+        query = query.filter(User.profitgroup_id == int(request.args.get('f_user_profitgroup')))
+
+    if 'f_product_category' in request.args and request.args.get('f_product_category') != 'all':
+        query = query.filter(Product.category == request.args.get('f_product_category'))
+    if 'f_product_purchaseable' in request.args:
+        t_round = request.args.get('f_product_purchaseable')
+        if t_round == '1':
+            query = query.filter(Product.purchaseable == True)
+        elif t_round == '0':
+            query = query.filter(Product.purchaseable == False)
+
     return query
 
 
@@ -206,9 +220,10 @@ def user(userid):
     user = User.query.get(userid)
 
     query = user.transactions
+    query = apply_filters(query)
     pagination = calculate_pagination_with_basequery(query, request)
     transactions = query.limit(pagination['pageSize']).offset(pagination['offset']).all()[::-1]
-    upgrades = user.upgrades.all()
+    filters = UserTransactionFilterForm()
 
     count = {}
     for p in user.purchases:
@@ -221,9 +236,9 @@ def user(userid):
         data.append((p_id, Product.query.get(p_id).name, int(amount)))
     ids, values, labels = stats.top_n(count, data, 20)
 
-    return render_template('user.html', title=user.name, h1="Informatie over " + user.name, user=user,
-                           transactions=transactions, Purchase=Purchase, upgrades=upgrades, Product=Product,
-                           Upgrade=Upgrade, ids=ids, data=values, labels=labels, url_prefix="", pag=pagination), 200
+    return render_template('user.html', title=user.name, h1="Informatie over " + user.name, user=user, filters=filters,
+                           transactions=transactions, ids=ids, data=values, labels=labels, url_prefix="",
+                           pag=pagination), 200
 
 
 def view_drink_dlc(*args, **kwargs):
@@ -385,6 +400,12 @@ def admin_users():
     if request.remote_addr != "127.0.0.1":
         abort(403)
     form = UserRegistrationForm()
+    filters = UsersFilterForm()
+
+    query = User.query
+    query = apply_filters(query)
+    users = query.all()
+
     if form.validate_on_submit():
         alert = (dbhandler.adduser(form.name.data, form.email.data, form.group.data, form.profitgroup.data,
                                    form.birthday.data))
@@ -394,9 +415,8 @@ def admin_users():
 
         return redirect(url_for('admin_users'))
     flash_form_errors(form.errors)
-    return render_template("admin/manusers.html", title="Gebruikersbeheer", h1="Gebruikersbeheer",
-                           backurl=url_for('index'), User=User,
-                           Usergroup=Usergroup, form=form), 200
+    return render_template("admin/manusers.html", title="Gebruikersbeheer", h1="Gebruikersbeheer", users=users,
+                           Usergroup=Usergroup, form=form, filters=filters), 200
 
 
 @register_breadcrumb(app, '.admin.users.confirm', "Bevestigen", order=2)
@@ -486,6 +506,12 @@ def admin_transactions_delete_exec(tranid):
 @register_breadcrumb(app, '.admin.drinks', 'Productbeheer', order=2)
 def admin_drinks():
     form = DrinkForm()
+    filters = ProductFilterForm()
+
+    query = Product.query
+    query = apply_filters(query)
+    products = query.order_by(Product.order.asc()).all()
+
     if request.method == "POST":
         if form.validate_on_submit():
             alert = (
@@ -501,7 +527,7 @@ def admin_drinks():
             flash(form.errors, "danger")
     flash_form_errors(form.errors)
     return render_template('admin/mandrinks.html', title="Productbeheer", h1="Productbeheer", Product=Product,
-                           form=form), 200
+                           products=products, form=form, filters=filters), 200
 
 
 def view_admin_drink_dlc(*args, **kwargs):
