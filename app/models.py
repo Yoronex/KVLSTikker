@@ -76,6 +76,7 @@ class Product(db.Model):
     order = db.Column(db.Integer)
     default_quantity = db.Column(db.Integer)
     category = db.Column(db.String, default="")
+    inventories = db.relationship('Inventory', backref='product', lazy='dynamic')
 
     def __repr__(self):
         return '<Product {} voor {}>'.format(self.name, self.price)

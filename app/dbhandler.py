@@ -32,9 +32,17 @@ def fix_float_errors_in_usergroup_profits():
     db.session.commit()
 
 
+def fix_float_errors_in_inventory():
+    inventories = Inventory.query.filter(Inventory.quantity != 0).all()
+    for i in range(0, len(inventories)):
+        inventories[i].quantity = round(inventories[i].quantity)
+    db.session.commit()
+
+
 # Because 1.1 + 2.2 !+ 3.3 in Python, we have to fix this every now and then (so at startup seems like a good time)
 fix_float_errors_in_user_balances()
 fix_float_errors_in_usergroup_profits()
+fix_float_errors_in_inventory()
 
 
 def initialize_settings():

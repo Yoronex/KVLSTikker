@@ -13,6 +13,12 @@ def round_down(float_number, n=2):
     return math.floor(float_number * decimals) / decimals
 
 
+class AttrDict(dict):
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+
 from flask import Flask
 from config import Config
 from flask_socketio import SocketIO

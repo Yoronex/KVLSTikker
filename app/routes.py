@@ -1,10 +1,12 @@
 from flask import render_template, flash, redirect, url_for, request, abort, jsonify, make_response
-from app import app, stats, socket, spotify, socketio, dbhandler, emailhandler, cart, round_up, round_down
+from app import app, stats, socket, spotify, socketio, dbhandler, emailhandler, cart, round_up, round_down, AttrDict
 from app.forms import *
 from app.models import *
 from flask_breadcrumbs import register_breadcrumb
 import copy
 import os
+
+from sqlalchemy import func, cast, Integer
 
 from datetime import datetime, timedelta
 from dateutil import tz
@@ -366,28 +368,20 @@ def admin():
     if request.remote_addr != "127.0.0.1":
         abort(403)
 
-    products = []
-    total_p_value = 0
-    for p in Product.query.filter(and_(Product.recipe_input == None), (Product.purchaseable == True)).all():
-        result = dbhandler.get_inventory_stock(p.id)
-        result[0]['name'] = p.name
-        result[0]['inventory_value'] = round_down(dbhandler.calc_inventory_value(p.id))
-        total_p_value += result[0]['inventory_value']
-        products.append(result[0])
+    products = [AttrDict(p._asdict()) for p in db.session.query(Product.name, Product.inventory_warning,
+                                                                func.sum(Inventory.quantity.cast(Integer)).label('quantity'),
+                                                                func.sum(Inventory.quantity *
+                                                                         Inventory.price_before_profit)
+                                                                .label('inventory_value'))
+        .filter(and_(Product.id == Inventory.product_id, Product.purchaseable == True))
+        .group_by(Inventory.product_id).all()]
 
-    transactions = {}
-    t_list = []
-    upgrades = Upgrade.query.all()
-    purchases = Purchase.query.filter(Purchase.price > 0).all()
-    transactions['upgrades'] = len(upgrades)
-    transactions['purchases'] = len(purchases)
-    transactions['total'] = len(upgrades) + len(purchases)
-    transactions['upgrades_value'] = 0
-    transactions['purchases_value'] = 0
-    for u in upgrades:
-        transactions['upgrades_value'] = transactions['upgrades_value'] + u.amount
-    for p in purchases:
-        transactions['purchases_value'] = transactions['purchases_value'] + p.amount * p.price
+    total_p_value = sum([p['inventory_value'] for p in products])
+
+    transactions = {'upgrades': Upgrade.query.count(), 'purchases': Purchase.query.count(),
+                    'total': Transaction.query.count(),
+                    'upgrades_value': db.session.query(func.sum(Upgrade.amount)).scalar(),
+                    'purchases_value': db.session.query(func.sum(Purchase.amount * Purchase.price)).scalar()}
     transactions['revenue'] = transactions['upgrades_value'] - transactions['purchases_value']
 
     return render_template('admin/admin.html', title='Admin paneel', h1="Beheerderspaneel", Usergroup=Usergroup,
@@ -1248,3 +1242,9 @@ def api_disable_snow():
 def api_reload_bigscreen():
     socket.send_reload()
     return redirect(url_for('bigscreen'))
+
+
+@app.route('/test')
+def test_something():
+    differences = db.session.query(Purchase.id, Transaction.id).filter(and_(Purchase.id == Transaction.purchase_id, func.abs(Purchase.amount * Purchase.price + Transaction.balchange) >= 0.01)).all()
+    return jsonify(differences)
