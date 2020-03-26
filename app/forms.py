@@ -286,3 +286,8 @@ class ProductFilterForm(ExtendedFlaskForm):
     f_product_category = SelectField("Categorie", choices=(('all', 'Alle'), ('Bieren', 'Bieren'), ('Shots', 'Shots'),
                                                            ('Mixjes', 'Mixjes')))
     f_product_purchaseable = SelectField("Beschikbaar", choices=(('all', 'Alle'), ('1', 'Ja'), ('0', 'Nee')))
+
+
+class InventoryFilterForm(ExtendedFlaskForm):
+    f_product_category = SelectField("Categorie", choices=(('all', 'Alle'), ('Bieren', 'Bieren'), ('Shots', 'Shots'),
+                                                           ('Mixjes', 'Mixjes')))

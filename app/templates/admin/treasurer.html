@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block scripts %}
+<script src="{{url_for('.static', filename='js/Chart.bundle.min.js')}}"></script>
+<script src="{{url_for('.static', filename='js/graph.js')}}"></script>
+<script>
+    createPie({{ category_q.ids|tojson }}, {{ category_q.value|tojson }}, {{ category_q.labels|tojson }}, 'quant-cat-pie', '');
+    createPie({{ category_v.ids|tojson }}, {{ category_v.value|tojson }}, {{ category_v.labels|tojson }}, 'val-cat-pie', '');
+    createBar({{ product_q.ids|tojson }}, {{ product_q.value|tojson }}, {{ product_q.labels|tojson }}, 'quant-bar', '');
+    createPie({{ product_q.ids|tojson }}, {{ product_q.value|tojson }}, {{ product_q.labels|tojson }}, 'quant-pie', '');
+    createBar({{ product_v.ids|tojson }}, {{ product_v.value|tojson }}, {{ product_v.labels|tojson }}, 'value-bar', '');
+    createPie({{ product_v.ids|tojson }}, {{ product_v.value|tojson }}, {{ product_v.labels|tojson }}, 'value-pie', '');
+</script>
+{{ super() }}
+{% endblock %}
+
+{% block app_content %}
+    <div class="subtitle"><sup>Pagina gegenereerd in {{ rendertime }} ms</sup></div>
+<div id="accordion">
+    <div class="card">
+        <div class="card-header">
+            <a class="card-link" data-toggle="collapse" href="#inventoryBox">
+                Inventaris (tabel)
+            </a>
+        </div>
+        <div id="inventoryBox" class="collapse show">
+            <div class="card-body">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-xl-9">
+                            <table class="table table-striped">
+                                <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Inventaris</th>
+                                    <th>Waarde</th>
+                                    <th>Per week</th>
+                                    <th>Inventaris op</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in products %}
+                                    <tr>
+                                        <td>{{ p['name'] }}</td>
+                                        <td>
+                                            {% if p['quantity'] < 0 %}<span style="color: red;">{{ p['quantity'] }}</span>
+                                            {% elif p['quantity'] <= p['inventory_warning'] %}<span style="color: darkorange;">{{ p['quantity'] }}</span>
+                                            {% else %} {{ p['quantity'] }}{% endif %}
+                                        </td>
+                                        <td>€ {{ '%.2f' % p['inventory_value'] }}</td>
+                                        <td>{{ '%.2f' % p['per_week'] }}</td>
+                                        {% if p['stock_empty'] is not none %}
+                                        <td>{{ p['stock_empty'].strftime("%Y-%m-%d") }}</td>
+                                        {% else %}
+                                        <td>-</td>
+                                        {% endif %}
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td></td>
+                                        <td></td>
+                                        <td>€ {{ '%.2f' % total_p_value }}</td>
+                                        <td></td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        <div class="col-xl-3">
+                            <h4>Hoeveelheid categorieën</h4>
+                            <canvas class="graph" id="quant-cat-pie"></canvas>
+                            <h4>Waarde categorieën</h4>
+                            <canvas class="graph" id="val-cat-pie"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <a class="card-link" data-toggle="collapse" href="#invAnalysisBox">
+                Inventaris (analyse)
+            </a>
+        </div>
+        <div id="invAnalysisBox" class="collapse">
+            <div class="card-body">
+                <div class="container-fluid">
+                    <div class="row">
+                        <div class="col-xl-5">
+                            <h3>Hoeveelheden (qty)</h3>
+                            <h4>Staafdiagram (qty)</h4>
+                            <canvas class="graph" id="quant-bar"></canvas>
+                            <h4>Cirkeldiagram (qty)</h4>
+                            <canvas class="graph" id="quant-pie"></canvas>
+                        </div>
+                        <div class="col-xl-5">
+                            <h3>Waarde (€)</h3>
+                            <h4>Staafdiagram (€)</h4>
+                            <canvas class="graph" id="value-bar"></canvas>
+                            <h4>Cirkeldiagram (€)</h4>
+                            <canvas class="graph" id="value-pie"></canvas>
+                        </div>
+                        <div class="col-xl-2">
+                            {% include 'tablefilters_vert.html' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <a class="card-link" data-toggle="collapse" href="#usersBox">
+                Gebruikers
+            </a>
+        </div>
+        <div id="usersBox" class="collapse">
+            <div class="card-body">
+                Mooie spullen hier
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

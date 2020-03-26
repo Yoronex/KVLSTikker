@@ -72,6 +72,10 @@ function createBar(ids, data, labels, id, url_prefix) {
 }
 
 function createPie(ids, data, labels, id, url_prefix) {
+    for (let i = 0; i < data.length; i++) {
+        data[i] = Math.max(0, data[i])
+    }
+
     var ctx = document.getElementById(id);
     var myChart = new Chart(ctx, {
         type: 'pie',

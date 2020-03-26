@@ -6,7 +6,7 @@ from flask_breadcrumbs import register_breadcrumb
 import copy
 import os
 
-from sqlalchemy import func, cast, Integer
+from sqlalchemy import func, cast, Integer, join
 
 from datetime import datetime, timedelta
 from dateutil import tz
@@ -803,6 +803,119 @@ def admin_soundboard_delete_exec(sound_id):
     alert = (dbhandler.del_sound(sound_id))
     flash(alert[0], alert[1])
     return redirect(url_for('admin_soundboard'))
+
+
+@register_breadcrumb(app, '.admin.treasurer', 'Penningmeester', order=2)
+@app.route('/admin/treasurer')
+def admin_treasurer():
+    if request.remote_addr != "127.0.0.1":
+        abort(403)
+
+    filters = InventoryFilterForm()
+
+    now = datetime.now()
+    three_months_ago = now - timedelta(days=7 * 12)
+
+    '''
+    Query the data from the database and calculate other necessary values
+    '''
+
+    # Query the inventory quantity left for each product
+    rawquery = db.session.query(Product.name, Product.id, Product.category, Product.inventory_warning,
+                                func.sum(Inventory.quantity.cast(Integer)).label('quantity'),
+                                func.sum(Inventory.quantity * Inventory.price_before_profit)
+                                .label('inventory_value'))\
+        .filter(and_(Product.id == Inventory.product_id, Product.purchaseable == True,
+                     Product.id != dbhandler.settings['dinner_product_id']))\
+        .group_by(Inventory.product_id)
+
+    # Apply the filters to the query
+    products = apply_filters(rawquery).all()
+    # Convert the result from a list of tuples to a list of dicts
+    products = [p._asdict() for p in products]
+
+    # Calculate the total value of the inventory
+    total_p_value = sum([p['inventory_value'] for p in products])
+
+    # Query the consumption of each product per week over a period of 12 weeks
+    purc_list = db.session.query(Purchase.product_id.label('id'),
+                                 func.sum(Purchase.amount / 12).label('per_week'))\
+        .filter(Purchase.round == False, Purchase.timestamp > three_months_ago)\
+        .group_by(Purchase.product_id).all()
+    # Convert the result to a list of dicts
+    purc_list = [p._asdict() for p in purc_list]
+    # Create a dictionary
+    purchases = {}
+    # Conver tthe list of dicts to a large dictionary
+    for p in purc_list:
+        purchases[p['id']] = p
+
+    # For every product..
+    for p in products:
+        # Add the consumption per week to each product dictionary
+        if p['id'] in purchases.keys():
+            p['per_week'] = purchases[p['id']]['per_week']
+            p['stock_empty'] = now + timedelta(days=int(p['quantity'] / p['per_week'] * 7))
+        else:
+            p['per_week'] = 0
+            p['stock_empty'] = None
+
+    '''
+    Create the analysis graphs
+    '''
+
+    # Create two empty lists for parsed data for the graphs
+    qdata, vdata = [], []
+    # For each product...
+    for p in products:
+        # Add a tuple to the lists
+        qdata.append((p['id'], p['name'], round(p['quantity'])))
+        vdata.append((p['id'], p['name'], round_down(p['inventory_value'])))
+    # Process the data lists for the graphs on the page
+    product_q, product_v = {}, {}
+    product_q['ids'], product_q['value'], product_q['labels'] = stats.topall(None, qdata)
+    product_v['ids'], product_v['value'], product_v['labels'] = stats.topall(None, vdata)
+
+    '''
+    Create the category graphs 
+    '''
+
+    # Create two empty lists for parsed data for the graphs
+    qdata, vdata = [], []
+    # Create a dictionary to store all the cumulative data
+    categories = {}
+    # Loop over all products
+    for p in products:
+        # If a product category is not yet in the dictionary...
+        if p['category'] not in categories:
+            # Add it with the corresponding values
+            categories[p['category']] = {'quantity': p['quantity'],
+                                         'value': p['inventory_value']}
+        # If is is, increment the values in the dictionary
+        else:
+            categories[p['category']]['quantity'] += p['quantity']
+            categories[p['category']]['value'] += p['inventory_value']
+
+    # Remove the empty category if it is present
+    if "" in categories:
+        categories.pop("")
+
+    # Add all the data to the two lists
+    for category, v in categories.items():
+        qdata.append((0, category, round(v['quantity'])))
+        vdata.append((0, category, round(v['value'])))
+    # Parse the data into readable data for the graphs
+    category_q, category_v = {}, {}
+    category_q['ids'], category_q['value'], category_q['labels'] = stats.topall(None, qdata)
+    category_v['ids'], category_v['value'], category_v['labels'] = stats.topall(None, vdata)
+
+    render_time = int((datetime.now() - now).microseconds / 1000)
+
+    return render_template('admin/treasurer.html', title='Penningmeester', h1='Penningmeester statistieken',
+                           products=products, filters=filters, total_p_value=total_p_value, product_q=product_q,
+                           product_v=product_v, category_q=category_q, category_v=category_v,
+                           rendertime=render_time), 200
+
 
 
 @app.route('/admin/recalcmax')

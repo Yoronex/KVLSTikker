@@ -104,3 +104,22 @@ a {
 .table > tbody > tr.item-available > td > a > i.edit-symbol {
     color: white;
 }
+
+.card {
+    border: 1px solid #dee2e6;
+    background-color: #212121;
+    margin: 5px;
+}
+
+.card > .card-header {
+    border-bottom: 1px solid #dee2e6;
+    background-color: #343a40;
+}
+
+.card > .card-header > a {
+    color: #cccccc;
+}
+
+#accordion {
+    margin: 5px;
+}
