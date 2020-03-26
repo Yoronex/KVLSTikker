@@ -745,7 +745,7 @@ def get_product_stats(product_id):
         result['alcohol'] = p.volume * p.alcohol
         result['volume'] = p.volume / 1000
         result['stock'] = [
-            {"product": p.name, "quantity": get_inventory(p.id), "inventory_warning": p.inventory_warning}]
+            {"product": p.name, "quantity": p.current_inventory, "inventory_warning": p.inventory_warning}]
     else:
         result['alcohol'] = 0
         result['stock'] = []
@@ -754,32 +754,22 @@ def get_product_stats(product_id):
             p = Product.query.get(r.ingredient_id)
             result['alcohol'] = result['alcohol'] + p.volume * p.alcohol
             result['stock'].append(
-                {"product": p.name, "quantity": get_inventory(p.id), "inventory_warning": p.inventory_warning})
+                {"product": p.name, "quantity": p.current_inventory, "inventory_warning": p.inventory_warning})
             result['volume'] = result['volume'] + p.volume / 1000
 
-    purchases = Purchase.query.filter(Purchase.product_id == product_id, Purchase.price > 0).all()
-    users = {u.id: [0, 0] for u in User.query.all()}
-    result['total_bought'] = 0
-    for pur in purchases:
-        result['total_bought'] = result['total_bought'] + pur.amount
-        if not pur.round:
-            users[pur.user_id][0] = users[pur.user_id][0] + pur.amount
-        else:
-            users[pur.user_id][1] = users[pur.user_id][1] + 1
-    largest_consumer = None
-    largest_round_giver = None
-    largest_consumer_amount = 0
-    largest_round_giver_amount = 0
-    for user, amount in users.items():
-        if amount[0] > largest_consumer_amount:
-            largest_consumer = user
-            largest_consumer_amount = amount[0]
-        if amount[1] > largest_round_giver_amount:
-            largest_round_giver = user
-            largest_round_giver_amount = amount[1]
+    largest_consumer, largest_consumer_amount = db.session.query(User.name, func.sum(Purchase.amount).label('amount'))\
+        .filter(User.id == Purchase.user_id, Purchase.round == False, Purchase.product_id == product_id)\
+        .group_by(User.id).order_by(func.sum(Purchase.amount).desc()).first()
+
+    largest_round_giver, largest_round_giver_amount = db.session.query(User.name, func.count().label('rounds'))\
+        .filter(User.id == Purchase.user_id, Purchase.round == True, Purchase.product_id == product_id)\
+        .group_by(Purchase.user_id).order_by(func.count().desc()).first()
 
     result['largest_consumer'] = {'user': largest_consumer, 'amount': largest_consumer_amount}
     result['largest_rounder'] = {'user': largest_round_giver, 'amount': largest_round_giver_amount}
+    result['total_bought'] = db.session.query(func.sum(Purchase.amount))\
+        .filter(Purchase.product_id == product_id, Purchase.price > 0).group_by(Purchase.product_id).scalar()
+
     return result
 
 

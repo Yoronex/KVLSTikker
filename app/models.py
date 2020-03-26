@@ -1,3 +1,6 @@
+from sqlalchemy import select, func
+from sqlalchemy.orm import column_property
+
 from app import db
 
 
@@ -57,39 +60,6 @@ class Recipe(db.Model):
 
     def __repr__(self):
         return '<Ingredient {} voor {}>'.format(self.ingredient_id, self.product_id)
-
-class Product(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64), index=True)
-    image = db.Column(db.String)
-    hoverimage = db.Column(db.String)
-    #components = db.Column(db.PickleType, nullable=True)
-    recipe = db.relationship('Recipe', backref='product', lazy='dynamic', foreign_keys=[Recipe.product_id])
-    recipe_input = db.Column(db.PickleType, nullable=True)
-    purchaseable = db.Column(db.Boolean)
-    purchases = db.relationship('Purchase', backref='product', lazy='dynamic')
-    price = db.Column(db.Float)
-    volume = db.Column(db.Float, nullable=True)  # amount of ml
-    unit = db.Column(db.String, nullable=True)  # e.g. bottle or 50ml
-    alcohol = db.Column(db.Float, nullable=True)  # percentage as float between 0 and 1
-    inventory_warning = db.Column(db.Integer, nullable=True)
-    order = db.Column(db.Integer)
-    default_quantity = db.Column(db.Integer)
-    category = db.Column(db.String, default="")
-    inventories = db.relationship('Inventory', backref='product', lazy='dynamic')
-
-    def __repr__(self):
-        return '<Product {} voor {}>'.format(self.name, self.price)
-
-    @property
-    def serialize(self):
-        return {
-            'id': self.id,
-            'name': self.name,
-            'recipe_input': self.recipe_input,
-            'purchaseable': self.purchaseable,
-            'price': self.price
-        }
 
 
 class Inventory_usage(db.Model):
@@ -155,6 +125,43 @@ class Inventory(db.Model):
             'quantity': self.quantity,
             'price_before_profit': self.price_before_profit,
             'note': self.note
+        }
+
+
+class Product(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(64), index=True)
+    image = db.Column(db.String)
+    hoverimage = db.Column(db.String)
+    # components = db.Column(db.PickleType, nullable=True)
+    recipe = db.relationship('Recipe', backref='product', lazy='dynamic', foreign_keys=[Recipe.product_id])
+    recipe_input = db.Column(db.PickleType, nullable=True)
+    purchaseable = db.Column(db.Boolean)
+    purchases = db.relationship('Purchase', backref='product', lazy='dynamic')
+    price = db.Column(db.Float)
+    volume = db.Column(db.Float, nullable=True)  # amount of ml
+    unit = db.Column(db.String, nullable=True)  # e.g. bottle or 50ml
+    alcohol = db.Column(db.Float, nullable=True)  # percentage as float between 0 and 1
+    inventory_warning = db.Column(db.Integer, nullable=True)
+    order = db.Column(db.Integer)
+    default_quantity = db.Column(db.Integer)
+    category = db.Column(db.String, default="")
+    inventories = db.relationship('Inventory', backref='product', lazy='dynamic')
+
+    current_inventory = column_property(select([func.sum(Inventory.quantity)])
+                                        .where(Inventory.product_id == id).correlate_except(Inventory))
+
+    def __repr__(self):
+        return '<Product {} voor {}>'.format(self.name, self.price)
+
+    @property
+    def serialize(self):
+        return {
+            'id': self.id,
+            'name': self.name,
+            'recipe_input': self.recipe_input,
+            'purchaseable': self.purchaseable,
+            'price': self.price
         }
 
 

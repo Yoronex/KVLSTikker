@@ -69,13 +69,13 @@
                     <tr>
                         <td style="text-align: right" width="60%">Grootste koper:</td>
                         <td style="text-align: left" width="40%">{% if stats['largest_consumer']['user'] is not none %}
-                            {{ User.query.get(stats['largest_consumer']['user']).name }} ({{ stats['largest_consumer']['amount']|round|int }})
+                            {{ stats['largest_consumer']['user'] }} ({{ stats['largest_consumer']['amount']|round|int }})
                             {% else %} Niemand :( {% endif %}</td>
                     </tr>
                     <tr>
                         <td style="text-align: right" width="60%">Meeste rondjes:</td>
                         <td style="text-align: left" width="40%">{% if stats['largest_rounder']['user'] is not none %}
-                            {{ User.query.get(stats['largest_rounder']['user']).name }} ({{ stats['largest_rounder']['amount']|round|int }})
+                            {{ stats['largest_rounder']['user'] }} ({{ stats['largest_rounder']['amount']|round|int }})
                             {% else %} Niemand :( {% endif %}</td>
                     </tr>
                     <tr>
