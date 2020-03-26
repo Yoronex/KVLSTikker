@@ -108,7 +108,6 @@ a {
 .card {
     border: 1px solid #dee2e6;
     background-color: #212121;
-    margin: 5px;
 }
 
 .card > .card-header {
@@ -118,8 +117,4 @@ a {
 
 .card > .card-header > a {
     color: #cccccc;
-}
-
-#accordion {
-    margin: 5px;
 }

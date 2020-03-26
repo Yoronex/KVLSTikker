@@ -805,13 +805,51 @@ def admin_soundboard_delete_exec(sound_id):
     return redirect(url_for('admin_soundboard'))
 
 
+def merge_queries(target_query, source_query, fields, defaults, conditions, calculations):
+    # Parse the source query from a list of dictionaries to a dictionary, where the ID is the key
+    source = {}
+    for s in source_query:
+        source[s['id']] = s
+
+    # For each row in the target query...
+    for t in target_query:
+        # Check if the ID exists in both queries
+        if t['id'] in source.keys():
+            # If this is the case, we will merge each field
+            for i in range(0, len(fields)):
+                # First, check if there is a condition that should hold. If there is one,
+                # check whether that condition actually holds
+                if conditions[i] is None or conditions[i](t):
+                    # If the condition holds and we do not have to do any calculations for that field...
+                    if calculations[i] is None:
+                        # Add the field to the target row
+                        t[fields[i]] = source[t['id']][fields[i]]
+                    # If we need to do a calculation
+                    else:
+                        # Add the result of the calculation in the field to the target row
+                        t[fields[i]] = calculations[i](t, source[i])
+                # If the condition does not hold...
+                else:
+                    # Add the default value to the target row
+                    t[fields[i]] = defaults[i]
+        # If the ID does not exist in the source query...
+        else:
+            # Simply add the default value for each field to the target row
+            for i in range(0, len(fields)):
+                t[fields[i]] = defaults[i]
+
+    # Return the target query, which is now merged with the source query
+    return target_query
+
+
 @register_breadcrumb(app, '.admin.treasurer', 'Penningmeester', order=2)
 @app.route('/admin/treasurer')
 def admin_treasurer():
     if request.remote_addr != "127.0.0.1":
         abort(403)
 
-    filters = InventoryFilterForm()
+    filters_inv = InventoryFilterForm()
+    filters_users = UsersFilterForm()
 
     now = datetime.now()
     three_months_ago = now - timedelta(days=7 * 12)
@@ -830,35 +868,29 @@ def admin_treasurer():
         .group_by(Inventory.product_id)
 
     # Apply the filters to the query
-    products = apply_filters(rawquery).all()
+    if 'f_product_category' in request.args and request.args.get('f_product_category') != 'all':
+        rawquery = rawquery.filter(Product.category == request.args.get('f_product_category'))
     # Convert the result from a list of tuples to a list of dicts
-    products = [p._asdict() for p in products]
+    products = [p._asdict() for p in rawquery.all()]
 
     # Calculate the total value of the inventory
     total_p_value = sum([p['inventory_value'] for p in products])
 
     # Query the consumption of each product per week over a period of 12 weeks
-    purc_list = db.session.query(Purchase.product_id.label('id'),
+    purchases = db.session.query(Purchase.product_id.label('id'),
                                  func.sum(Purchase.amount / 12).label('per_week'))\
         .filter(Purchase.round == False, Purchase.timestamp > three_months_ago)\
         .group_by(Purchase.product_id).all()
     # Convert the result to a list of dicts
-    purc_list = [p._asdict() for p in purc_list]
-    # Create a dictionary
-    purchases = {}
-    # Conver tthe list of dicts to a large dictionary
-    for p in purc_list:
-        purchases[p['id']] = p
+    purchases = [p._asdict() for p in purchases]
 
-    # For every product..
-    for p in products:
-        # Add the consumption per week to each product dictionary
-        if p['id'] in purchases.keys():
-            p['per_week'] = purchases[p['id']]['per_week']
-            p['stock_empty'] = now + timedelta(days=int(p['quantity'] / p['per_week'] * 7))
-        else:
-            p['per_week'] = 0
-            p['stock_empty'] = None
+    # Function to calculate when the stock will be empty
+    def stock_empty(p, source):
+        return datetime.now() + timedelta(days=int(p['quantity'] / p['per_week'] * 7))
+
+    # Merge the products and purchases table
+    products = merge_queries(products, purchases, ['per_week', 'stock_empty'], [0, None], [None, None],
+                             [None, stock_empty])
 
     '''
     Create the analysis graphs
@@ -909,12 +941,84 @@ def admin_treasurer():
     category_q['ids'], category_q['value'], category_q['labels'] = stats.topall(None, qdata)
     category_v['ids'], category_v['value'], category_v['labels'] = stats.topall(None, vdata)
 
+    '''
+    Query the users table
+    '''
+
+    # The base query for all the users
+    users_query = db.session.query(User.id, User.name, User.balance, Usergroup.name.label('group'))\
+        .filter(User.usergroup_id == Usergroup.id)\
+        .order_by(User.usergroup_id)
+
+    # Stolen from the function above, because the filter function cannot be called.
+    # There are two tables on this page and applying filters on both causes problems
+    if 'f_user_usergroup' in request.args and int(request.args.get('f_user_usergroup')) > 0:
+        users_query = users_query.filter(User.usergroup_id == int(request.args.get('f_user_usergroup')))
+    if 'f_user_profitgroup' in request.args and int(request.args.get('f_user_profitgroup')) > 0:
+        users_query = users_query.filter(User.profitgroup_id == int(request.args.get('f_user_profitgroup')))
+    # Finish the query and convert all items to dictionaries
+    users = [u._asdict() for u in users_query.all()]
+
+    #  Query the amount every user spends per week (to merge later)
+    purchase1 = db.session.query(Purchase.user_id.label('id'),
+                                 func.sum(Purchase.amount * Purchase.price / 12).label('per_week'))\
+        .filter(Purchase.timestamp > three_months_ago).group_by(Purchase.user_id).all()
+    # Convert it to a dictionary
+    purchase1 = [p._asdict() for p in purchase1]
+
+    # Query the average balance of every user during three months
+    transaction1 = db.session.query(Transaction.user_id.label('id'),
+                                    func.avg(Transaction.newbal).label('average_balance'))\
+        .filter(Transaction.timestamp > three_months_ago).group_by(Transaction.user_id).all()
+    # Convert it to a dictionary
+    transaction1 = [t._asdict() for t in transaction1]
+
+    # Query the last time the user had a positive balance (earliest from now on)
+    transaction2 = db.session.query(Transaction.user_id.label('id'), Transaction.timestamp.label('last_positive'))\
+        .filter(Transaction.newbal > 0).group_by(Transaction.user_id).all()
+    #  Convert it to a dictionary
+    transaction2 = [t._asdict() for t in transaction2]
+
+    # Condition that will be used later when merging
+    def positive_balance(user):
+        if user['balance'] > 0:
+            return True
+        return False
+
+    # Function to calculate the (expected) time until the user has no more balance
+    def no_balance_left(u, source):
+        return datetime.now() + timedelta(days=int(u['balance'] / u['per_week'] * 7))
+
+    # Merge all the three seperate queries with the users query
+    users = merge_queries(users, purchase1, ['per_week', 'no_balance_left'], [0, None], [None, positive_balance],
+                          [None, no_balance_left])
+    users = merge_queries(users, transaction1, ['average_balance'], [None], [None], [None])
+    users = merge_queries(users, transaction2, ['last_positive'], [datetime.now()], [None], [None])
+
+    # Because not every user has an average balance and because it is hard to parameterize
+    # in the merge_queries function above, we add this average balance manually
+    for u in users:
+        if u['average_balance'] is None:
+            u['average_balance'] = u['balance']
+
+    # Calculate the sum of all the balances and other numbers
+    total_u_balance = sum([u['balance'] for u in users])
+    total_u_average = sum([u['average_balance'] for u in users])
+    total_u_per_week = sum([u['per_week'] for u in users])
+
+    '''
+    Finalize
+    '''
+
+    # Calculate the render time
     render_time = int((datetime.now() - now).microseconds / 1000)
 
     return render_template('admin/treasurer.html', title='Penningmeester', h1='Penningmeester statistieken',
-                           products=products, filters=filters, total_p_value=total_p_value, product_q=product_q,
-                           product_v=product_v, category_q=category_q, category_v=category_v,
-                           rendertime=render_time), 200
+                           products=products, filters_inv=filters_inv, filters_users=filters_users,
+                           total_p_value=total_p_value, product_q=product_q, product_v=product_v, category_q=category_q,
+                           category_v=category_v, rendertime=render_time, users=users,
+                           total_u_balance=total_u_balance, total_u_average=total_u_average,
+                           total_u_per_week=total_u_per_week), 200
 
 
 
