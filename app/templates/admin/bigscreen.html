@@ -17,47 +17,20 @@
             <a href="{{ url_for('api_disable_snow') }}" class="btn btn-block btn-green">Sneeuw uit</a>
         </div>
         <div class="col-xl-3">
-            <a href="{{ url_for('api_reload_bigscreen') }}" class="btn btn-block btn-yellow">Herstarten</a>
-        </div>
-        <div class="col-xl-3">
-            <a href="{{ url_for('biertje_kwartiertje') }}" class="btn btn-block btn-green">Biertje Kwartiertje</a>
-        </div>
-        <div class="col-xl-3">
             <a href="{{ url_for('admin_quotes') }}" class="btn btn-block btn-yellow">Beheer citaten</a>
         </div>
+        <div class="col-xl-3">
+            <a href="{{ url_for('api_reload_bigscreen') }}" class="btn btn-block btn-green">Herstarten</a>
+        </div>
+        <div class="col-xl-3">
+            <a href="{{ url_for('biertje_kwartiertje') }}" class="btn btn-block btn-yellow">Biertje Kwartiertje</a>
+        </div>
     </div>
-
-    <!--<div class="row">
-        <div class="col-xl-3">
-            <a href="/admin/inventory" class="btn btn-block btn-yellow">Beheer Inventaris</a>
-        </div>
-        <div class="col-xl-3">
-            <a href="/admin/inventory/correct" class="btn btn-block btn-green">Inventaris Correctie</a>
-        </div>
-        <div class="col-xl-3">
-            <a href="/admin/profit" class="btn btn-block btn-yellow">Winst uitkeren</a>
-        </div>
-        <div class="col-xl-3">
-        </div>
-    </div>-->
-
-    <!--<div class="row"><div class="col"><hr></div></div>
-
-    <div class="row">
-        <div class="col-xl-3">
-        </div>
-        <div class="col-xl-3">
-        </div>
-        <div class="col-xl-3">
-        </div>
-        <div class="col-xl-3">
-        </div>
-    </div>-->
 
     <br><br>
     <div class="row">
         <div class="col-xl img-thumbnail">
-            <table width="100%">
+            <table style="width: 100%">
                 <tr>
                     <th colspan="2">Spotify</th>
                 </tr>
@@ -83,7 +56,7 @@
             {{ wtf.quick_form(form_interrupt) }}
         </div>
         <div class="col-xl img-thumbnail">
-            <table width="100%" style="font-size: 1rem;">
+            <table style="width: 100%; font-size: 1rem;">
                 <tr>
                     <th colspan="2" style="font-size: 1.25rem">Biertje Kwartiertje</th>
                 </tr>

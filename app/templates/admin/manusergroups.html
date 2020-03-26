@@ -22,7 +22,7 @@
                         <td>{{ u.name }}</td>
                         <td><span style="color: green;font-weight:bold;">€ {{ '%.2f' % u.profit }}</span></td>
                         <td>{{ u.users.all()|length }}</td>
-                        <td><a href="/admin/usergroups/delete/{{ u.id }}"><span class="fa fa-times fa-lg" style="color:red;"></span></a></td>
+                        <td><a href="{{ url_for('admin_usergroups_delete', usergroupid=u.id) }}"><span class="fa fa-times fa-lg" style="color:red;"></span></a></td>
                     </tr>
                     {% endfor %}
                 </tbody>

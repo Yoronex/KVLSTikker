@@ -46,7 +46,7 @@
                         {% else %}
                         <td></td>
                         {% endif %}
-                        <td><a href="/admin/drinks/edit/{{ d.id }}"><i class="fa fa-edit edit-symbol"></i></a></td>
+                        <td><a href="{{ url_for('admin_drinks_edit', drinkid=d.id) }}"><i class="fa fa-edit edit-symbol"></i></a></td>
                         </td>
                         <td></td>
                     </tr>
@@ -61,8 +61,8 @@
                         {% if d.recipe_input is not none %}
                         <td>{% for key, value in d.recipe_input.items() %} {{ value }}x {{ Product.query.get(key).name }}{% if loop.index < d.recipe_input.items()|length %},{% endif %} {% endfor %}</td>
                         {% else %} <td></td> {% endif %}
-                        <td><a href="/admin/drinks/edit/{{ d.id }}"><i class="fa fa-edit edit-symbol"></i></a></td>
-                        <td><a href="/admin/drinks/delete/{{ d.id }}"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>
+                        <td><a href="{{ url_for('admin_drinks_edit', drinkid=d.id) }}"><i class="fa fa-edit edit-symbol"></i></a></td>
+                        <td><a href="{{ url_for('admin_drinks_delete', drinkid=d.id) }}"><i class="fa fa-times fa-lg" style="color:red;"></i></a></td>
                     </tr>
                     {% endif %}
                     {% endfor %}

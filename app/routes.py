@@ -1463,5 +1463,8 @@ def api_reload_bigscreen():
 
 @app.route('/test')
 def test_something():
-    differences = db.session.query(Purchase.id, Transaction.id).filter(and_(Purchase.id == Transaction.purchase_id, func.abs(Purchase.amount * Purchase.price + Transaction.balchange) >= 0.01)).all()
-    return jsonify(differences)
+    #differences = db.session.query(Purchase.id, Transaction.id).filter(and_(Purchase.id == Transaction.purchase_id, func.abs(Purchase.amount * Purchase.price + Transaction.balchange) >= 0.01)).all()
+
+    #return jsonify(differences)
+
+    return jsonify(db.session.query(User.name, Transaction.timestamp).filter(User.id == Transaction.user_id, Transaction.newbal > 0).group_by(Transaction.user_id).all())
