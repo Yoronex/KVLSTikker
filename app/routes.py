@@ -1407,6 +1407,12 @@ def update_biertje_kwartiertje():
     return redirect(url_for("bigscreen"))
 
 
+@app.route('/admin/bigscreen/fireplace')
+def bigscreen_toggle_fireplace():
+    socket.toggle_fireplace()
+    return redirect(url_for('bigscreen'))
+
+
 @app.route("/api/spotify/login")
 def api_spotify_login():
     return spotify.login(request)

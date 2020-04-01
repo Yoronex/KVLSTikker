@@ -304,6 +304,10 @@ def disable_snow():
     socketio.emit('snow', None, namespace='/bigscreen')
 
 
+def toggle_fireplace():
+    socketio.emit('fireplace', None, namespace='/bigscreen')
+
+
 def update_biertje_kwartiertje():
     socketio.emit('biertje_kwartiertje_start', {'minutes': dbhandler.biertje_kwartiertje_time}, namespace='/bigscreen')
 
