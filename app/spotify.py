@@ -108,11 +108,15 @@ def current_playback():
     if results is None:
         return results
 
+    results['video'] = False
+
     if results['currently_playing_type'] == "track":
         # If the album cover has not been downloaded yet, download it
         if results['item']['album']['id'] + ".jpg" not in os.listdir(app.config['ALBUM_COVER_FOLDER']):
             wget.download(results['item']['album']['images'][1]["url"],
                           app.config['ALBUM_COVER_FOLDER'] + "/" + results['item']['album']['id'] + ".jpg")
+
+        results['video'] = os.path.isfile(os.path.join(app.config['VIDEOS_FOLDER'], results['item']['id'] + '.mp4'))
 
         # If the currently playing track is not equal to the track we are playing now and if we are a quarter on the
         # track...

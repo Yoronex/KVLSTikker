@@ -42,7 +42,8 @@ cors = CORS(app, resources={r"/api/*": {"origins": "*"}, r"/socket.io/*": {"orig
 socketio = SocketIO(app, cors_allowed_origins="*")  # Needs to be changed later for Tikker BigScreen
 babel = Babel(app, default_locale='nl', default_timezone='CET')
 
-for path in [app.config['ALBUM_COVER_FOLDER'], app.config['BACKUP_FOLDER'], app.config['SPOTIFY_CACHE_FOLDER'], app.config['DOCUMENT_FOLDER'], app.config['SOUNDBOARD_FOLDER']]:
+for path in [app.config['ALBUM_COVER_FOLDER'], app.config['BACKUP_FOLDER'], app.config['SPOTIFY_CACHE_FOLDER'],
+             app.config['DOCUMENT_FOLDER'], app.config['SOUNDBOARD_FOLDER'], app.config['VIDEOS_FOLDER']]:
     if not os.path.exists(path):
         os.makedirs(path)
 
