@@ -68,7 +68,8 @@ if (now.month is 1 and now.day > 10) or (1 < now.month < 12):
 else:
     EN_SNOW = True
 
-from app import routes, models
+from app import models
+from app.routes import *
 from app.models import *
 
 if not app.debug:
