@@ -1,20 +1,16 @@
 from datetime import datetime, timedelta
 
-from flask import render_template, flash, redirect, url_for, request, abort
 from flask_breadcrumbs import register_breadcrumb
 from sqlalchemy import Integer, and_
 
 from app import stats, socket, dbhandler, round_up, round_down, AttrDict
-from app.forms import *
-from app.models import *
-from app.routes import apply_filters, flash_form_errors, calculate_pagination_with_basequery
+from app.routes import *
 
 
 @app.route('/admin', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.admin', 'Beheerderspaneel', order=1)
 def admin():
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
 
     products = [AttrDict(p._asdict()) for p in db.session.query(Product.name, Product.inventory_warning,
                                                                 func.sum(Inventory.quantity.cast(Integer)).label('quantity'),
@@ -39,8 +35,8 @@ def admin():
 @app.route('/admin/users', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.admin.users', 'Gebruikersbeheer', order=2)
 def admin_users():
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
+
     form = UserRegistrationForm()
     filters = UsersFilterForm()
 
@@ -49,6 +45,7 @@ def admin_users():
     users = query.all()
 
     if form.validate_on_submit():
+        check_if_not_view_only()
         alert = (dbhandler.adduser(form.name.data, form.email.data, form.group.data, form.profitgroup.data,
                                    form.birthday.data))
         flash(alert[0], alert[1])
@@ -64,8 +61,9 @@ def admin_users():
 @register_breadcrumb(app, '.admin.users.confirm', "Bevestigen", order=2)
 @app.route('/admin/users/delete/<int:userid>')
 def admin_users_delete(userid):
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
+    check_if_not_view_only()
+
     user = User.query.get(userid)
     group = Usergroup.query.get(user.usergroup_id)
     if user.balance == 0.0:
@@ -81,8 +79,9 @@ def admin_users_delete(userid):
 
 @app.route('/admin/users/delete/<int:userid>/exec')
 def admin_users_delete_exec(userid):
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
+    check_if_not_view_only()
+
     if (User.query.get(userid).balance != 0.0):
         flash("Deze gebruiker heeft nog geen saldo van € 0!", "danger")
         return redirect(url_for('admin_users'))
@@ -98,8 +97,7 @@ def admin_users_delete_exec(userid):
 @app.route('/admin/transactions')
 @register_breadcrumb(app, '.admin.transactions', 'Transactiebeheer', order=2)
 def admin_transactions():
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
 
     query = Transaction.query
     query = apply_filters(query)
@@ -116,6 +114,9 @@ def admin_transactions():
 @register_breadcrumb(app, '.admin.transactions.confirm', "Bevestigen", order=2)
 @app.route('/admin/transactions/delete/<int:tranid>')
 def admin_transactions_delete(tranid):
+    check_if_local_machine()
+    check_if_not_view_only()
+
     transaction = Transaction.query.get(tranid)
     u = User.query.get(transaction.user_id)
     if transaction.purchase_id is not None:
@@ -137,8 +138,9 @@ def admin_transactions_delete(tranid):
 
 @app.route('/admin/transactions/delete/<int:tranid>/exec')
 def admin_transactions_delete_exec(tranid):
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
+    check_if_not_view_only()
+
     alert = (dbhandler.deltransaction(tranid))
     flash(alert[0], alert[1])
     return redirect(url_for('admin_transactions'))
@@ -147,6 +149,7 @@ def admin_transactions_delete_exec(tranid):
 @app.route('/admin/drinks', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.admin.drinks', 'Productbeheer', order=2)
 def admin_drinks():
+    check_if_local_machine()
     form = DrinkForm()
     filters = ProductFilterForm()
 
@@ -155,6 +158,7 @@ def admin_drinks():
     products = query.order_by(Product.order.asc()).all()
 
     if request.method == "POST":
+        check_if_not_view_only()
         if form.validate_on_submit():
             alert = (
                 dbhandler.adddrink(form.name.data, float(form.price.data), form.category.data, int(form.pos.data) + 1,
@@ -181,8 +185,9 @@ def view_admin_drink_dlc(*args, **kwargs):
 @app.route('/admin/drinks/edit/<int:drinkid>', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.admin.drinks.id', '', dynamic_list_constructor=view_admin_drink_dlc, order=3)
 def admin_drinks_edit(drinkid):
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
+    check_if_not_view_only()
+
     form = ChangeDrinkForm()
     form2 = ChangeDrinkImageForm()
     recipe = ""
@@ -214,8 +219,9 @@ def admin_drinks_edit(drinkid):
 
 @app.route('/admin/drinks/delete/<int:drinkid>')
 def admin_drinks_delete(drinkid):
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
+    check_if_not_view_only()
+
     alert = (dbhandler.deldrink(drinkid))
     flash(alert[0], alert[1])
     return redirect(url_for('admin_drinks'))
@@ -224,10 +230,10 @@ def admin_drinks_delete(drinkid):
 @app.route('/admin/usergroups', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.admin.usergroups', 'Groepenbeheer', order=2)
 def admin_usergroups():
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
     form = UserGroupRegistrationForm()
     if form.validate_on_submit():
+        check_if_not_view_only()
+        check_if_local_machine()
         alert = (dbhandler.addusergroup(form.name.data))
         flash(alert[0], alert[1])
         return redirect(url_for('admin_usergroups'))
@@ -239,8 +245,9 @@ def admin_usergroups():
 @register_breadcrumb(app, '.admin.usergroups.confirm', 'Bevestigen', order=2)
 @app.route('/admin/usergroups/delete/<int:usergroupid>')
 def admin_usergroups_delete(usergroupid):
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
+    check_if_not_view_only()
+
     usergroup = Usergroup.query.get(usergroupid)
     users = usergroup.users.all()
     if len(users) == 0:
@@ -256,8 +263,9 @@ def admin_usergroups_delete(usergroupid):
 
 @app.route('/admin/usergroups/delete/<int:usergroupid>/exec')
 def admin_usergroups_delete_exec(usergroupid):
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
+    check_if_not_view_only()
+
     if len(Usergroup.query.get(usergroupid).users.all()) != 0:
         flash("Deze groep heeft nog gebruikers! Verwijder deze eerst.", "danger")
         return redirect(url_for('admin_usergroups'))
@@ -269,10 +277,10 @@ def admin_usergroups_delete_exec(usergroupid):
 @register_breadcrumb(app, '.admin.inventory', 'Inventarisbeheer', order=2)
 @app.route('/admin/inventory/', methods=['GET', 'POST'])
 def admin_inventory():
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
     form = AddInventoryForm()
     if form.validate_on_submit():
+        check_if_not_view_only()
         alert = (dbhandler.add_inventory(int(form.product.data), form.quantity.data,
                                          float(form.purchase_price.data), form.note.data))
         flash(alert[0], alert[1])
@@ -287,6 +295,8 @@ def admin_inventory():
 @register_breadcrumb(app, '.admin.inventorycorrect', 'Inventariscorrectie', order=2)
 @app.route('/admin/inventory/correct', methods=['GET', 'POST'])
 def admin_correct_inventory():
+    check_if_local_machine()
+    check_if_not_view_only()
     products = [p.serialize for p in Product.query.filter(Product.recipe_input == None).all()]
     for p in products:
         p['stock'] = dbhandler.calcStock(p['id'])
@@ -307,8 +317,8 @@ def admin_correct_inventory():
 @app.route('/admin/upgrade', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.admin.upgrade', 'Opwaarderen', order=2)
 def upgrade():
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
+    check_if_not_view_only()
 
     # Create the two forms that will be included
     upgr_form = UpgradeBalanceForm()
@@ -367,10 +377,10 @@ def upgrade():
 @register_breadcrumb(app, '.admin.profit', 'Winst uitkeren', order=2)
 @app.route('/admin/profit', methods=['GET', 'POST'])
 def payout_profit():
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
     form = PayOutProfitForm()
     if form.validate_on_submit():
+        check_if_not_view_only()
         alert = dbhandler.payout_profit(int(form.usergroup.data), float(form.amount.data), form.verification.data)
         flash(alert[0], alert[1])
         return redirect(url_for('payout_profit'))
@@ -382,8 +392,9 @@ def payout_profit():
 @register_breadcrumb(app, '.admin.borrelmode', "Borrel Modus", order=2)
 @app.route('/admin/borrelmode', methods=['GET', 'POST'])
 def borrel_mode():
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
+    check_if_not_view_only()
+
     form = BorrelModeForm()
     if form.validate_on_submit():
         dbhandler.set_borrel_mode(form.products.data, form.user.data, form.amount.data)
@@ -413,6 +424,8 @@ def borrel_mode():
 
 @app.route('/admin/borrelmode/disable', methods=['GET'])
 def disable_borrel_mode():
+    check_if_local_machine()
+    check_if_not_view_only()
     dbhandler.borrel_mode_enabled = False
     flash("Borrel mode uitgeschakeld", "success")
     return redirect(url_for('borrel_mode'))
@@ -421,8 +434,10 @@ def disable_borrel_mode():
 @register_breadcrumb(app, '.admin.soundboard', 'Soundboard', order=2)
 @app.route('/admin/soundboard', methods=['GET', 'POST'])
 def admin_soundboard():
+    check_if_local_machine()
     form = SoundBoardForm()
     if form.validate_on_submit():
+        check_if_not_view_only()
         dbhandler.add_sound(form.name.data, form.key.data, form.code.data, form.file.data)
         flash('Geluid {} succesvol toegevoegd'.format(form.name.data), 'success')
 
@@ -434,8 +449,8 @@ def admin_soundboard():
 @register_breadcrumb(app, '.admin.soundboard.confirm', 'Bevestigen', order=3)
 @app.route('/admin/soundboard/delete/<int:sound_id>')
 def admin_soundboard_delete(sound_id):
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
+    check_if_not_view_only()
     sound = Sound.query.get(sound_id)
     message = "geluid " + sound.name + " wilt verwijderen?"
     agree_url = url_for("admin_soundboard_delete_exec", sound_id=sound_id)
@@ -446,8 +461,8 @@ def admin_soundboard_delete(sound_id):
 
 @app.route('/admin/soundboard/delete/<int:sound_id>/exec')
 def admin_soundboard_delete_exec(sound_id):
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
+    check_if_not_view_only()
     alert = (dbhandler.del_sound(sound_id))
     flash(alert[0], alert[1])
     return redirect(url_for('admin_soundboard'))
@@ -493,8 +508,7 @@ def merge_queries(target_query, source_query, fields, defaults, conditions, calc
 @register_breadcrumb(app, '.admin.treasurer', 'Penningmeester', order=2)
 @app.route('/admin/treasurer')
 def admin_treasurer():
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
 
     filters_inv = InventoryFilterForm()
     filters_users = UsersFilterForm()
@@ -672,6 +686,9 @@ def admin_treasurer():
 
 @app.route('/admin/recalcmax')
 def recalculate_max_stats():
+    check_if_local_machine()
+    check_if_not_view_only()
+
     transactions = Transaction.query.all()
     begindate = datetime(year=2019, month=7, day=1, hour=12, minute=0, second=0)
     for t in transactions:

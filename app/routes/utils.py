@@ -1,7 +1,5 @@
-from flask import render_template, url_for, request, abort, jsonify
-
 from app import spotify, socketio, dbhandler, emailhandler
-from app.forms import *
+from app.routes import *
 
 
 def shutdown_server():
@@ -11,8 +9,9 @@ def shutdown_server():
 
 @app.route('/shutdown', methods=['GET', 'POST'])
 def shutdown():
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
+    check_if_not_view_only()
+
     if request.args.get('emails') == 'True':
         if dbhandler.overview_emails:
             emailhandler.send_overview_emails()
@@ -47,7 +46,10 @@ def show_500():
 
 @app.errorhandler(403)
 def no_access_error(error):
-    message = "Je bezoekt Tikker niet vanaf de computer waar Tikker op is geïnstalleerd. Je hebt daarom geen toegang tot deze pagina."
+    if app.config['VIEW_ONLY']:
+        message = "Tikker staat in View-only modus. daarom kun je deze pagina niet bezoeken."
+    else:
+        message = "Je bezoekt Tikker niet vanaf de computer waar Tikker op is geïnstalleerd. Je hebt daarom geen toegang tot deze pagina."
     gif = url_for('.static', filename='img/403.mp4')
     return render_template('error.html', title="403", h1="Error 403", message=message, gif_url=gif), 403
 
@@ -65,9 +67,6 @@ def exception_error(error):
     gif = url_for('.static', filename='img/500.mp4')
     dbhandler.rollback()
     return render_template('error.html', title="500", h1="Error 500", message=message, gif_url=gif), 500
-
-
-app.config["BOOTSTRAP_SERVE_LOCAL"] = True
 
 
 @app.route("/api/ping")

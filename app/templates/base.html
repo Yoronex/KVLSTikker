@@ -3,6 +3,7 @@
 {% set version = "1.5.0.0" %}
 
 {% block title %}
+{% if view_only %}(VIEW ONLY){% endif %}
 {% if title %}Tikker - {{ title }}
 {% else %}Tikker
 {% endif %}
@@ -66,16 +67,16 @@
                 <div class="modal-body">
                     Weet je zeker dat je Tikker wilt afsluiten?<br><br>
 
-                    {% if send_overview_emails == true %}
+                    {% if send_overview_emails and not view_ony %}
                         Voor het afsluiten kun je ook iedereen een mail sturen met <b>het maandelijkse transactieoverzicht</b> en een mail met <b>eventuele schulden</b>.
                         Het versturen van deze mails kan enkele minuten duren.
-                    {% elif send_debt_emails == true %}
+                    {% elif send_debt_emails and not view_only %}
                         Voor het afsluiten kun je ook iedereen met een hoge schuld een mail sturen met <b>de hoogte van de schuld</b>.
                         Het versturen van deze mails kan enkele minuten duren.
                     {% endif %}
                 </div>
                 <div class="modal-footer">
-                    {% if send_overview_emails == true or send_debt_emails == true %}
+                    {% if (send_overview_emails or send_debt_emails) and not view_only %}
                     <a href="{{ url_for('shutdown', emails=true) }}" type="button" class="btn btn-danger" onclick="showLoadingBar()">Mailen en afsluiten</a>
                     {% endif %}
                     <a href="{{ url_for('shutdown') }}" type="button" class="btn btn-danger">Afsluiten</a>
@@ -153,9 +154,11 @@
                             </ul>
                         </li>
                         <li>Foutmeldingen van formulieren zijn nu in het Nederlands</li>
+                        <li>View-only modus toegevoegd, die gestart kan worden met de "-v" parameter in de command line</li>
                         <li>Directe "hard-coded" links in de interface vervangen door dynamische functies</li>
                         <li>Bug gefixt waardoor een rondje dubbel telde bij de "Totaal gedronken" statistieken op BigScreen</li>
                         <li>Bug gefixt bij inventaris correctie waardoor de inventaris van het laatst veranderde product niet veranderde</li>
+                        <li>Repetetieve code opgeruimd en vervangen door functies</li>
                     </ul>
                     <b>Versie 1.4.4.1 (07/03/2019)</b>: Bugfixes
                     <ul>
@@ -437,7 +440,7 @@
                     <div class="col">
                         <script>
                             window.setTimeout(function () {
-                                $(".alert").fadeTo(500, 0).slideUp(500, function () {
+                                $(".alert-dismissable").fadeTo(500, 0).slideUp(500, function () {
                                     $(this).remove();
                                 });
                             }, 4000);
@@ -453,6 +456,14 @@
                         {% endfor %}
                         {% endif %}
                         {% endwith %}
+
+                        {% if view_only %}
+                        <div class="alert alert-danger" role="alert">
+                            Deze versie van Tikker staat in <i>View-only modus</i>. Dit betekent bijvoorbeeld dat je alleen de data kunt bekijken.
+                            Het is niet mogelijk om producten af te tikken, transacties te verwijderen of de gebruikers of groepen te veranderen.
+                            BigScreen is ook niet toegankelijk en het soundboard zal niet werken.
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="row" style="align-items: center">

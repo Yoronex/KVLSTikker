@@ -1,12 +1,9 @@
 import copy
 
-from flask import render_template, flash, redirect, url_for, request, make_response
 from flask_breadcrumbs import register_breadcrumb
 
 from app import stats, dbhandler, cart
-from app.forms import *
-from app.models import *
-from app.routes import get_usergroups_with_users, apply_filters, calculate_pagination_with_basequery
+from app.routes import *
 
 birthday = False
 showed_birthdays = True
@@ -98,6 +95,7 @@ def view_dinner_dlc(*args, **kwargs):
 @app.route('/drink/<int:drinkid>', methods=['GET', 'POST'])
 @register_breadcrumb(app, '.drink.id', '', dynamic_list_constructor=view_drink_dlc, order=2)
 def drink(drinkid):
+    check_if_not_view_only()
     dinnerid = dbhandler.settings['dinner_product_id']
     if dinnerid is None:
         raise ValueError
@@ -120,6 +118,7 @@ def drink(drinkid):
 # Input in format of <userid>a<amount>&...
 @app.route('/drink/<int:drink_id>/<cart_string>')
 def purchase_from_cart(drink_id, cart_string):
+    check_if_not_view_only()
     msg = cart.purchase(cart_string, drink_id)
     if msg['shared'] is True:
         return redirect(url_for('purchase_together', drinkid=drink_id, amount=msg['shared_amount']))
@@ -130,6 +129,7 @@ def purchase_from_cart(drink_id, cart_string):
 @register_breadcrumb(app, '.drink.id.shared', 'Gezamelijk', order=3)
 @app.route('/drink/<int:drinkid>/shared/<int:amount>')
 def purchase_together(drinkid, amount):
+    check_if_not_view_only()
     drink = copy.deepcopy(Product.query.get(drinkid))
     usergroups = get_usergroups_with_users()
     borrel_data = dbhandler.borrel_mode(drinkid)
@@ -144,6 +144,7 @@ def purchase_together(drinkid, amount):
 # Input in format of <userid>a<amount>&
 @app.route('/drink/<int:drinkid>/shared/<int:amount>/<cart_string>')
 def purchase_from_cart_together(drinkid, amount, cart_string):
+    check_if_not_view_only()
     cart.purchase_together(cart_string, drinkid, amount)
     return redirect(url_for('index'))
 
@@ -151,6 +152,7 @@ def purchase_from_cart_together(drinkid, amount, cart_string):
 @app.route('/drink/dinner')
 @register_breadcrumb(app, '.drink.dinner', '', dynamic_list_constructor=view_dinner_dlc, order=2)
 def drink_dinner():
+    check_if_not_view_only()
     drinkid = dbhandler.settings['dinner_product_id']
     if drinkid is None:
         raise ValueError
@@ -163,6 +165,7 @@ def drink_dinner():
 
 @app.route('/drink/dinner/<cart_string>')
 def purchase_dinner_from_cart(cart_string):
+    check_if_not_view_only()
     cart.purchase_dinner(cart_string, request.args['price'], request.args['comments'])
     return redirect(url_for('index'))
 
@@ -186,6 +189,7 @@ def add_user_quote():
     form = AddQuoteForm()
 
     if form.validate_on_submit():
+        check_if_not_view_only()
         alert = dbhandler.addquote(form.quote.data, form.author.data)
         flash(alert[0], alert[1])
         return redirect(url_for('index'))

@@ -1,7 +1,11 @@
 from app import app, socketio
+import sys
 
-#app.run(host='0.0.0.0')
 if __name__ == '__main__':
-    # socketio.run(app, debug=True)
-    socketio.run(app, host='0.0.0.0')
-    # app.run(debug=True)
+    if '-v' in sys.argv:
+        app.config['VIEW_ONLY'] = True
+        app.logger.info('Tikker starts in view-only mode. Tikker BigScreen is unavailable and it is not possible to '
+                        'edit the database, either by adding, changing or deleting data.')
+        app.run(host='0.0.0.0')
+    else:
+        socketio.run(app, host='0.0.0.0')

@@ -1,17 +1,16 @@
 from datetime import datetime
-
-from flask import render_template, flash, redirect, url_for, request, abort, jsonify
 from flask_breadcrumbs import register_breadcrumb
 
 from app import stats, socket, spotify, dbhandler, cart
-from app.forms import *
-from app.models import *
-from app.routes import get_usergroups_with_users
+from app.routes import *
 
 
 @register_breadcrumb(app, '.admin.bigscreen', 'BigScreen', order=2)
 @app.route("/admin/bigscreen", methods=['GET', 'POST'])
 def bigscreen():
+    check_if_local_machine()
+    check_if_not_view_only()
+
     form_quote = AddQuoteForm()
     form_interrupt = SlideInterruptForm()
     form_spotify = ChooseSpotifyUser()
@@ -53,8 +52,8 @@ def bigscreen():
 @register_breadcrumb(app, '.admin.bigscreen.quotes', 'Quotes', order=3)
 @app.route('/admin/bigscreen/quotes', methods=['GET'])
 def admin_quotes():
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
+    check_if_not_view_only()
 
     if 'all' in request.args:
         quotes = Quote.query.all()
@@ -70,8 +69,8 @@ def admin_quotes():
 @register_breadcrumb(app, '.admin.bigscreen.quotes.confirm', 'Bevestigen', order=4)
 @app.route('/admin/bigscreen/quotes/delete/<int:q_id>')
 def admin_quotes_delete(q_id):
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
+    check_if_not_view_only()
 
     q = Quote.query.get(q_id)
     message = 'quote met ID {} ({}) door {}'.format(str(q.id), q.value, q.author)
@@ -83,8 +82,8 @@ def admin_quotes_delete(q_id):
 
 @app.route('/admin/bigscreen/quotes/delete/<int:q_id>/exec')
 def admin_quotes_delete_exec(q_id):
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
+    check_if_not_view_only()
 
     alert = dbhandler.del_quote(q_id)
     flash(alert[0], alert[1])
@@ -93,8 +92,8 @@ def admin_quotes_delete_exec(q_id):
 
 @app.route('/admin/bigscreen/quotes/approve/<int:q_id>')
 def admin_quotes_approve(q_id):
-    if request.remote_addr != "127.0.0.1":
-        abort(403)
+    check_if_local_machine()
+    check_if_not_view_only()
 
     alert = dbhandler.approve_quote(q_id)
     flash(alert[0], alert[1])
@@ -104,6 +103,9 @@ def admin_quotes_approve(q_id):
 @register_breadcrumb(app, '.admin.bigscreen.bk', 'Biertje Kwartiertje', order=3)
 @app.route("/admin/bigscreen/biertjekwartiertje")
 def biertje_kwartiertje():
+    check_if_local_machine()
+    check_if_not_view_only()
+
     usergroups = get_usergroups_with_users()
     dinnerid = dbhandler.settings['dinner_product_id']
     products = Product.query.filter(and_(Product.purchaseable == True, Product.id != dinnerid)).all()
@@ -127,6 +129,9 @@ def biertje_kwartiertje():
 
 @app.route("/admin/bigscreen/biertjekwartiertje/<cart_string>")
 def start_biertje_kwartiertje(cart_string):
+    check_if_local_machine()
+    check_if_not_view_only()
+
     old_participants = dbhandler.biertje_kwartiertje_participants
     parsed_cart = cart.parse_cart_string(cart_string, -1)
     dbhandler.biertje_kwartiertje_participants = parsed_cart['orders']
@@ -146,6 +151,9 @@ def start_biertje_kwartiertje(cart_string):
 
 @app.route("/admin/bigscreen/biertjekwartiertje/stop")
 def stop_biertje_kwartiertje():
+    check_if_local_machine()
+    check_if_not_view_only()
+
     dbhandler.biertje_kwartiertje_participants = []
     dbhandler.biertje_kwartiertje_time = 0
     dbhandler.biertje_kwartiertje_drink = -1
@@ -155,23 +163,27 @@ def stop_biertje_kwartiertje():
 
 @app.route("/admin/bigscreen/biertjekwartiertje/update")
 def update_biertje_kwartiertje():
+    check_if_not_view_only()
     socket.update_biertje_kwartiertje()
     return redirect(url_for("bigscreen"))
 
 
 @app.route('/admin/bigscreen/fireplace')
 def bigscreen_toggle_fireplace():
+    check_if_not_view_only()
     socket.toggle_fireplace()
     return redirect(url_for('bigscreen'))
 
 
 @app.route("/api/spotify/login")
 def api_spotify_login():
+    check_if_not_view_only()
     return spotify.login(request)
 
 
 @app.route('/api/spotify/logout')
 def api_spotify_logout():
+    check_if_not_view_only()
     current_user = spotify.current_user
     spotify.logout()
     flash("Spotify gebruiker {} uitgelogd".format(current_user), "success")
@@ -180,21 +192,25 @@ def api_spotify_logout():
 
 @app.route('/api/spotify/covers/<string:id>')
 def api_spotify_get_album_cover(id):
+    check_if_not_view_only()
     return render_template(url_for('.static', filename='covers/{}.jpg'.format(id)))
 
 
 @app.route('/api/spotify/currently_playing')
 def api_spotify_currently_playing():
+    check_if_not_view_only()
     return jsonify(spotify.current_playback())
 
 
 @app.route('/api/spotify/me')
 def api_spotify_user():
+    check_if_not_view_only()
     return jsonify(spotify.me())
 
 
 @app.route('/api/total_alcohol')
 def api_total_alcohol():
+    check_if_not_view_only()
     begindate = "2019-09-01"
     enddate = "2019-12-31"
     parsedbegin = datetime.strptime(begindate, "%Y-%m-%d")
@@ -209,11 +225,13 @@ def api_total_alcohol():
 
 @app.route('/api/bigscreen/snow')
 def api_disable_snow():
+    check_if_not_view_only()
     socket.disable_snow()
     return redirect(url_for('bigscreen'))
 
 
 @app.route('/api/bigscreen/reload')
 def api_reload_bigscreen():
+    check_if_not_view_only()
     socket.send_reload()
     return redirect(url_for('bigscreen'))

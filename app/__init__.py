@@ -1,6 +1,7 @@
 import locale
 import logging
 import math
+import sys
 
 
 def round_up(float_number, n=2):
@@ -69,7 +70,7 @@ else:
     EN_SNOW = True
 
 from app import models
-from app.routes import *
+from app.routes import admin, bigscreen, stats, user, utils
 from app.models import *
 
 if not app.debug:
@@ -105,5 +106,6 @@ app.jinja_env.globals.update(is_18min=is_18min)
 
 
 @app.context_processor
-def snow():
-    return dict(snow=EN_SNOW)
+def defaults():
+    return dict(snow=EN_SNOW,
+                view_only='-v' in sys.argv)

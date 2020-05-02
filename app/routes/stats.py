@@ -1,11 +1,8 @@
 from datetime import datetime, timedelta
-
-from flask import render_template, redirect, url_for, request
 from flask_breadcrumbs import register_breadcrumb
 
 from app import stats
-from app.forms import *
-from app.models import *
+from app.routes import *
 
 plotcolours = ["#0b8337", "#ffd94a", "#707070"]
 

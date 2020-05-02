@@ -1,14 +1,11 @@
 from datetime import datetime
 
 from dateutil import tz
-from flask import flash, request
+from flask import flash, request, abort, make_response, render_template, jsonify, redirect, url_for
 
 from app import round_up
 from app.forms import *
 from app.models import *
-
-
-__all__ = ['admin', 'bigscreen', 'stats', 'user', 'utils']
 
 
 page_size = 100
@@ -150,3 +147,13 @@ def apply_filters(query):
             query = query.filter(Product.purchaseable == False)
 
     return query
+
+
+def check_if_local_machine():
+    if not app.config['VIEW_ONLY'] and request.remote_addr != "127.0.0.1":
+        abort(403)
+
+
+def check_if_not_view_only():
+    if app.config['VIEW_ONLY']:
+        abort(403)
