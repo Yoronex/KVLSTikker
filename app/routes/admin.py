@@ -675,7 +675,7 @@ def admin_treasurer():
     # Calculate the render time
     render_time = int((datetime.now() - now).microseconds / 1000)
 
-    return render_template('admin/treasurer.html', title='Penningmeester', h1='Penningmeester statistieken',
+    return render_template('admin/treasurer.html', title='Penno Panel', h1='Penno Panel',
                            products=products, filters_inv=filters_inv, filters_users=filters_users,
                            total_p_value=total_p_value, product_q=product_q, product_v=product_v, category_q=category_q,
                            category_v=category_v, rendertime=render_time, users=users,
