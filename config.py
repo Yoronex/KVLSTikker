@@ -3,6 +3,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config(object):
+    VIEW_ONLY = False
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'scouting-kornet-van-limburg-stirum-olst-wijhe'
     SQLALCHEMY_DATABASE_LOC = os.path.join(basedir, 'app.db')
     SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///' + SQLALCHEMY_DATABASE_LOC
@@ -13,6 +14,8 @@ class Config(object):
     ALBUM_COVER_FOLDER = os.path.join(basedir, 'app/static/covers')
     SPOTIFY_CACHE_FOLDER = os.path.join(basedir, 'spotifycache')
     DOCUMENT_FOLDER = os.path.join(basedir, 'documents')
+    SOUNDBOARD_FOLDER = os.path.join(basedir, 'app/static/soundboard')
+    VIDEOS_FOLDER = os.path.join(basedir, 'app/static/videos')
     MAX_BACKUPS = 20
     ALLOWED_EXTENSIONS = {'jpg', 'png', 'bmp', 'gif'}
     ADMIN_PASSWORD = "knotgang"
@@ -32,3 +35,4 @@ class Config(object):
     SPOTIPY_CACHE = '.spotipyoauthcache'
     CALENDAR_URL = 'https://drive.kvls.nl/remote.php/dav/public-calendars/BKWDW9PJT2mmoRa4?export'
     CALENDAR_UPDATE_INTERVAL = 30 * 60
+    PROFIT_PERCENTAGE = 0.8

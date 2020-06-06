@@ -104,6 +104,7 @@ def reset_daily_stats():
     daily_stats["shots"] = 0
     daily_stats["purchases"] = 0
     daily_stats["rounds"] = 0
+    daily_stats_seen_users = set({})
 
 
 def update_daily_stats(key, update_val):
@@ -147,8 +148,8 @@ def get_yesterday_for_today(enddate):
 
 def top_n(count, data, n):
     data.sort(key=getStatValue, reverse=True)
-    if len(count) <= n:
-        size = len(count)
+    if len(data) <= n:
+        size = len(data)
     else:
         size = n - 1
 
@@ -156,9 +157,9 @@ def top_n(count, data, n):
     labels = [data[i][1] for i in range(0, size)]
     values = [data[i][2] for i in range(0, size)]
 
-    if len(count) - size >= 2:
+    if len(data) - size >= 2:
         sum = 0
-        for i in range(size, len(count)):
+        for i in range(size, len(data)):
             sum = sum + data[i][2]
         ids.append(0)
         values.append(sum)
@@ -169,7 +170,7 @@ def top_n(count, data, n):
 
 def topall(count, data):
     data.sort(key=getStatValue, reverse=True)
-    size = len(count)
+    size = len(data)
     ids = [data[i][0] for i in range(0, size)]
     labels = [data[i][1] for i in range(0, size)]
     values = [data[i][2] for i in range(0, size)]
@@ -330,7 +331,7 @@ def most_bought_products_by_users(parsedbegin, parsedend):
     count = {}
     purchases = Purchase.query.filter(and_(Purchase.timestamp >= parsedbegin, Purchase.timestamp <= parsedend,
                                            Purchase.product_id != settings['dinner_product_id'],
-                                           Purchase.price > 0)).all()
+                                           Purchase.round == False)).all()
     for pur in purchases:
         if pur.product_id not in count:
             count[pur.product_id] = pur.amount

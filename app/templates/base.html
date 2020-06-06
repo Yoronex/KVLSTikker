@@ -1,8 +1,9 @@
 {% extends 'bootstrap/base.html' %}
 
-{% set version = "1.4.4.1" %}
+{% set version = "1.5.0.0" %}
 
 {% block title %}
+{% if view_only %}(VIEW ONLY){% endif %}
 {% if title %}Tikker - {{ title }}
 {% else %}Tikker
 {% endif %}
@@ -19,6 +20,7 @@
     <link rel="stylesheet" href="{{url_for('.static', filename='css/menu.css')}}">
     <link rel="stylesheet" href="{{url_for('.static', filename='css/fonts.css')}}">
     <link rel="stylesheet" href="{{ url_for('.static', filename='css/font-awesome.css') }}">
+    <link rel="stylesheet" href="{{url_for('.static', filename='css/table.css')}}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
 {% endblock %}
 
@@ -27,6 +29,7 @@
 <script type="text/javascript" src="/bootstrap/static/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="{{url_for('.static', filename='js/clock.js')}}"></script>
 <script type="text/javascript" src="{{url_for('.static', filename='js/darklight.js')}}"></script>
+<script type="text/javascript" src="{{url_for('.static', filename='js/jquery.dataTables.min.js')}}"></script>
 <script>
     $("#menu-toggle").click(function(e) {
         e.preventDefault();
@@ -66,16 +69,16 @@
                 <div class="modal-body">
                     Weet je zeker dat je Tikker wilt afsluiten?<br><br>
 
-                    {% if send_overview_emails == true %}
+                    {% if send_overview_emails and not view_ony %}
                         Voor het afsluiten kun je ook iedereen een mail sturen met <b>het maandelijkse transactieoverzicht</b> en een mail met <b>eventuele schulden</b>.
                         Het versturen van deze mails kan enkele minuten duren.
-                    {% elif send_debt_emails == true %}
+                    {% elif send_debt_emails and not view_only %}
                         Voor het afsluiten kun je ook iedereen met een hoge schuld een mail sturen met <b>de hoogte van de schuld</b>.
                         Het versturen van deze mails kan enkele minuten duren.
                     {% endif %}
                 </div>
                 <div class="modal-footer">
-                    {% if send_overview_emails == true or send_debt_emails == true %}
+                    {% if (send_overview_emails or send_debt_emails) and not view_only %}
                     <a href="{{ url_for('shutdown', emails=true) }}" type="button" class="btn btn-danger" onclick="showLoadingBar()">Mailen en afsluiten</a>
                     {% endif %}
                     <a href="{{ url_for('shutdown') }}" type="button" class="btn btn-danger">Afsluiten</a>
@@ -95,7 +98,7 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    Tikker is geschreven door Roy Kakkenberg van de Scouting Kornet van Limburg Olst-Wijhe om bierschulden bij te houden. Het systeem bevat daarnaast een systeem voor het bijhouden van een inventaris, waardoor zelfst winsten per groep bijgehouden kunnen worden. Producten kunnen bestaan uit zichzelf of een mix van meerdere andere producten, waardoor Tikker robuust is als het gaat om inventarissen bijhouden en nieuwe producten toevoegen.
+                    Tikker is geschreven door Roy Kakkenberg van Scouting Kornet van Limburg Olst-Wijhe om bierschulden bij te houden. Het systeem bevat daarnaast een systeem voor het bijhouden van een inventaris, waardoor zelfst winsten per groep bijgehouden kunnen worden. Producten kunnen bestaan uit zichzelf of een mix van meerdere andere producten, waardoor Tikker robuust is als het gaat om inventarissen bijhouden en nieuwe producten toevoegen.
                     <br><br>
                     Bugs kunnen gemeld worden aan Roy. Als het systeem een fout weergeeft, wordt deze automatisch gelogd. Vergeet deze niet door te geven aan Roy, samen met wat je aan het doen was op dat moment!
                     <br>
@@ -106,10 +109,64 @@
                     </ul>
                     <hr>
                     <h5>Changelog</h5>
-                    <b>Versie 1.4.4.1</b>: Bugfixes
+                    <b>Versie 1.5.0.0 (06/06/2020)</b>: De grote coronaupdate
+                    <ul>
+                        <li>Soundboard toegevoegd
+                            <ul>
+                                <li>Geluiden kunnen afgespeeld worden vanaf de "Soundboard" pagina met de knop of het toetsenbord</li>
+                                <li>Geluiden kunnen samen met een toets toegevoegd worden via het administratorpaneel</li>
+                                <li>Geluiden kunnen verwijderd worden via het administratorpaneel</li>
+                            </ul>
+                        </li>
+                        <li>Quotes toevoegen groots aangepast
+                            <ul>
+                                <li>Iedereen kan nu quotes toevoegen vanaf het hoofdmenu</li>
+                                <li>Quotes moeten goedgekeurd worden vanaf het BigScreen Administratorpaneel</li>
+                                <li>Quotes kunnen verwijderd worden. Dit is permanent!</li>
+                            </ul>
+                        </li>
+                        <li>Penningmeester-paneel toegevoegd, waarin de status van gebruikerssaldo's en de inventaris beter geanalyseerd kan worden
+                            <ul>
+                                <li>Waarde van inventaris in het administratorpaneel verwijderd</li>
+                                <li>De tabellen op deze pagina kunnen gesorteerd worden op verschillende kolommen</li>
+                            </ul>
+                        </li>
+                        <li>Tabellen met alle data groots aangepast
+                            <ul>
+                                <li>Het uiterlijk van alle tabellen is sterk verbeterd, met onder andere gekleurde lijnen in plaats van kolommen</li>
+                                <li>Filters toegevoegd aan de "Beheer transacties" tabel</li>
+                                <li>Filters toegevoegd aan de "Beheer gebruikers" tabel</li>
+                                <li>Filters toegevoegd aan de "Beheer groepen" tabel</li>
+                                <li>Filters toegevoegd aan de tabel op de overzichtspagina van een gebruiker</li>
+                            </ul>
+                        </li>
+                        <li>Mutaties in de winstpotjes worden nu bijgehouden in de database
+                            <ul>
+                                <li>Gebruikers kunnen nu declaraties doen aan een speltak en het geld terugkrijgen als Tikker saldo</li>
+                            </ul>
+                        </li>
+                        <li>Transacties kunnen nu gefiltert worden op verschillende criteria</li>
+                        <li>Opwaarderingen komen nu ook langs in Tikker BigScreen</li>
+                        <li>Het veranderen van de deelnemers of de tijd bij Biertje Kwartiertje reset de klok niet meer</li>
+                        <li>Wanneer je een persoon kiest om in te loggen op Spotify, kun je geen nieuwe naam meer invullen</li>
+                        <li>Optimalisaties
+                            <ul>
+                                <li>Het Administratorpaneel laadt nu ongeveer 2-3x zo snel</li>
+                                <li>De pagina om een product af te tikken is nu ongeveer 1.5x zo snel</li>
+                                <li>Structuur van code flink verbeterd</li>
+                            </ul>
+                        </li>
+                        <li>Foutmeldingen van formulieren zijn nu in het Nederlands</li>
+                        <li>View-only modus toegevoegd, die gestart kan worden met de "-v" parameter in de command line</li>
+                        <li>Directe "hard-coded" links in de interface vervangen door dynamische functies</li>
+                        <li>Bug gefixt waardoor een rondje dubbel telde bij de "Totaal gedronken" statistieken op BigScreen</li>
+                        <li>Bug gefixt bij inventaris correctie waardoor de inventaris van het laatst veranderde product niet veranderde</li>
+                        <li>Repetetieve code opgeruimd en vervangen door functies</li>
+                    </ul>
+                    <b>Versie 1.4.4.1 (07/03/2019)</b>: Bugfixes
                     <ul>
                         <li>De laatst geupdate slide wordt nu bij elke statistieken-update ook geupdate, waardoor de slides niet meer achter zouden moeten lopen</li>
-                        <li>Bug gefixt waardoor een rondje dubbel telde bij de "Totaal gedronken" statistieken op BigScreen</li>
+                        <li><s>Bug gefixt waardoor een rondje dubbel telde bij de "Totaal gedronken" statistieken op BigScreen</s></li>
                         <li>Bug gefixt waardoor bij een gezamelijke transactie bij verwijderen uit de winkelwagen de aantallen en bedragen niet meer omhoog gingen</li>
                     </ul>
                     <b>Versie 1.4.4.0 (29/02/2020)</b>: Bugfixes en kleine verbeteringen
@@ -368,6 +425,8 @@
                 <a href="{{ url_for('index') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Home</a>
                 <a href="{{ url_for('balance') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Gebruikersoverzicht</a>
                 <a href="{{ url_for('stats_home') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Statistieken</a>
+                <a href="{{ url_for('add_user_quote') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Citaat toevoegen</a>
+                <a href="{{ url_for('soundboard') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Soundboard</a>
                 <a href="{{ url_for('client_settings') }}" class="list-group-item list-group-item-action {% if request.cookies.get('dark-mode') == 'True' %}bg-dark{% else %}bg-light{% endif %}">Browserinstellingen</a>
             </div>
             <div style="position: absolute; bottom: 0;">
@@ -384,7 +443,7 @@
                     <div class="col">
                         <script>
                             window.setTimeout(function () {
-                                $(".alert").fadeTo(500, 0).slideUp(500, function () {
+                                $(".alert-dismissable").fadeTo(500, 0).slideUp(500, function () {
                                     $(this).remove();
                                 });
                             }, 4000);
@@ -400,6 +459,14 @@
                         {% endfor %}
                         {% endif %}
                         {% endwith %}
+
+                        {% if view_only %}
+                        <div class="alert alert-danger" role="alert">
+                            Deze versie van Tikker staat in <i>View-only modus</i>. Dit betekent bijvoorbeeld dat je alleen de data kunt bekijken.
+                            Het is niet mogelijk om producten af te tikken, transacties te verwijderen of de gebruikers of groepen te veranderen.
+                            BigScreen is ook niet toegankelijk en het soundboard zal niet werken.
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 <div class="row" style="align-items: center">

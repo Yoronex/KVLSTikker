@@ -1,0 +1,18 @@
+{% import 'bootstrap/wtf.html' as wtf %}
+
+<h2>Filters</h2>
+{{ wtf.quick_form(filters) }}
+
+<script>
+    {% for f in filters.get_fields() %}
+        document.getElementById('{{ f }}').onchange = function() {
+            let value = document.getElementById('{{ f }}').value;
+            console.log("Changed field {{ f }} => " + value);
+            updateQueryStringParameter('{{ f }}', value);
+        };
+
+        {% if f in request.args %}
+            document.getElementById('{{ f }}').value = '{{ request.args.get(f) }}';
+        {% endif %}
+    {% endfor %}
+</script>

@@ -7,6 +7,7 @@
 <script>
     biertjekwartiertje = true;
     initCart(0, {{ already_playing|tojson }});
+    document.getElementById('playtime').value = {{ playtime|tojson }};
 </script>
 {% endblock %}
 
@@ -18,11 +19,11 @@
         </div>
         <div class="col-xl-3 min-width-460-md">
 
-            <div class="img-thumbnail" width="100%" style="font-size: 12pt;">
+            <div class="img-thumbnail" style="width: 100%; font-size: 12pt;">
                 <img class="front-image" src="{{ url_for('.static', filename='img/bk.jpg' ) }}" style="max-width:100%;max-height:100%; display: block; margin: 0 auto;">
             </div>
 
-            <div class="img-thumbnail" width="100%" style="font-size: 12pt">
+            <div class="img-thumbnail" style="width: 100%; font-size: 12pt">
                 <table style="margin-left:auto;margin-right:auto;">
                     <tr>
                         <th colspan="2" style="font-size: 28px; color: red;">Biertje Kwartiertje</th>
@@ -35,7 +36,7 @@
                 </table>
             </div>
 
-            <div class="img-thumbnail" width="100%" style="font-size: 12pt; text-align: center">
+            <div class="img-thumbnail" style="width: 100%; font-size: 12pt; text-align: center">
                 <form>
                     <label class="form-control-label" for="drink">Drank</label><br>
                     <select id="drink" name="drink" style="width: 100%">
@@ -50,7 +51,7 @@
             </div>
 
             <div class="img-thumbnail">
-                <table id="cart" width="100%"></table>
+                <table id="cart" style="width: 100%"></table>
                 <hr>
                 <input type="hidden" type="checkbox" id="round">
                 <btn class="btn btn-block btn-grey" id="submitbutton" onclick="submitCart()" width="90%">Versturen</btn>

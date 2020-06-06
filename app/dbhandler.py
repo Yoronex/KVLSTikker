@@ -21,12 +21,28 @@ biertje_kwartiertje_drink = -1
 def fix_float_errors_in_user_balances():
     users = User.query.all()
     for i in range(0, len(users)):
-        users[i].balance = round(users[i].balance, 4)
+        users[i].balance = round(users[i].balance, 2)
+    db.session.commit()
+
+
+def fix_float_errors_in_usergroup_profits():
+    usergroups = Usergroup.query.all()
+    for i in range(0, len(usergroups)):
+        usergroups[i].profit = round(usergroups[i].profit, 2)
+    db.session.commit()
+
+
+def fix_float_errors_in_inventory():
+    inventories = Inventory.query.filter(Inventory.quantity != 0).all()
+    for i in range(0, len(inventories)):
+        inventories[i].quantity = round(inventories[i].quantity)
     db.session.commit()
 
 
 # Because 1.1 + 2.2 !+ 3.3 in Python, we have to fix this every now and then (so at startup seems like a good time)
 fix_float_errors_in_user_balances()
+fix_float_errors_in_usergroup_profits()
+fix_float_errors_in_inventory()
 
 
 def initialize_settings():
@@ -202,11 +218,17 @@ def addpurchase(drink_id, user_id, quantity, rondje, price_per_one):
     # Get the profitgroup of the user
     profitgroup = Usergroup.query.get(user.profitgroup_id)
     # Calculate the profit
-    profit = round_down(price_per_one * quantity - inventory['costs'])
+    prof = round_down((price_per_one * quantity - inventory['costs']) * app.config['PROFIT_PERCENTAGE'])
     # Add the profit to the group
-    profitgroup.profit = profitgroup.profit + round_up(profit)
+    profitgroup.profit = profitgroup.profit + prof
+    # Create a row object for the profit table
+    profit_obj = Profit(profitgroup_id=profitgroup.id, timestamp=datetime.now(),
+                        percentage=app.config['PROFIT_PERCENTAGE'], change=prof, new=profitgroup.profit)
+    db.session.add(profit_obj)
     # Save to database
     db.session.commit()
+
+    print(profit_obj.percentage)
 
     # Calculate the new user balance
     user.balance = user.balance - round_up(float(price_per_one) * quantity)
@@ -228,7 +250,7 @@ def addpurchase(drink_id, user_id, quantity, rondje, price_per_one):
     balchange = round_down(-price_per_one * quantity)
     # Create a transaction entry and add it to the database
     transaction = Transaction(user_id=user.id, timestamp=datetime.now(), purchase_id=purchase.id,
-                              balchange=balchange, newbal=user.balance)
+                              profit_id=profit_obj.id, balchange=balchange, newbal=user.balance)
     db.session.add(transaction)
     db.session.commit()
 
@@ -244,7 +266,7 @@ def addpurchase(drink_id, user_id, quantity, rondje, price_per_one):
     return quantity, drink.name, user.name, "success"
 
 
-def addbalance(user_id, description, amount):
+def addbalance(user_id, description, amount, profit_id=None):
     # Create an upgrade entry and add it to the database
     upgrade = Upgrade(user_id=user_id, description=description, timestamp=datetime.now(), amount=amount)
     db.session.add(upgrade)
@@ -255,16 +277,40 @@ def addbalance(user_id, description, amount):
     user.balance = user.balance + float(amount)
     # Create a transaction object with the new balance and the upgrade entry and add it to the database
     transaction = Transaction(user_id=user_id, timestamp=datetime.now(), upgrade_id=upgrade.id,
-                              balchange=upgrade.amount,
-                              newbal=user.balance)
+                              balchange=upgrade.amount, profit_id=profit_id, newbal=user.balance)
     db.session.add(transaction)
     db.session.commit()
 
     # Update the daily stats accordingly
     stats.update_daily_stats('euros', upgrade.amount)
 
-    return "Gebruiker {} heeft succesvol opgewaardeerd met €{}".format(user.name, str("%.2f" % upgrade.amount)
-                                                                       .replace(".", ",")), "success"
+    return upgrade
+
+
+def add_declaration(user_id, description, amount, group_id):
+    # If the group is not 0 aka the bar...
+    if group_id is not 0:
+        # Get the group and the user for this declaration
+        group = Usergroup.query.get(group_id)
+        user = User.query.get(user_id)
+        # Decrease its profit with the declarated amount
+        group.profit -= amount
+        # Create the (negative) profit record
+        profit = Profit(profitgroup_id=group_id, timestamp=datetime.now(), percentage=1.0, change=-amount, new=group.profit,
+                        description=description + " voor " + user.name)
+        # Add it to the database
+        db.session.add(profit)
+        db.session.commit()
+
+        # Get the ID for when the balance gets added
+        profit_id = profit.id
+    else:
+        # No profit has been removed, so the profit_id does not exist
+        profit_id = None
+
+    # Add the balance
+    return addbalance(user_id, description, amount, profit_id)
+
 
 
 def parse_recipe(recipe):
@@ -347,14 +393,13 @@ def adddrink(name, price, category, order, image, hoverimage, recipe, inventory_
     else:
         # We set the default values of volume and alcohol if none is given
         if volume is "":
-            volume = "0"
+            volume = 0
         if alcohol is "":
-            alcohol = "0"
+            alcohol = 0
         # Then, we create a new product in the database
         product = Product(name=name, price=price, category=category, order=order, purchaseable=True, image="",
-                          hoverimage="",
-                          inventory_warning=inventory_warning, volume=int(float(volume)), unit=unit,
-                          alcohol=float(alcohol.replace(",", ".").replace("%", "").replace(" ", "")) / 100)
+                          hoverimage="", inventory_warning=inventory_warning, volume=volume, unit=unit,
+                          alcohol=alcohol / 100)
     db.session.add(product)
     db.session.commit()
 
@@ -402,9 +447,35 @@ def addusergroup(name):
     return "Groep {} succesvol aangemaakt".format(usergroup.name), "success"
 
 
-def addquote(q):
-    quote = Quote(timestamp=datetime.now(), value=q)
+def addquote(q, author):
+    quote = Quote(timestamp=datetime.now(), value=q, author=author, approved=False)
     db.session.add(quote)
+    db.session.commit()
+    return "Quote succesvol aangevraagd. Na goedkeuring wordt hij toegevoegd!", "success"
+
+
+def approve_quote(q_id):
+    quote = Quote.query.get(q_id)
+    quote.approved = True
+    db.session.commit()
+    return "Quote met ID {} succesvol goedgekeurd!".format(quote.id), "success"
+
+
+def del_quote(q_id):
+    quote = Quote.query.get(q_id)
+    db.session.delete(quote)
+    db.session.commit()
+    return "Quote met ID {} succesvol verwijderd!".format(quote.id), 'success'
+
+
+def add_sound(name, key, code, file):
+    sound = Sound(name=name, keyboard_key=key, keyboard_code=code)
+    db.session.add(sound)
+    db.session.commit()
+
+    filename, extension = os.path.splitext(secure_filename(file.filename))
+    sound.filename = str(sound.id) + "_" + filename + extension
+    file.save(os.path.join(app.config['SOUNDBOARD_FOLDER'], sound.filename))
     db.session.commit()
 
 
@@ -435,36 +506,66 @@ def deluser(user_id):
         return "Gebruiker {} verwijderd".format(name), "success"
 
 
+def del_profit(profit_id):
+    # Find the profit object
+    profit = Profit.query.get(profit_id)
+    # Get the profit group and undo the added profit
+    profitgroup = Usergroup.query.get(profit.profitgroup_id)
+    profitgroup.profit -= profit.change
+
+    # For all newer recorded profits for the same group...
+    for p in Profit.query.filter(Profit.profitgroup_id == profit.profitgroup_id, Profit.timestamp > profit.timestamp).all():
+        # Reduce its new profit balance with the value of the to-be removed row
+        p.new = p.new - profit.change
+    # Actually delete the row
+    db.session.delete(profit)
+    db.session.commit()
+
+
 def deltransaction(transaction_id):
+    # Get the tranaction and its corresponding user and profitgroup
     transaction = Transaction.query.get(transaction_id)
     user = User.query.get(transaction.user_id)
     profitgroup = Usergroup.query.get(user.profitgroup_id)
 
+    # If the transaction is an upgrade...
     if transaction.purchase_id is None:
+
+        # If this upgrade was a declaration to a user group, we have to undo this declaration
+        if transaction.profit_id is not None:
+            # Delete the profit object
+            del_profit(transaction.profit_id)
+
+        # Get the upgrade object and delete it!
+        # The balance will be changed later
         upgrade = Upgrade.query.get(transaction.upgrade_id)
         db.session.delete(upgrade)
     else:
         purchase = Purchase.query.get(transaction.purchase_id)
-        profitgroup.profit = profitgroup.profit - purchase.price * purchase.amount
+
+        # If the transaction is from before version 1.4.4.1 or earlier...
+        if transaction.profit_id is None:
+            # Remove the profit the old way
+            # This is the first step, that removes too much profit
+            profitgroup.profit = profitgroup.profit - purchase.price * purchase.amount
+        else:
+            # If this is not the case, delete the profit object
+            del_profit(transaction.profit_id)
+
         inv_usage = Inventory_usage.query.filter(Inventory_usage.purchase_id == purchase.id).all()
         if type(inv_usage) is not list:
             inv_usage = [inv_usage]
         for i in range(0, len(inv_usage)):
             inventory = Inventory.query.get(inv_usage[i].inventory_id)
             inventory.quantity = inventory.quantity + inv_usage[i].quantity
-            profitgroup.profit = profitgroup.profit + inventory.price_before_profit * inv_usage[i].quantity
+            # If the transaction is from before version 1.4.4.1 or earlier...
+            if transaction.profit_id is None:
+                # Do the second step: increase the profit again with the price before profit
+                # (so only the profit has been removed)
+                profitgroup.profit = profitgroup.profit + inventory.price_before_profit * inv_usage[i].quantity
             db.session.delete(inv_usage[i])
             db.session.commit()
             inventory = None
-
-        # inventory_usage = purchase.inventory
-        # print(str(inventory_usage))
-        # for i in inventory_usage:
-        #    inv = Inventory.query.get(i['id'])
-        #    inv.quantity = inv.quantity + i['quantity']
-        #    profitgroup.profit = profitgroup.profit + inv.price_before_profit * i['quantity']
-        #    db.session.commit()
-        #    inv = None
 
         recipe = Recipe.query.filter(Recipe.product_id == purchase.product_id).all()
         if len(recipe) == 0:
@@ -495,6 +596,34 @@ def delusergroup(usergroup_id):
     db.session.delete(usergroup)
     db.session.commit()
     return "Groep {} verwijderd".format(usergroup.name), "success"
+
+
+def del_sound(sound_id):
+    sound = Sound.query.get(sound_id)
+    db.session.delete(sound)
+    db.session.commit()
+    return "Geluid {} verwijderd".format(sound.name), "success"
+
+
+def edit_profit(profit, amount):
+    # Calculate the new profit while taking the percentage for the bar into account
+    old_change = profit.change
+    old_change_before_perc = old_change / profit.percentage
+    new_change_before_perc = old_change_before_perc + amount
+    profit.change = new_change_before_perc * profit.percentage
+    diff = profit.change - old_change
+    # For all newer recorded profits for the same group...
+    for p in Profit.query.filter(Profit.profitgroup_id == profit.profitgroup_id, Profit.timestamp > profit.timestamp).all():
+        # Reduce its new profit balance with the amount
+        p.new += diff
+    
+    # Get the profit group
+    profitgroup = Usergroup.query.get(profit.profitgroup_id)
+    # Change the profit accordingly
+    profitgroup.profit += diff
+
+    # Write all changes
+    db.session.commit()
 
 
 def editdrink_attr(product_id, name, price, category, order, purchaseable, recipe, inventory_warning, alcohol, volume,
@@ -531,10 +660,10 @@ def editdrink_attr(product_id, name, price, category, order, purchaseable, recip
     product.recipe_input = result_recipe
     product.inventory_warning = inventory_warning
     if alcohol != "":
-        product.alcohol = float(str(alcohol).replace(",", ".").replace("%", "").replace(" ", "")) / 100
+        product.alcohol = alcohol / 100
     else:
         product.alcohol = None
-    product.volume = int(float(volume))
+    product.volume = volume
     product.unit = unit
     db.session.commit()
 
@@ -616,7 +745,7 @@ def get_product_stats(product_id):
         result['alcohol'] = p.volume * p.alcohol
         result['volume'] = p.volume / 1000
         result['stock'] = [
-            {"product": p.name, "quantity": get_inventory(p.id), "inventory_warning": p.inventory_warning}]
+            {"product": p.name, "quantity": p.current_inventory, "inventory_warning": p.inventory_warning}]
     else:
         result['alcohol'] = 0
         result['stock'] = []
@@ -625,32 +754,48 @@ def get_product_stats(product_id):
             p = Product.query.get(r.ingredient_id)
             result['alcohol'] = result['alcohol'] + p.volume * p.alcohol
             result['stock'].append(
-                {"product": p.name, "quantity": get_inventory(p.id), "inventory_warning": p.inventory_warning})
+                {"product": p.name, "quantity": p.current_inventory, "inventory_warning": p.inventory_warning})
             result['volume'] = result['volume'] + p.volume / 1000
 
-    purchases = Purchase.query.filter(Purchase.product_id == product_id, Purchase.price > 0).all()
-    users = {u.id: [0, 0] for u in User.query.all()}
-    result['total_bought'] = 0
-    for pur in purchases:
-        result['total_bought'] = result['total_bought'] + pur.amount
-        if not pur.round:
-            users[pur.user_id][0] = users[pur.user_id][0] + pur.amount
-        else:
-            users[pur.user_id][1] = users[pur.user_id][1] + 1
-    largest_consumer = None
-    largest_round_giver = None
-    largest_consumer_amount = 0
-    largest_round_giver_amount = 0
-    for user, amount in users.items():
-        if amount[0] > largest_consumer_amount:
-            largest_consumer = user
-            largest_consumer_amount = amount[0]
-        if amount[1] > largest_round_giver_amount:
-            largest_round_giver = user
-            largest_round_giver_amount = amount[1]
+    # Get the list of all people that bought this product at least once and order them by total amount bought
+    largest_consumers = db.session.query(User.name, func.sum(Purchase.amount).label('amount'))\
+        .filter(User.id == Purchase.user_id, Purchase.round == False, Purchase.product_id == product_id)\
+        .group_by(User.id).order_by(func.sum(Purchase.amount).desc()).first()
+    # Make sure the result is always a list
+    if type(largest_consumers) != list:
+        largest_consumers = [largest_consumers]
+    # If there is at least one person that bought this product...
+    if len(largest_consumers) > 0:
+        # Get the first person from the sorted list and make him the largest consumer
+        largest_consumer = largest_consumers[0][0]
+        largest_consumer_amount = largest_consumers[0][1]
+    else:
+        # Otherwise, choose default values
+        largest_consumer = None
+        largest_consumer_amount = 0
+
+    # Get the list of all people that bought a round for this product at least once and order them by total rounds given
+    round_givers = db.session.query(User.name, func.count().label('rounds'))\
+        .filter(User.id == Purchase.user_id, Purchase.round == True, Purchase.product_id == product_id)\
+        .group_by(Purchase.user_id).order_by(func.count().desc()).all()
+    # Make sure the result is always a list
+    if type(round_givers) != list:
+        round_givers = [round_givers]
+    # If there is at least one person that gave a round...
+    if len(round_givers) > 0:
+        # Get the first person from this sorted list and make him the largest round giver
+        largest_round_giver = round_givers[0][0]
+        largest_round_giver_amount = round_givers[0][1]
+    else:
+        # Otherwise, choose default values
+        largest_round_giver = None
+        largest_round_giver_amount = 0
 
     result['largest_consumer'] = {'user': largest_consumer, 'amount': largest_consumer_amount}
     result['largest_rounder'] = {'user': largest_round_giver, 'amount': largest_round_giver_amount}
+    result['total_bought'] = db.session.query(func.sum(Purchase.amount))\
+        .filter(Purchase.product_id == product_id, Purchase.price > 0).group_by(Purchase.product_id).scalar()
+
     return result
 
 
@@ -719,11 +864,19 @@ def fix_neg_inv(old_inv, new_inv):
             break
         pur = Purchase.query.get(inv_use[i].purchase_id)
         if pur is not None:
+            t = pur.transactions.all()[0]
             user = User.query.get(pur.user_id)
             if user is not None:
                 profitgroup = Usergroup.query.get(user.profitgroup_id)
+            # If the purchase is created in version 1.5.0.0 or newer, we get the profit object as well
+            if t.profit_id is not None:
+                profit = Profit.query.get(pur.profit_id)
+            else:
+                profit = None
         else:
             profitgroup = None
+            app.logger.info("There is no purchase attached to an inventory usage row of inventory {}".format(old_inv.id))
+            raise ValueError
 
         if inv_use[i].quantity > new_inv.quantity:
             new_inv_use = Inventory_usage(purchase_id=inv_use[i].purchase_id, inventory_id=new_inv.id,
@@ -731,7 +884,13 @@ def fix_neg_inv(old_inv, new_inv):
             db.session.add(new_inv_use)
             inv_use[i].quantity = inv_use[i].quantity - new_inv.quantity
             if profitgroup is not None:
-                profitgroup.profit = profitgroup.profit - (new_inv.price_before_profit * new_inv_use.quantity)
+                change = -(new_inv.price_before_profit * new_inv_use.quantity)
+                # Use the old method if the transaction is from 1.4.4.1 or older
+                if profit is None:
+                    profitgroup.profit = profitgroup.profit + change
+                else:
+                    # Use the new method otherwise
+                    edit_profit(change)
             new_inv.quantity = 0
             old_inv.quantity = old_inv.quantity + new_inv_use.quantity
             db.session.commit()
@@ -739,7 +898,11 @@ def fix_neg_inv(old_inv, new_inv):
         else:
             inv_use[i].inventory_id = new_inv.id
             if profitgroup is not None:
-                profitgroup.profit = profitgroup.profit - (new_inv.price_before_profit * inv_use[i].quantity)
+                change = -(new_inv.price_before_profit * inv_use[i].quantity)
+                if profit is None:
+                    profitgroup.profit = profitgroup.profit + change
+                else:
+                    edit_profit(change)
             new_inv.quantity = new_inv.quantity - inv_use[i].quantity
             old_inv.quantity = old_inv.quantity + inv_use[i].quantity
             db.session.commit()
@@ -765,27 +928,23 @@ def take_from_inventory(user, product_id, quantity):
             break
         else:
             if quantity < inventory.quantity:
-                # profit = product.price - inventory.price_before_profit
                 if profitgroup is not None:
-                    # profitgroup.profit = profitgroup.profit + (inventory.price_before_profit * quantity)
                     added_costs = added_costs + (inventory.price_before_profit * quantity)
                 inventory_usage.append({"id": inventory.id, "quantity": quantity})
                 inventory.quantity = inventory.quantity - quantity
                 break
             elif quantity >= inventory.quantity > 0.0:
-                # profit = product.price - inventory.price_before_profit  # calculate profit
                 if profitgroup is not None:
-                    # profitgroup.profit = profitgroup.profit + (inventory.price_before_profit * inventory.quantity)  # add profit to profitgroup
                     added_costs = added_costs + (inventory.price_before_profit * inventory.quantity)
                 inventory_usage.append({"id": inventory.id, "quantity": inventory.quantity})
                 quantity = quantity - inventory.quantity  # decrease quantity
-                #  db.session.delete(inventory)  # delete empty inventory
                 inventory.quantity = 0
             else:
                 inventory.quantity = inventory.quantity - quantity
                 inventory_usage.append({"id": inventory.id, "quantity": quantity})
                 break
         db.session.commit()
+    db.session.commit()
     return {"costs": added_costs, "inventory_usage": inventory_usage}
 
 
@@ -888,9 +1047,12 @@ def correct_inventory(json):
                 # Get the group object
                 g = Usergroup.query.get(g_id)
                 # Calculate the costs for this group
-                cost = round_up(diff * p.price / len(i['groups']))
+                cost = round_down(diff * p.price / len(i['groups']))
                 # Change its profit
                 g.profit = g.profit + cost
+                profit = Profit(profitgroup_id=g_id, timestamp=datetime.now(), percentage=1.0,
+                                change=cost, new=g.profit, description="{} {} inventariscorrectie".format(str(diff), p.name))
+                db.session.add(profit)
                 db.session.commit()
                 # Add it to the row in the table and to the cumulative costs
                 index = all_groups.index(g_id)
@@ -898,7 +1060,7 @@ def correct_inventory(json):
                 row_cells[5 + index].text = '-€ %.2f' % -cost
                 # Reset the group object
                 g = None
-            take_from_inventory(None, p.id, -diff)
+            print(take_from_inventory(None, p.id, -diff))
         elif diff > 0:
             new_price = find_newest_product_price(p.id)
             add_inventory(p.id, diff, new_price, "Inventariscorrectie")
@@ -906,6 +1068,10 @@ def correct_inventory(json):
                 g = Usergroup.query.get(g_id)
                 profit_for_group = round_down(diff * new_price / len(i['groups']))
                 g.profit = g.profit + profit_for_group
+                profit = Profit(profitgroup_id=g_id, timestamp=datetime.now(), percentage=1.0,
+                                change=profit_for_group, new=g.profit,
+                                description="{} {} inventariscorrectie".format(str(diff), p.name))
+                db.session.add(profit)
                 db.session.commit()
                 # Add it to the row in the table and to the cumulative costs
                 index = all_groups.index(g_id)
@@ -958,6 +1124,9 @@ def payout_profit(usergroup_id, amount, password):
         return "Het gekozen bedrag is ongeldig"
 
     usergroup.profit = usergroup.profit - amount
+    profit = Profit(profitgroup_id=usergroup_id, timestamp=datetime.now(), percentage=1.0, change=-amount,
+                    new=usergroup.profit)
+    db.session.add(profit)
     db.session.commit()
     return "€ {} winst van {} uitgekeerd uit Tikker".format(str('%.2f' % usergroup.profit),
                                                             usergroup.name), "success"

@@ -1,6 +1,7 @@
 import locale
 import logging
 import math
+import sys
 
 
 def round_up(float_number, n=2):
@@ -13,6 +14,12 @@ def round_down(float_number, n=2):
     return math.floor(float_number * decimals) / decimals
 
 
+class AttrDict(dict):
+    def __init__(self, *args, **kwargs):
+        super(AttrDict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+
 from flask import Flask
 from config import Config
 from flask_socketio import SocketIO
@@ -23,6 +30,7 @@ from flask_bootstrap import Bootstrap
 from flask_breadcrumbs import Breadcrumbs
 from flask_mail import Mail
 from logging.handlers import RotatingFileHandler
+from flask_babel import Babel
 import os
 import zipfile
 from datetime import datetime
@@ -33,18 +41,12 @@ app = Flask(__name__)
 app.config.from_object(Config)
 cors = CORS(app, resources={r"/api/*": {"origins": "*"}, r"/socket.io/*": {"origins": "*"}})
 socketio = SocketIO(app, cors_allowed_origins="*")  # Needs to be changed later for Tikker BigScreen
+babel = Babel(app, default_locale='nl', default_timezone='CET')
 
-if not os.path.exists(app.config['ALBUM_COVER_FOLDER']):
-    os.makedirs(app.config['ALBUM_COVER_FOLDER'])
-
-if not os.path.exists(app.config['BACKUP_FOLDER']):
-    os.makedirs(app.config['BACKUP_FOLDER'])
-
-if not os.path.exists(app.config['SPOTIFY_CACHE_FOLDER']):
-    os.makedirs(app.config['SPOTIFY_CACHE_FOLDER'])
-
-if not os.path.exists(app.config['DOCUMENT_FOLDER']):
-    os.makedirs(app.config['DOCUMENT_FOLDER'])
+for path in [app.config['ALBUM_COVER_FOLDER'], app.config['BACKUP_FOLDER'], app.config['SPOTIFY_CACHE_FOLDER'],
+             app.config['DOCUMENT_FOLDER'], app.config['SOUNDBOARD_FOLDER'], app.config['VIDEOS_FOLDER']]:
+    if not os.path.exists(path):
+        os.makedirs(path)
 
 list_of_files = os.listdir(app.config['BACKUP_FOLDER'])
 if len(list_of_files) >= app.config['MAX_BACKUPS']:
@@ -67,7 +69,9 @@ if (now.month is 1 and now.day > 10) or (1 < now.month < 12):
 else:
     EN_SNOW = True
 
-from app import routes, models
+from app import models
+from app.routes import admin, bigscreen, stats, user, utils
+from app.models import *
 
 if not app.debug:
     if not os.path.exists(app.config["LOG_FOLDER"]):
@@ -102,5 +106,6 @@ app.jinja_env.globals.update(is_18min=is_18min)
 
 
 @app.context_processor
-def snow():
-    return dict(snow=EN_SNOW)
+def defaults():
+    return dict(snow=EN_SNOW,
+                view_only='-v' in sys.argv)

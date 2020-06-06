@@ -59,6 +59,7 @@ def update_spotify_request():
 
 @socketio.on('biertje_kwartiertje_exec', namespace='/bigscreen')
 def biertje_kwartiertje_purchase():
+    update_biertje_kwartiertje()
     drink_id = dbhandler.biertje_kwartiertje_drink
     cart.purchase_from_orders(dbhandler.biertje_kwartiertje_participants, drink_id)
 
@@ -118,7 +119,8 @@ def get_slide_data(name):
                 "prices": prices}
 
     elif name == "Quote":
-        quotes = Quote.query.all()
+        quotes = Quote.query.filter(Quote.approved == True).all()
+        print(quotes)
         q = quotes[randrange(len(quotes))]
         return q.value
 
@@ -270,7 +272,6 @@ def update_stats():
     app.logger.info("Finished updating stats and recent slide")
 
 
-
 def get_stats():
     daily = copy.deepcopy(stats.daily_stats)
     maxim = copy.deepcopy(stats.max_stats)
@@ -303,7 +304,11 @@ def disable_snow():
     socketio.emit('snow', None, namespace='/bigscreen')
 
 
-def start_biertje_kwartiertje():
+def toggle_fireplace():
+    socketio.emit('fireplace', None, namespace='/bigscreen')
+
+
+def update_biertje_kwartiertje():
     socketio.emit('biertje_kwartiertje_start', {'minutes': dbhandler.biertje_kwartiertje_time}, namespace='/bigscreen')
 
 

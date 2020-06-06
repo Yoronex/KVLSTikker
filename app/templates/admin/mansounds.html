@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
+
+{% block app_content %}
+    <div class="row">
+        <div class="col-xl-6">
+            <h2>Alle geluiden</h2>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Naam</th>
+                        <th>Toets</th>
+                        <th>Toetscode</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for s in Sound.query.all() %}
+                    <tr>
+                        <td>{{ s.id }}</td>
+                        <td>{{ s.name }}</td>
+                        <td>{{ s.keyboard_key }}</td>
+                        <td>{{ s.keyboard_code }}</td>
+                        <td><a href="{{ url_for('admin_soundboard_delete', sound_id=s.id) }}"><span class="fa fa-times fa-lg" style="color: red;"></span></a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-xl-6">
+            <h2>Geluid toevoegen</h2>
+            <p>Om te zien wat de toetscode van een toetsenbordtoets is, kun je de website <a href="http://keycode.info/" target="_blank">http://keycode.info/</a> gebruiken.</p>
+            {{ wtf.quick_form(form) }}
+        </div>
+    </div>
+{% endblock %}

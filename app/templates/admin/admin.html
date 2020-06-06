@@ -4,27 +4,27 @@
 {% block app_content %}
     <div class="row">
         <div class="col-xl-3">
-            <a href="/admin/usergroups" class="btn btn-block btn-green">Beheer Groepen</a>
+            <a href="{{ url_for('admin_usergroups') }}" class="btn btn-block btn-green">Beheer Groepen</a>
         </div>
         <div class="col-xl-3">
-            <a href="/admin/users" class="btn btn-block btn-yellow">Beheer Gebruikers</a>
+            <a href="{{ url_for('admin_users') }}" class="btn btn-block btn-yellow">Beheer Gebruikers</a>
         </div>
         <div class="col-xl-3">
-            <a href="/admin/drinks" class="btn btn-block btn-green">Beheer Producten</a>
+            <a href="{{ url_for('admin_drinks') }}" class="btn btn-block btn-green">Beheer Producten</a>
         </div>
         <div class="col-xl-3">
-            <a href="/admin/transactions" class="btn btn-block btn-yellow">Beheer Transacties</a>
+            <a href="{{ url_for('admin_transactions') }}" class="btn btn-block btn-yellow">Beheer Transacties</a>
         </div>
     </div>
     <div class="row">
         <div class="col-xl-3">
-            <a href="/admin/inventory" class="btn btn-block btn-yellow">Beheer Inventaris</a>
+            <a href="{{ url_for('admin_soundboard') }}" class="btn btn-block btn-yellow">Beheer Soundboard</a>
         </div>
         <div class="col-xl-3">
-            <a href="/admin/inventory/correct" class="btn btn-block btn-green">Inventaris Correctie</a>
+            <a href="{{ url_for('admin_inventory') }}" class="btn btn-block btn-green">Beheer Inventaris</a>
         </div>
         <div class="col-xl-3">
-            <a href="/admin/profit" class="btn btn-block btn-yellow">Winst uitkeren</a>
+            <a href="{{ url_for('admin_correct_inventory') }}" class="btn btn-block btn-yellow">Inventaris Correctie</a>
         </div>
         <div class="col-xl-3">
             <a href="{{ url_for('upgrade') }}" class="btn btn-block btn-green">Opwaarderen</a>
@@ -41,55 +41,57 @@
             <a href="{{ url_for('borrel_mode') }}" class="btn btn-block btn-yellow">Borrel modus</a>
         </div>
         <div class="col-xl-3">
+            <a href="{{ url_for('admin_treasurer') }}" class="btn btn-block btn-green">Penno Panel</a>
         </div>
         <div class="col-xl-3">
+            <a href="{{ url_for('payout_profit') }}" class="btn btn-block btn-yellow">Winst uitkeren</a>
         </div>
     </div>
 
     <br><br>
     <div class="row">
         <div class="col-xl img-thumbnail">
-            <table width="100%">
+            <table style="width: 100%">
                 <tr>
                     <th colspan="2">Winst per groep</th>
                 </tr>
                 {% for u in Usergroup.query.all() %}
                 <tr>
-                    <td width="50%" style="text-align: right">{{ u.name }}:</td>
-                    <td width="50%" style="text-align: left">{% if u.profit < 0 %}<span style="color:red;font-weight:bold;">
+                    <td style="width: 50%; text-align: right">{{ u.name }}:</td>
+                    <td style="width: 50%; text-align: left">{% if u.profit < 0 %}<span style="color:red;font-weight:bold;">
                         {% else %}<span style="color:green;font-weight:bold;">{% endif %}€{{ '%.2f' % u.profit }}</span></td>
                 </tr>
                 {% endfor %}
             </table>
         </div>
         <div class="col-xl img-thumbnail">
-            <table width="100%">
+            <table style="width: 100%">
                 <tr>
                     <th colspan="2">Transactie overzicht</th>
                 </tr>
                 <tr>
-                    <td width="50%" style="text-align: right">Transacties: </td>
-                    <td width="50%" style="text-align: left">{{ transactions.total }}</td>
+                    <td style="width: 50%; text-align: right">Transacties: </td>
+                    <td style="width: 50%; text-align: left">{{ transactions.total }}</td>
                 </tr>
                 <tr>
-                    <td width="50%" style="text-align: right">Opwaarderingen: </td>
-                    <td width="50%" style="text-align: left">{{ transactions.upgrades }}</td>
+                    <td style="width: 50%; text-align: right">Opwaarderingen: </td>
+                    <td style="width: 50%; text-align: left">{{ transactions.upgrades }}</td>
                 </tr>
                 <tr>
-                    <td width="50%" style="text-align: right">Waarde:</td>
-                    <td width="50%" style="text-align: left"><span style="color: green;font-weight:bold;">€{{ '%.2f' % transactions.upgrades_value }}</span></td>
+                    <td style="width: 50%; text-align: right">Waarde:</td>
+                    <td style="width: 50%; text-align: left"><span style="color: green;font-weight:bold;">€{{ '%.2f' % transactions.upgrades_value }}</span></td>
                 </tr>
                 <tr>
-                    <td width="50%" style="text-align: right">Aankopen:</td>
-                    <td width="50%" style="text-align: left">{{ transactions.purchases }}</td>
+                    <td style="width: 50%; text-align: right">Aankopen:</td>
+                    <td style="width: 50%; text-align: left">{{ transactions.purchases }}</td>
                 </tr>
                 <tr>
-                    <td width="50%" style="text-align: right">Waarde:</td>
-                    <td width="50%" style="text-align: left"><span style="color: red;font-weight:bold;">€{{ '%.2f' % transactions.purchases_value }}</span></td>
+                    <td style="width: 50%; text-align: right">Waarde:</td>
+                    <td style="width: 50%; text-align: left"><span style="color: red;font-weight:bold;">€{{ '%.2f' % transactions.purchases_value }}</span></td>
                 </tr>
                 <tr>
-                    <td style="text-align: right" width="50%">Balans:</td>
-                    <td style="text-align: left" width="50%">
+                    <td style="width: 50%; text-align: right">Balans:</td>
+                    <td style="width: 50%; text-align: left">
                         {% if transactions.revenue < 0 %}<span style="color: red;font-weight:bold;">€{{ '%.2f' % transactions.revenue }}</span>
                         {% else %}<span style="color: green;font-weight:bold;">€{{ '%.2f' % transactions.revenue }}</span>
                     {% endif %} </td>
@@ -98,11 +100,10 @@
             </table>
         </div>
         <div class="col-xl img-thumbnail">
-            <table width="100%">
+            <table style="width: 100%">
                 <colgroup>
                     <col style="width: 50%">
-                    <col style="width: 3rem">
-                    <col>
+                    <col style="width: 50%">
                 </colgroup>
                 <tr>
                     <th colspan="3">Inventaris overzicht</th>
@@ -115,13 +116,11 @@
                         {% elif p.quantity <= p.inventory_warning %}<span style="color: darkorange;">{{ p.quantity }}</span>
                         {% else %} {{ p.quantity }}
                     {% endif %}</td>
-                    <td style="text-align: left">€ {{ '%.2f' % p.inventory_value }}</td>
                 </tr>
                 {% endfor %}
                 <tr>
                     <td></td>
                     <td></td>
-                    <td>€ {{ '%.2f' % value }}</td>
                 </tr>
             </table>
         </div>

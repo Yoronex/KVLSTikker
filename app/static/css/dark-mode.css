@@ -69,10 +69,6 @@ a {
     color: grey;
 }
 
-.edit-symbol {
-    color: white;
-}
-
 .modal {
     color: black !important;
 }
@@ -94,4 +90,31 @@ a {
 {
     color: #5a5a5a;
     background-color: #eee;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: #343a40;
+}
+
+.table > tbody > tr.item-unavailable,
+.table > tbody > tr.item-unavailable > td > a > i.edit-symbol{
+    color: rgba(241, 243, 250, 0.5) !important;
+}
+
+.table > tbody > tr.item-available > td > a > i.edit-symbol {
+    color: white;
+}
+
+.card {
+    border: 1px solid #dee2e6;
+    background-color: #212121;
+}
+
+.card > .card-header {
+    border-bottom: 1px solid #dee2e6;
+    background-color: #343a40;
+}
+
+.card > .card-header > a {
+    color: #cccccc;
 }
