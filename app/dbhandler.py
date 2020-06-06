@@ -757,13 +757,39 @@ def get_product_stats(product_id):
                 {"product": p.name, "quantity": p.current_inventory, "inventory_warning": p.inventory_warning})
             result['volume'] = result['volume'] + p.volume / 1000
 
-    largest_consumer, largest_consumer_amount = db.session.query(User.name, func.sum(Purchase.amount).label('amount'))\
+    # Get the list of all people that bought this product at least once and order them by total amount bought
+    largest_consumers = db.session.query(User.name, func.sum(Purchase.amount).label('amount'))\
         .filter(User.id == Purchase.user_id, Purchase.round == False, Purchase.product_id == product_id)\
         .group_by(User.id).order_by(func.sum(Purchase.amount).desc()).first()
+    # Make sure the result is always a list
+    if type(largest_consumers) != list:
+        largest_consumers = [largest_consumers]
+    # If there is at least one person that bought this product...
+    if len(largest_consumers) > 0:
+        # Get the first person from the sorted list and make him the largest consumer
+        largest_consumer = largest_consumers[0][0]
+        largest_consumer_amount = largest_consumers[0][1]
+    else:
+        # Otherwise, choose default values
+        largest_consumer = None
+        largest_consumer_amount = 0
 
-    largest_round_giver, largest_round_giver_amount = db.session.query(User.name, func.count().label('rounds'))\
+    # Get the list of all people that bought a round for this product at least once and order them by total rounds given
+    round_givers = db.session.query(User.name, func.count().label('rounds'))\
         .filter(User.id == Purchase.user_id, Purchase.round == True, Purchase.product_id == product_id)\
-        .group_by(Purchase.user_id).order_by(func.count().desc()).first()
+        .group_by(Purchase.user_id).order_by(func.count().desc()).all()
+    # Make sure the result is always a list
+    if type(round_givers) != list:
+        round_givers = [round_givers]
+    # If there is at least one person that gave a round...
+    if len(round_givers) > 0:
+        # Get the first person from this sorted list and make him the largest round giver
+        largest_round_giver = round_givers[0][0]
+        largest_round_giver_amount = round_givers[0][1]
+    else:
+        # Otherwise, choose default values
+        largest_round_giver = None
+        largest_round_giver_amount = 0
 
     result['largest_consumer'] = {'user': largest_consumer, 'amount': largest_consumer_amount}
     result['largest_rounder'] = {'user': largest_round_giver, 'amount': largest_round_giver_amount}

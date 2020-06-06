@@ -20,6 +20,7 @@
     <link rel="stylesheet" href="{{url_for('.static', filename='css/menu.css')}}">
     <link rel="stylesheet" href="{{url_for('.static', filename='css/fonts.css')}}">
     <link rel="stylesheet" href="{{ url_for('.static', filename='css/font-awesome.css') }}">
+    <link rel="stylesheet" href="{{url_for('.static', filename='css/table.css')}}">
     <link rel="shortcut icon" href="{{ url_for('static', filename='img/favicon.ico') }}">
 {% endblock %}
 
@@ -28,6 +29,7 @@
 <script type="text/javascript" src="/bootstrap/static/js/bootstrap.min.js"></script>
 <script type="text/javascript" src="{{url_for('.static', filename='js/clock.js')}}"></script>
 <script type="text/javascript" src="{{url_for('.static', filename='js/darklight.js')}}"></script>
+<script type="text/javascript" src="{{url_for('.static', filename='js/jquery.dataTables.min.js')}}"></script>
 <script>
     $("#menu-toggle").click(function(e) {
         e.preventDefault();
@@ -126,6 +128,7 @@
                         <li>Penningmeester-paneel toegevoegd, waarin de status van gebruikerssaldo's en de inventaris beter geanalyseerd kan worden
                             <ul>
                                 <li>Waarde van inventaris in het administratorpaneel verwijderd</li>
+                                <li>De tabellen op deze pagina kunnen gesorteerd worden op verschillende kolommen</li>
                             </ul>
                         </li>
                         <li>Tabellen met alle data groots aangepast
