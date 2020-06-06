@@ -1,12 +1,13 @@
-<div class="container-fluid">
+<div class="container-fluid" style="padding: 0">
     <div class="row">
         {% for g in usergroups %}
-        <div class="col" style="text-align: center">{{ g.name }}</div>
+        <div class="col" style="text-align: center; padding: 0">{{ g.name }}</div>
         {% endfor %}
         <div class="w-100"></div>
         {% for g in usergroups %}
         {% set outer_loop = loop %}
-        <div class="col">
+        <div class="col" style="padding: 0">
+        <!--
             <table width="100%" cellpadding="30">
                 {% for u in g.users.all() %}
                 {% set underage = is_18min(u) and (drink.recipe_input is not none or drink.alcohol > 0.01) %}
@@ -23,7 +24,45 @@
                 </tr>
                 {% endfor %}
             </table>
+        -->
+        <div class="container-fluid">
+            <div class="row">
+                {% for u in g.users.all() %}
+                <div class="col" style="text-align: center; padding: 2px;">
+                    <div style="max-width: 10rem; min-width: 5rem; width: 100%; margin: 0 auto;" onclick="addToCart('{{ u.id }}', '{{ u.name }}', '{{ shared }}')">
+                       <img src="{{ url_for('.static', filename='img/profile.png') }}" style="width: 100%; border-radius: 5px; border: 2px solid green" onclick="addToCart('{{ u.id }}', '{{ u.name }}', '{{ shared }}')">
+                       <!--<canvas class="image-unknown" style="width: 100%; border-radius: 5px; border: 2px solid green;" data-name="{{ u.name }}"></canvas>-->
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
         </div>
         {% endfor %}
     </div>
 </div>
+<script>
+    function resizeUnknownBoxes() {
+        let unknowns = document.getElementsByClassName('image-unknown');
+        let name, width, canvas, context, fontsize;
+        for (let i = 0; i < unknowns.length; i++) {
+            width = unknowns[i].clientWidth;
+            unknowns[i].style.height = width + "px";
+
+            fontsize = 4 * parseInt(getComputedStyle(document.documentElement).fontSize);
+
+            context = unknowns[i].getContext('2d');
+            name = unknowns[i].dataset.name;
+            do {
+                fontsize--;
+                context.font = fontsize + "px Arial";
+            } while (context.measureText(name).width > 3 * width)
+            context.fillText(name, 0, 100);
+
+            console.log(context.getImageData(0, 0, 100, 100))
+        }
+    }
+
+    resizeUnknownBoxes()
+    window.addEventListener('resize', resizeUnknownBoxes)
+</script>
