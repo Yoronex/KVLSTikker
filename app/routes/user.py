@@ -2,8 +2,8 @@ import copy
 
 from flask_breadcrumbs import register_breadcrumb
 
-from app import stats, dbhandler, cart
 from app.routes import *
+from app import stats, dbhandler, cart
 
 birthday = False
 showed_birthdays = True

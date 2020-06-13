@@ -745,7 +745,7 @@ def get_product_stats(product_id):
         result['alcohol'] = p.volume * p.alcohol
         result['volume'] = p.volume / 1000
         result['stock'] = [
-            {"product": p.name, "quantity": p.current_inventory, "inventory_warning": p.inventory_warning}]
+            {"product": p.name, "quantity": p.current_inventory or 0, "inventory_warning": p.inventory_warning}]
     else:
         result['alcohol'] = 0
         result['stock'] = []
@@ -754,13 +754,13 @@ def get_product_stats(product_id):
             p = Product.query.get(r.ingredient_id)
             result['alcohol'] = result['alcohol'] + p.volume * p.alcohol
             result['stock'].append(
-                {"product": p.name, "quantity": p.current_inventory, "inventory_warning": p.inventory_warning})
+                {"product": p.name, "quantity": p.current_inventory or 0, "inventory_warning": p.inventory_warning})
             result['volume'] = result['volume'] + p.volume / 1000
 
     # Get the list of all people that bought this product at least once and order them by total amount bought
     largest_consumers = db.session.query(User.name, func.sum(Purchase.amount).label('amount'))\
         .filter(User.id == Purchase.user_id, Purchase.round == False, Purchase.product_id == product_id)\
-        .group_by(User.id).order_by(func.sum(Purchase.amount).desc()).first()
+        .group_by(User.id).order_by(func.sum(Purchase.amount).desc()).all()
     # Make sure the result is always a list
     if type(largest_consumers) != list:
         largest_consumers = [largest_consumers]
@@ -794,7 +794,7 @@ def get_product_stats(product_id):
     result['largest_consumer'] = {'user': largest_consumer, 'amount': largest_consumer_amount}
     result['largest_rounder'] = {'user': largest_round_giver, 'amount': largest_round_giver_amount}
     result['total_bought'] = db.session.query(func.sum(Purchase.amount))\
-        .filter(Purchase.product_id == product_id, Purchase.price > 0).group_by(Purchase.product_id).scalar()
+        .filter(Purchase.product_id == product_id, Purchase.price > 0).group_by(Purchase.product_id).scalar() or 0
 
     return result
 

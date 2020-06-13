@@ -3,8 +3,8 @@ from datetime import datetime, timedelta
 from flask_breadcrumbs import register_breadcrumb
 from sqlalchemy import Integer, and_
 
-from app import stats, socket, dbhandler, round_up, round_down, AttrDict
 from app.routes import *
+from app import stats, socket, dbhandler, round_up, round_down, AttrDict
 
 
 @app.route('/admin', methods=['GET', 'POST'])

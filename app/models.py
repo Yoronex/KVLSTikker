@@ -149,7 +149,7 @@ class Product(db.Model):
     inventories = db.relationship('Inventory', backref='product', lazy='dynamic')
 
     current_inventory = column_property(select([func.sum(Inventory.quantity)])
-                                        .where(Inventory.product_id == id).correlate_except(Inventory))
+                                        .where(Inventory.product_id == id).correlate_except(Inventory)) or 0
 
     def __repr__(self):
         return '<Product {} voor {}>'.format(self.name, self.price)
