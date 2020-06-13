@@ -1,0 +1,296 @@
+<h5>Bekende bugs</h5>
+<ul>
+    <li>Geen! Hoera!</li>
+</ul>
+<hr>
+<h5>Changelog</h5>
+<b>Versie 1.5.0.1 (13/06/2020)</b>: Bugfixes
+<ul>
+    <li>Bug gefixt waardoor de pagina om nooit gekochte producten af te tikken niet werkte</li>
+    <li>Bug gefixt waardoor de gebruikersoverzichten niet laadden</li>
+</ul>
+<b>Versie 1.5.0.0 (06/06/2020)</b>: De grote coronaupdate
+<ul>
+    <li>Soundboard toegevoegd
+        <ul>
+            <li>Geluiden kunnen afgespeeld worden vanaf de "Soundboard" pagina met de knop of het toetsenbord</li>
+            <li>Geluiden kunnen samen met een toets toegevoegd worden via het administratorpaneel</li>
+            <li>Geluiden kunnen verwijderd worden via het administratorpaneel</li>
+        </ul>
+    </li>
+    <li>Quotes toevoegen groots aangepast
+        <ul>
+            <li>Iedereen kan nu quotes toevoegen vanaf het hoofdmenu</li>
+            <li>Quotes moeten goedgekeurd worden vanaf het BigScreen Administratorpaneel</li>
+            <li>Quotes kunnen verwijderd worden. Dit is permanent!</li>
+        </ul>
+    </li>
+    <li>Penningmeester-paneel toegevoegd, waarin de status van gebruikerssaldo's en de inventaris beter geanalyseerd kan worden
+        <ul>
+            <li>Waarde van inventaris in het administratorpaneel verwijderd</li>
+            <li>De tabellen op deze pagina kunnen gesorteerd worden op verschillende kolommen</li>
+        </ul>
+    </li>
+    <li>Tabellen met alle data groots aangepast
+        <ul>
+            <li>Het uiterlijk van alle tabellen is sterk verbeterd, met onder andere gekleurde lijnen in plaats van kolommen</li>
+            <li>Filters toegevoegd aan de "Beheer transacties" tabel</li>
+            <li>Filters toegevoegd aan de "Beheer gebruikers" tabel</li>
+            <li>Filters toegevoegd aan de "Beheer groepen" tabel</li>
+            <li>Filters toegevoegd aan de tabel op de overzichtspagina van een gebruiker</li>
+        </ul>
+    </li>
+    <li>Mutaties in de winstpotjes worden nu bijgehouden in de database
+        <ul>
+            <li>Gebruikers kunnen nu declaraties doen aan een speltak en het geld terugkrijgen als Tikker saldo</li>
+        </ul>
+    </li>
+    <li>Transacties kunnen nu gefiltert worden op verschillende criteria</li>
+    <li>Opwaarderingen komen nu ook langs in Tikker BigScreen</li>
+    <li>Het veranderen van de deelnemers of de tijd bij Biertje Kwartiertje reset de klok niet meer</li>
+    <li>Wanneer je een persoon kiest om in te loggen op Spotify, kun je geen nieuwe naam meer invullen</li>
+    <li>Optimalisaties
+        <ul>
+            <li>Het Administratorpaneel laadt nu ongeveer 2-3x zo snel</li>
+            <li>De pagina om een product af te tikken is nu ongeveer 1.5x zo snel</li>
+            <li>Structuur van code flink verbeterd</li>
+        </ul>
+    </li>
+    <li>Foutmeldingen van formulieren zijn nu in het Nederlands</li>
+    <li>View-only modus toegevoegd, die gestart kan worden met de "-v" parameter in de command line</li>
+    <li>Directe "hard-coded" links in de interface vervangen door dynamische functies</li>
+    <li>Bug gefixt waardoor een rondje dubbel telde bij de "Totaal gedronken" statistieken op BigScreen</li>
+    <li>Bug gefixt bij inventaris correctie waardoor de inventaris van het laatst veranderde product niet veranderde</li>
+    <li>Repetetieve code opgeruimd en vervangen door functies</li>
+</ul>
+<b>Versie 1.4.4.1 (07/03/2019)</b>: Bugfixes
+<ul>
+    <li>De laatst geupdate slide wordt nu bij elke statistieken-update ook geupdate, waardoor de slides niet meer achter zouden moeten lopen</li>
+    <li><s>Bug gefixt waardoor een rondje dubbel telde bij de "Totaal gedronken" statistieken op BigScreen</s></li>
+    <li>Bug gefixt waardoor bij een gezamelijke transactie bij verwijderen uit de winkelwagen de aantallen en bedragen niet meer omhoog gingen</li>
+</ul>
+<b>Versie 1.4.4.0 (29/02/2020)</b>: Bugfixes en kleine verbeteringen
+<ul>
+    <li>De lijst met transacties in het gebruikersoverzicht en in het adminpaneel heeft nu verschillende pagina's met transacties, waardoor hij sneller laadt</li>
+    <li>In het administratorpaneel staat nu naast de aantallen inventaris ook de waarde van deze inventaris</li>
+    <li>Een error verschijnt nu bovenin het scherm wanneer er een fout wordt gemaakt in een formulier</li>
+    <li>Alle client-instellingen verplaatst vanaf het hoofdmenu naar een aparte pagina</li>
+    <li>Het bevestigen-scherm wanneer iets wordt verwijderd, laat ook zien wat je precies gaat verwijderen (naast alleen een ID)</li>
+    <li>Alle symbolen in Tikker zijn vervangen door tekst-symbolen in plaats van afbeeldingen</li>
+    <li>Prijskolommen in tabellen hebben nu een minimale breedte om te voorkomen dat het euro teken en de prijs beiden op een aparte lijn komen te staan</li>
+    <li>Bug gefixt die Tikker liet vastlopen wanneer iemand was ingelogd met Spotify en de internetverbinding tijdelijk wegviel</li>
+    <li>Bug gefixt waardoor Tikker BigScreen niet kon starten wanneer er geen internetverbinding was</li>
+</ul>
+<b>Versie 1.4.3.1 (14/02/2020)</b>: Hotfix
+<ul>
+    <li>Bug gefixt waardoor het opkomstdiner en gedeelde producten niet afgetikt konden worden</li>
+</ul>
+<b>Versie 1.4.3.0 (14/02/2020)</b>: Rondjes, bugfixes en code opgeruimd
+<ul>
+    <li>Socket waarop BigScreen communiceert met Tikker aangepast. <u>Tikker BigScreen moet ook geupdate worden!</u></li>
+    <li>Borrel modus kan nu aangezet worden vanuit het Administratorpaneel</li>
+    <li>Rondjes worden nu gegeven door een gebruiker en tellen mee voor de statistieken</li>
+    <li>Top 10 hoogste saldo's slide toegevoegd aan BigScreen</li>
+    <li>Saldo's van alle borrelaars slide toegevoegd aan BigScreen</li>
+    <li>Kalender in BigScreen negeert activiteiten met "TIKKERIGNORE" in de beschrijving/opmerkingen</li>
+    <li>Kalender wordt nu ieder half uur geupdate in plaats van iedere keer dat hij langs komt als slide</li>
+    <li>Menuknoppen onder het KVLS logo zijn groter gemaakt voor betere touchscreen ondersteuning</li>
+    <li>Achter de schermen de methode van het verwerken van orders grondig aangepast voor betere uitbreidmogelijkheden</li>
+    <li>Code opgeruimd, want dat moet soms ook gebeuren</li>
+    <li>Bug gefixt die het aantal borrelaars in BigScreen niet veranderde</li>
+    <li>Bug gefixt die het opkomstdiner meetelde bij het aantal gekochte drankjes op BigScreen</li>
+    <li>Bug gefixt die gedeelde aankopen niet meetelde in de statistieken</li>
+</ul>
+<b>Versie 1.4.2 (25/01/2020)</b>: Biertje kwartiertje en bugfixes
+<ul>
+    <li>Biertje Kwartiertje toegevoegd aan BigScreen</li>
+    <li>Inventariscorrectie genereert nu een rapport in het .docx formaat in de map 'documents'</li>
+    <li>De maandelijkse overzichtemails hebben nu ook een tabel met hoeveel er van alles gekocht is</li>
+    <li>De feestdagen zijn voorbij, dus de sneeuw is uitgezet</li>
+    <li>De "Rondje" checkbox is vervangen door een toggle knop voor een betere touchscreen ervaring</li>
+    <li>Bug gefixt in inventariscorrectie die de verkeerde of geen inventaris liet zien bij producten</li>
+    <li>Bug gefixt in inventariscorrectie die bij het corrigeren van negatieve inventaris fouten maakte in de inventaris database</li>
+    <li>Bug gefixt die de kalender op BigScreen niet in chronologische volgorde zette, maar in volgorde van toevoegen aan de agenda</li>
+    <li>Bug gefixt die BigScreen liet crashen wanneer iemand Flugel had gedronken</li>
+    <li>Bug gefixt errors veroorzaakte wanneer iemand een podcast aan het afspelen was op Spotify</li>
+    <li>Bug gefixt die het versturen van emails stopt, als de email server weigert hem te versturen</li>
+    <li>Enkele wijzigingen doorgevoord die <i>floating point errors</i> in saldo's verminderen</li>
+</ul>
+<b>Versie 1.4.1 (11/01/2019)</b>: Penningmeester email
+<ul>
+    <li>De penningmeester van de bar krijgt nu samen met de schuldemails een mail met de actuele saldo's, inventaris en winstpotjes</li>
+</ul>
+<b>Versie 1.4.0 (31/12/2019)</b>: Emails
+<ul>
+    <li>Tikker kan nu emails versturen</li>
+    <ul>
+        <li>Elke week wanneer iemands schuld hoger is dan 30 euro</li>
+        <li>Elke maand wanneer iemand heeft meegegeten bij het opkomstdiner</li>
+        <li>Elke maand een volledig transactieoverzicht van de afgelopen maand</li>
+        <li>Mails moeten handmatig verstuurd worden bij het afsluiten van Tikker</li>
+    </ul>
+    <li>Agenda slide toegevoegd aan BigScreen</li>
+</ul>
+<b>Versie 1.3.3 (14/12/2019)</b>: Borrels
+<ul>
+    <li>Borrelmodus toegevoegd</li>
+    <ul>
+        <li>Eén gebruiker betaalt voor alle afgetikte drankjes</li>
+        <li>Gebruiker betaalt alleen voor drankjes uit een speciale (handmatig) gekozen selectie</li>
+        <li>Borrelmodus staat aan totdat de ingelegde drank op is</li>
+        <li>Aankopen tellen nog steeds mee voor statistieken, maar hebbene een prijs van nul euro en geen inventaris</li>
+    </ul>
+    <li>Tikker onthoudt nu de Spotify-logins van meerdere accounts</li>
+</ul>
+<b>Versie 1.3.2 (07/12/2019)</b>: Merry Christmas!
+<ul>
+    <li>Sneeuw toegevoegd aan Tikker en Tikker BigScreen</li>
+    <li>"Sneeuw uit" knop toegevoegd aan Tikker BigScreen controlepaneel</li>
+    <li>Herstartknop toegevoegd aan Tikker BigScreen controlepaneel</li>
+</ul>
+<b>Versie 1.3.1 (30/11/2019)</b>: Extra slides
+<ul>
+    <li>Ondersteuning voor de volgende slides van BigScreen toegevoegd
+        <ul>
+            <li>Prins Pils en het Flugelmeisje van de avond</li>
+            <li>Recent afgespeelde tracks op Spotify</li>
+            <li>Individuele grafieken voor de top3 meest gedronken drankjes</li>
+        </ul>
+    </li>
+    <li>Diner telt bij een aantal onrelevante statistieken niet meer mee</li>
+    <li>In Dark Mode zijn tabelkolommen ook zwart en niet meer wit</li>
+</ul>
+<b>Versie 1.3.0 (23/11/2019)</b>: Tikker Bigscreen en meer...
+<ul>
+    <li>Ondersteuning toevoegd voor Tikker BigScreen</li>
+    <ul>
+        <li>Actuele statistieken aan de linkerkant</li>
+        <li>Integratie met Spotify</li>
+        <li>Notificatie wanneer iets wordt afgetikt</li>
+        <li>Diavoorstelling met grafieken en getallen, zoals schulden, producten en meest gedronken</li>
+    </ul>
+    <li>Speciale pagina toegevoegd voor het Stam opkomstdiner, zodat handmatig inventaris toevoegen niet meer hoeft</li>
+    <li>Productcategorieën toegevoegd</li>
+    <li>Afsluiten-knop verplaatst van Administratorpaneel naar hoofdmenu. De knop werkt alleen op de host-computer</li>
+    <li>Opwaarderen-knop verplaats van hoofdmenu naar Administratorpaneel</li>
+    <li>"Vergoeding inkoop" toegevoegd als beschrijving van een opwaardering</li>
+    <li>Bug gefixt die soms 'confetti uit' liet zien, terwijl de confetti al uit was</li>
+    <li>Bug gefixt die de nieuwe positie van een product verkeerd verwerkte</li>
+    <li>Bug gefixt die de huidige positie van een product altijd op vooraan zette</li>
+    <li>Bug gefixt die het vakje beschikbaar altijd aanvinkte bij het bewerken van onbeschikbare producten </li>
+</ul>
+<b>Versie 1.2.3 (04/10/2019)</b>: Kleine toevoegingen
+<ul>
+    <li>Beschrijving van een opwaardering toegevoegd</li>
+    <li>Bij de aankooppagina van een product staat nu ook de afbeelding van dat product</li>
+    <il>Bug gefixt die 18 plussers ook 18- maakte op de verkooppagina</il>
+</ul>
+<b>Versie 1.2.2 (28/09/2019)</b>: Bugfixes
+<ul>
+    <li>Bij de statistieken worden rondjes niet meer meegeteld</li>
+    <li>Menuknop is nu wit in plaats van zwart in Dark mode</li>
+    <li>Bug gefixt die ervoor zorgde dat mensen die nog jarig moesten worden dit jaar nu al jarig waren volgens Tikker</li>
+    <li>Wanneer non-alcoholische of mixdranken worden afgetikt, worden de namen van minderjarigen half transparant en staat er (18-) bij de naam</li>
+    <li>Bug gefixt bij de Statistieken die bij meer dan 10 producten/mensen een error veroorzaakte</li>
+</ul>
+<b>Versie 1.2.1 (21/09/2019)</b>: Kleine toevoegingen en bugfixes
+<ul>
+    <li>Het groene Tikker-online bolletje is nu pulserend</li>
+    <li>Email van gebruiker toegevoegd</li>
+    <li>Favicon toegevoegd</li>
+    <li>Bug gefixt die ervoor zorgde dat sommige scripts niet meer werkten</li>
+</ul>
+<b>Versie 1.2.0 (18/09/2019)</b>: Statistieken en puntjes-op-de-i update
+<ul>
+    <li>Dark modus toegevoegd
+        <ul>
+            <li>Er is een knop in het hoofdmenu om te wisselen tussen Light en Dark mode</li>
+        </ul>
+    </li>
+    <li>Verjaardagen toegevoegd
+        <ul>
+            <li>Wanneer iemand jarig is, verschijnt er confetti op de homepage</li>
+            <li>Confetti kan lokaal aan of uit gezet worden met een knop in het hoofdmenu</li>
+            <li>De eerste keer dat de homepage geopend wordt, verschijnt er een melding wie jarig is met twee knoppen voor traktaties</li>
+        </ul>
+    </li>
+    <li>Meer statistieken toegevoegd
+        <ul>
+            <li>Cirkeldiagram van gekochte producten per gebruiker toegevoegd</li>
+            <li>Lijn- en staafdiagrammen toegevoegd over saldo per gebruiker</li>
+            <li>Staaf- en Cirkeldiagram van gebruikers per product toegevoegd</li>
+            <li>Staaf- en Cirkeldiagram van groepen per product toegevoegd</li>
+        </ul>
+    </li>
+    <li>De status van Tikker wordt nu periodiek gecontroleerd (elke 15 seconden)
+        <ul>
+            <li>Rechtsbovenin de hoek staat de status van Tikker (online of offline)</li>
+            <li>Wanneer Tikker offline gaat, verschijnt een popup en wordt het scherm geblokkeerd</li>
+            <li>De popup verdwijnt wanneer de verbinding met Tikker hersteld is</li>
+        </ul>
+    </li>
+    <li>Opwaarderen heeft nu een nieuw veld die de commissie van Sumup automatisch uitrekent</li>
+    <li>Hoofdmenu aan de linkerkant scrollt nu niet meer mee met de pagina</li>
+    <li>Knoppen en invoervelden zijn nu allemaal groen of hebben een oranje gloed
+        <ul>
+            <li>Wanneer je met je muis over een knop gaat, krijgt hij een lichtere kleur</li>
+        </ul>
+    </li>
+    <li>Knop toegevoegd naast kruimelpad om het hoofdmenu te verbergen of tevoorschijn te halen.</li>
+    <li>Bug gefixt bij het gezamenlijk aftikken, die de aantallen niet aanpaste wanneer iemand uit de winkelwagen verwijderd werd</li>
+    <li>Bug gefixt die de "verstuur" knop op de Opwaarderen-pagina non-functioneel maakte</li>
+    <li>Bug gefixt die een error veroorzaakte, wanneer een gebruiker was verwijderd die nog een aankoop op noodinventaris had gedaan</li>
+    <li>Bug gefixt die namen van producten, personen of groepen in het kruimelpad naar de verkeerde pagina leidde</li>
+</ul>
+<b>Versie 1.1.1 (2019-08-31)</b>: Bugfixes
+<ul>
+    <li>Bug gefixt die een error veroorzaakte wanneer je een negatieve inventaris ging ophogen</li>
+    <li>Bug gefixt die de "over" pagina niet deed verschijnen</li>
+</ul>
+<b>Versie 1.1.0 (2019-08-31)</b>: Inventaris update
+<ul>
+    <li>Inventaris toegevoegd:
+        <ul>
+            <li>Elk product heeft een eigen inventaris</li>
+            <li>Een product dat uit meerdere producten bestaat (bijvoorbeeld een mix), deelt de inventaris met de ingrediënten</li>
+            <li>Inventaris kan negatief worden</li>
+        </ul>
+    </li>
+    <li>Inventariscorrectie toegevoegd om niet of dubbel afgetikte producten te corrigeren in de inventaris
+        <ul>
+            <li>Per product kan gekozen worden welke groep opdraait voor de kosten (of de opbrengst)</li>
+        </ul>
+    </li>
+    <li>Winst per groep toegevoegd:
+        <ul>
+            <li>Per verkocht product wordt de prijs bijgeschreven en kosten afgetrokken</li>
+            <li>Winst kan uitgekeerd worden met een verificatiecode</li>
+        </ul>
+    </li>
+    <li>
+        <ul>
+            <li>Afbeeldingen op het hoofdmenu hebben nu een nieuwe afbeelding als je met je muis over ze heen beweegt</li>
+            <li>Ondersteuning voor .png, .bmp en .gif afbeeldingen toegevoegd</li>
+        </ul>
+    </li>
+    <li>Elke keer bij opstarten wordt een backup gemaakt van de database</li>
+    <li>Foutmeldingen worden opgeslagen in een tekstbestand voor reproducering</li>
+    <li>Afsluitknop toegevoegd aan het administratorpaneel</li>
+    <li>Enkele statistieken toegevoegd:
+        <ul>
+            <li>Per product kan nu de hoeveelheid en het alcoholpercentage opgegeven worden</li>
+            <li>Statistieken toegevoegd bij elke productaankooppagina</li>
+            <li>Enkele statistieken toegevoegd aan het administratorpaneel</li>
+            <li>Staafdiagram van gekochte producten toegevoegd aan gebruikersoverzicht van een gebruiker</li>
+        </ul>
+    </li>
+    <li>URL's zijn nu allemaal donkergrijs in plaats van blauw</li>
+    <li>NIX18 logo in de linkerhoek toegevoegd</li>
+</ul>
+<b>Versie 1.0.0 (2019-03-07)</b>: Initiële versie
+<ul>
+    <li>Betaalscherm toegevoegd</li>
+    <li>Administratorpaneel toegevoegd</li>
+    <li>Beheer van gebruikers, groepen, producten en transacties toegevoegd</li>
+    <li>Homepagina met afbeeldingen voor producten toegevoegd</li>
+</ul>

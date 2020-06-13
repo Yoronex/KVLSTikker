@@ -1,8 +1,8 @@
 from datetime import datetime
 from flask_breadcrumbs import register_breadcrumb
 
-from app import stats, socket, spotify, dbhandler, cart
 from app.routes import *
+from app import stats, socket, spotify, dbhandler, cart
 
 
 @register_breadcrumb(app, '.admin.bigscreen', 'BigScreen', order=2)

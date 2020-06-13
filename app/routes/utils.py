@@ -1,5 +1,5 @@
-from app import spotify, socketio, dbhandler, emailhandler
 from app.routes import *
+from app import spotify, socketio, dbhandler, emailhandler
 
 
 def shutdown_server():
