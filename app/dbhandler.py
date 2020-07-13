@@ -1,4 +1,4 @@
-from app import app, db, stats, round_up, round_down
+from app import app, db, statshandler, round_up, round_down
 from app.models import *
 from werkzeug.utils import secure_filename
 from datetime import datetime
@@ -76,7 +76,7 @@ def initialize_settings():
             db.session.commit()
 
     # Finally, add all settings to the settings object
-    # This includes duplicates for the stats (see stats.py)
+    # This includes duplicates for the stats (see statshandler.py)
     for s in Setting.query.all():
         settings[s.key] = s.value
 
@@ -255,14 +255,14 @@ def addpurchase(drink_id, user_id, quantity, rondje, price_per_one):
     db.session.commit()
 
     # Update the daily stats with the new purchase
-    stats.update_daily_stats_product(drink_id, quantity)
-    stats.update_daily_stats('euros', balchange)
-    stats.update_daily_stats_drinker(user_id)
+    statshandler.update_daily_stats_product(drink_id, quantity)
+    statshandler.update_daily_stats('euros', balchange)
+    statshandler.update_daily_stats_drinker(user_id)
     # If the price is zero, we do not add this purchase as it is added somewhere else
     if price_per_one > 0 and drink_id != settings['dinner_product_id']:
-        stats.update_daily_stats('purchases', 1)
+        statshandler.update_daily_stats('purchases', 1)
     if rondje:
-        stats.update_daily_stats('rounds', 1)
+        statshandler.update_daily_stats('rounds', 1)
     return quantity, drink.name, user.name, "success"
 
 
@@ -282,7 +282,7 @@ def addbalance(user_id, description, amount, profit_id=None):
     db.session.commit()
 
     # Update the daily stats accordingly
-    stats.update_daily_stats('euros', upgrade.amount)
+    statshandler.update_daily_stats('euros', upgrade.amount)
 
     return upgrade
 
@@ -425,7 +425,7 @@ def adddrink(name, price, category, order, image, hoverimage, recipe, inventory_
     db.session.commit()
 
     # Update the daily stats because we added a product
-    stats.update_daily_stats('products', 1)
+    statshandler.update_daily_stats('products', 1)
 
     return "Product {} succesvol aangemaakt".format(product.name), "success"
 
@@ -435,7 +435,7 @@ def adduser(name, email, group, profitgroup, birthday):
     db.session.add(user)
     db.session.commit()
 
-    stats.update_daily_stats('users', 1)
+    statshandler.update_daily_stats('users', 1)
 
     return "Gebruiker {} succesvol geregistreerd".format(user.name), "success"
 
@@ -501,7 +501,7 @@ def deluser(user_id):
         db.session.delete(user)
         db.session.commit()
 
-        stats.update_daily_stats('users', -1)
+        statshandler.update_daily_stats('users', -1)
 
         return "Gebruiker {} verwijderd".format(name), "success"
 
@@ -668,9 +668,9 @@ def editdrink_attr(product_id, name, price, category, order, purchaseable, recip
     db.session.commit()
 
     if purchaseable_old is True and purchaseable is False:
-        stats.update_daily_stats('products', -1)
+        statshandler.update_daily_stats('products', -1)
     elif purchaseable_old is False and purchaseable is True:
-        stats.update_daily_stats('products', 1)
+        statshandler.update_daily_stats('products', 1)
 
     return "Product {} (ID: {}) succesvol aangepast!".format(product.name, product.id), "success"
 

@@ -3,7 +3,7 @@ import copy
 from flask_breadcrumbs import register_breadcrumb
 
 from app.routes import *
-from app import stats, dbhandler, cart
+from app import statshandler, dbhandler, cart
 
 birthday = False
 showed_birthdays = True
@@ -70,7 +70,7 @@ def user(userid):
     data = []
     for p_id, amount in count.items():
         data.append((p_id, Product.query.get(p_id).name, int(amount)))
-    ids, values, labels = stats.top_n(count, data, 20)
+    ids, values, labels = statshandler.top_n(count, data, 20)
 
     return render_template('user.html', title=user.name, h1="Informatie over " + user.name, user=user, filters=filters,
                            transactions=transactions, ids=ids, data=values, labels=labels, url_prefix="",
