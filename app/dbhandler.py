@@ -253,14 +253,18 @@ def addpurchase(drink_id, user_id, quantity, rondje, price_per_one):
     db.session.commit()
 
     # Update the daily stats with the new purchase
-    statshandler.update_daily_stats_product(drink_id, quantity)
     statshandler.update_daily_stats('euros', balchange)
     statshandler.update_daily_stats_drinker(user_id)
     # If the price is zero, we do not add this purchase as it is added somewhere else
     if price_per_one > 0 and drink_id != settings['dinner_product_id']:
         statshandler.update_daily_stats('purchases', 1)
+    # If this purchase is a round, we add it to the number of rounds given today
     if rondje:
         statshandler.update_daily_stats('rounds', 1)
+    # If it is not a round, we add it to the stats per product
+    else:
+        statshandler.update_daily_stats_product(drink_id, quantity)
+
     return quantity, drink.name, user.name, "success"
 
 
@@ -308,7 +312,6 @@ def add_declaration(user_id, description, amount, group_id):
 
     # Add the balance
     return addbalance(user_id, description, amount, profit_id)
-
 
 
 def parse_recipe(recipe):
