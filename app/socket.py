@@ -48,7 +48,8 @@ def init_bigscreen(msg):
                   'spotify': spotify_data,
                   'stats': {'daily': stats_daily,
                             'max': stats_max},
-                  'snow': EN_SNOW})
+                  'snow': EN_SNOW,
+                  'biertje_kwartiertje': {'minutes': dbhandler.biertje_kwartiertje_time}})
 
 
 @socketio.on('spotify', namespace='/bigscreen')
