@@ -228,8 +228,6 @@ def addpurchase(drink_id, user_id, quantity, rondje, price_per_one):
     # Save to database
     db.session.commit()
 
-    print(profit_obj.percentage)
-
     # Calculate the new user balance
     user.balance = user.balance - round_up(float(price_per_one) * quantity)
     # Create a purchase entry in the table, so we can use its purchase ID to create the transaction
@@ -976,13 +974,11 @@ def fix_negative_inventory(p_id):
         neg_inv = [neg_inv]
 
     for n in neg_inv:
-        print("N: " + neg_inv.__repr__())
         pos_inv = Inventory.query.filter(and_(
             Inventory.product_id == p_id,
             Inventory.quantity > 0,
             Inventory.timestamp > n.timestamp
         )).all()
-        print("P: " + pos_inv.__repr__())
         if type(pos_inv) is Inventory:
             pos_inv = [pos_inv]
         for p in pos_inv:

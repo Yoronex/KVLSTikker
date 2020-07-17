@@ -120,7 +120,6 @@ def get_slide_data(name):
 
     elif name == "Quote":
         quotes = Quote.query.filter(Quote.approved == True).all()
-        print(quotes)
         q = quotes[randrange(len(quotes))]
         return q.value
 
