@@ -681,32 +681,3 @@ def admin_treasurer():
                            category_v=category_v, rendertime=render_time, users=users,
                            total_u_balance=total_u_balance, total_u_average=total_u_average,
                            total_u_per_week=total_u_per_week), 200
-
-
-
-@app.route('/admin/recalcmax')
-def recalculate_max_stats():
-    check_if_local_machine()
-    check_if_not_view_only()
-
-    transactions = Transaction.query.all()
-    begindate = datetime(year=2019, month=7, day=1, hour=12, minute=0, second=0)
-    for t in transactions:
-        begindate2 = statshandler.get_yesterday_for_today(t.timestamp)
-        if begindate2 != begindate:
-            begindate = begindate2
-            statshandler.reset_daily_stats()
-        statshandler.update_daily_stats("euros", t.balchange)
-
-        if t.purchase_id is not None:
-            p = Purchase.query.get(t.purchase_id)
-            if p.round:
-                statshandler.update_daily_stats("rounds", 1)
-            statshandler.update_daily_stats_drinker(p.user_id)
-            if p.price > 0:
-                statshandler.update_daily_stats_product(p.product_id, p.amount)
-            statshandler.update_daily_stats("purchases", 1)
-    statshandler.update_daily_stats("products", Product.query.filter(Product.purchaseable == True).count())
-    statshandler.update_daily_stats("users", User.query.count())
-    socket.update_stats()
-    return redirect(url_for("index"))

@@ -72,6 +72,7 @@ else:
 from app import models
 from app.routes import admin, bigscreen, stats, user, utils
 from app.models import *
+from app import commands
 
 if not app.debug:
     if not os.path.exists(app.config["LOG_FOLDER"]):
