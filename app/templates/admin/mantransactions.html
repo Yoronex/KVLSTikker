@@ -28,7 +28,7 @@
                             <td>{{ t.user.name }} (ID: {{ t.user_id }})</td>
                             {% if t.purchase_id is not none %}
                                 {% with purchase = t.purchase %}
-                                <td>{{ purchase.amount }}x {{ purchase.product.name }} (ID: {{ t.purchase_id }})</td>
+                                <td>{% if purchase.round %}(R){% endif %} {{ purchase.amount }}x {{ purchase.product.name }} (ID: {{ t.purchase_id }})</td>
                                 {% endwith %}
                             {% else %}
                                 {% with upgrade = t.upgrade %}
