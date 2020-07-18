@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from flask_breadcrumbs import register_breadcrumb
 
 from app.routes import *
-from app import stats
+from app import statshandler
 
 plotcolours = ["#0b8337", "#ffd94a", "#707070"]
 
@@ -39,8 +39,8 @@ def stats_user(userid, begindate, enddate):
     parsedbegin = datetime.strptime(begindate, "%Y-%m-%d")
     parsedend = datetime.strptime(enddate, "%Y-%m-%d")
 
-    datat, idw, labelw, valuew = stats.balance_over_time_user(userid, parsedbegin, parsedend)
-    ids, values, labels = stats.most_bought_products_per_user(userid, parsedbegin, parsedend)
+    datat, idw, labelw, valuew = statshandler.balance_over_time_user(userid, parsedbegin, parsedend)
+    ids, values, labels = statshandler.most_bought_products_per_user(userid, parsedbegin, parsedend)
 
     return render_template("stats/statsuser.html", title="Statistieken van " + user.name,
                            h1="Statistieken van " + user.name, ids=ids, data=values, labels=labels, idw=idw,
@@ -67,8 +67,8 @@ def stats_drink(drinkid, begindate, enddate):
     parsedbegin = datetime.strptime(begindate, "%Y-%m-%d")
     parsedend = datetime.strptime(enddate, "%Y-%m-%d")
 
-    idsg, valuesg, labelsg = stats.most_bought_of_one_product_by_groups(drinkid, parsedbegin, parsedend)
-    idsu, valuesu, labelsu = stats.most_bought_of_one_product_by_users(drinkid, parsedbegin, parsedend)
+    idsg, valuesg, labelsg = statshandler.most_bought_of_one_product_by_groups(drinkid, parsedbegin, parsedend)
+    idsu, valuesu, labelsu = statshandler.most_bought_of_one_product_by_users(drinkid, parsedbegin, parsedend)
 
     return render_template("stats/statsproduct.html", title='Statistieken over {}'.format(product.name),
                            h1='Statistieken over {}'.format(product.name),
@@ -99,9 +99,9 @@ def stats_drink_group(drinkid, groupid, begindate, enddate):
     parsedbegin = datetime.strptime(begindate, "%Y-%m-%d")
     parsedend = datetime.strptime(enddate, "%Y-%m-%d")
 
-    idsu, valuesu, labelsu = stats.most_bought_of_one_product_by_users_from_group(drinkid, groupid, parsedbegin,
+    idsu, valuesu, labelsu = statshandler.most_bought_of_one_product_by_users_from_group(drinkid, groupid, parsedbegin,
                                                                                   parsedend)
-    idsg, valuesg, labelsg = stats.most_bought_of_one_product_by_groups_from_group(drinkid, groupid, parsedbegin,
+    idsg, valuesg, labelsg = statshandler.most_bought_of_one_product_by_groups_from_group(drinkid, groupid, parsedbegin,
                                                                                    parsedend)
 
     return render_template("stats/statsproduct.html",

@@ -94,7 +94,7 @@ def init_max_stats():
                 max_stats[s.key] = int(float(s.value))
 
 
-def reset_daily_stats():
+def reset_daily_stats(full=False):
     global daily_stats
     global daily_stats_seen_users
 
@@ -105,6 +105,20 @@ def reset_daily_stats():
     daily_stats["purchases"] = 0
     daily_stats["rounds"] = 0
     daily_stats_seen_users = set({})
+
+    if full:
+        daily_stats["products"] = 0
+        daily_stats["users"] = 0
+        daily_stats["euros"] = 0
+
+
+def reset_max_stats():
+    for key in ['drinkers', 'beers', 'mixes', 'shots', 'purchases', 'rounds', 'euros', 'products', 'users']:
+        real_key = 'max-stats-' + key
+        max_stats[real_key] = 0
+        setting = Setting.query.get(real_key)
+        setting.value = str(0)
+        db.session.commit()
 
 
 def update_daily_stats(key, update_val):
@@ -136,6 +150,19 @@ def update_daily_stats_drinker(user_id):
     new_length = len(daily_stats_seen_users)
     # Update the daily stats with the difference between the lengths
     update_daily_stats("drinkers", new_length - old_length)
+
+
+def update_daily_stats_purchase(user_id, drink_id, quantity, rondje, price_per_one):
+    update_daily_stats_drinker(user_id)
+    # If the price is zero, we do not add this purchase as it is added somewhere else
+    if price_per_one > 0 and drink_id != settings['dinner_product_id']:
+        update_daily_stats('purchases', 1)
+    # If this purchase is a round, we add it to the number of rounds given today
+    if rondje:
+        update_daily_stats('rounds', 1)
+    # If it is not a round, we add it to the stats per product
+    else:
+        update_daily_stats_product(drink_id, quantity)
 
 
 def get_yesterday_for_today(enddate):

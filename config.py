@@ -27,7 +27,7 @@ class Config(object):
     MAIL_USERNAME = os.getenv('MAIL_USERNAME')
     MAIL_PASSWORD = os.getenv('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = ("KVLS Tikker", "tikker@kvls.nl")
-    DEBT_MAXIMUM = -10.0  # Negative balance is
+    DEBT_MAXIMUM = 0.0  # Negative balance is
     SPOTIPY_CLIENT_ID = os.getenv('SPOTIPY_CLIENT_ID')
     SPOTIPY_CLIENT_SECRET = os.getenv('SPOTIPY_CLIENT_SECRET')
     SPOTIPY_REDIRECT_URI = 'http://127.0.0.1:5000/api/spotify/login'

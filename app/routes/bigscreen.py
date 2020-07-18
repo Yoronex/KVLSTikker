@@ -2,7 +2,7 @@ from datetime import datetime
 from flask_breadcrumbs import register_breadcrumb
 
 from app.routes import *
-from app import stats, socket, spotify, dbhandler, cart
+from app import statshandler, socket, spotify, dbhandler, cart
 
 
 @register_breadcrumb(app, '.admin.bigscreen', 'BigScreen', order=2)
@@ -216,7 +216,7 @@ def api_total_alcohol():
     parsedbegin = datetime.strptime(begindate, "%Y-%m-%d")
     parsedend = datetime.strptime(enddate, "%Y-%m-%d")
 
-    ids, values, labels = stats.most_alcohol_drank_by_users(parsedbegin, parsedend)
+    ids, values, labels = statshandler.most_alcohol_drank_by_users(parsedbegin, parsedend)
 
     return jsonify({"ids": ids,
                     "values": values,

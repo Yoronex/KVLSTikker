@@ -6,7 +6,7 @@ from flask import render_template, flash
 from flask_mail import Message
 from sqlalchemy import and_
 
-from app import app, mail, dbhandler, db, stats
+from app import app, mail, dbhandler, db, statshandler
 from app.models import User, Purchase, Transaction, Product, Upgrade, Usergroup
 
 enabled = True
@@ -118,7 +118,7 @@ def create_overview_emails(users, begindate, enddate):
         if len(transactions) > 0:
             months = monthlist_fast([begindate, enddate])
 
-            product_ids, product_amount, product_names = stats.most_bought_products_per_user(u.id, begindate, enddate,
+            product_ids, product_amount, product_names = statshandler.most_bought_products_per_user(u.id, begindate, enddate,
                                                                                              nr_of_products)
 
             result = {'html': render_template('email/overview.html', user=u, transactions=transactions, Product=Product,

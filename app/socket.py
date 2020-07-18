@@ -1,4 +1,4 @@
-from app import app, socketio, stats, spotify, dbhandler, EN_SNOW, cart
+from app import app, socketio, statshandler, spotify, dbhandler, EN_SNOW, cart
 from flask_socketio import emit
 from datetime import datetime
 from sqlalchemy import and_
@@ -48,7 +48,8 @@ def init_bigscreen(msg):
                   'spotify': spotify_data,
                   'stats': {'daily': stats_daily,
                             'max': stats_max},
-                  'snow': EN_SNOW})
+                  'snow': EN_SNOW,
+                  'biertje_kwartiertje': {'minutes': dbhandler.biertje_kwartiertje_time}})
 
 
 @socketio.on('spotify', namespace='/bigscreen')
@@ -86,7 +87,7 @@ def get_slide_data(name):
     global third_most_drank, second_most_drank, most_drank, cal, last_calendar_update
 
     if name == "DrankTonight":
-        data = stats.most_bought_products_by_users_today(datetime.now())
+        data = statshandler.most_bought_products_by_users_today(datetime.now())
         if len(data[0]) >= 3:
             third_most_drank = data[0][2]
         if len(data[0]) >= 2:
@@ -120,7 +121,6 @@ def get_slide_data(name):
 
     elif name == "Quote":
         quotes = Quote.query.filter(Quote.approved == True).all()
-        print(quotes)
         q = quotes[randrange(len(quotes))]
         return q.value
 
@@ -153,7 +153,7 @@ def get_slide_data(name):
         ubalances = []
         unparsed = []
         # Loop over all users that are seen today
-        for id in stats.daily_stats_seen_users:
+        for id in statshandler.daily_stats_seen_users:
             # Get the user object
             u = User.query.get(id)
             # Add this user with their name and balance to the list of users
@@ -167,11 +167,11 @@ def get_slide_data(name):
     elif name == "Title":
         if dbhandler.settings['beer_product_id'] is not None and dbhandler.settings['flugel_product_id'] is not None:
             enddate = datetime.now()
-            begindate = stats.get_yesterday_for_today(enddate)
+            begindate = statshandler.get_yesterday_for_today(enddate)
 
-            idsb, valuesb, namesb = stats.most_bought_of_one_product_by_users(dbhandler.settings['beer_product_id'],
+            idsb, valuesb, namesb = statshandler.most_bought_of_one_product_by_users(dbhandler.settings['beer_product_id'],
                                                                               begindate, enddate)
-            idsf, valuesf, namesf = stats.most_bought_of_one_product_by_users(dbhandler.settings['flugel_product_id'],
+            idsf, valuesf, namesf = statshandler.most_bought_of_one_product_by_users(dbhandler.settings['flugel_product_id'],
                                                                               begindate, enddate)
 
             most_beers = get_top_users(namesb, valuesb)
@@ -252,7 +252,7 @@ def get_slide_data(name):
 
 def most_drank_data(drinkid):
     if drinkid > 0:
-        data = stats.most_bought_of_one_product_by_users_today(drinkid, datetime.now())
+        data = statshandler.most_bought_of_one_product_by_users_today(drinkid, datetime.now())
         return {'labels': data[2],
                 'values': data[1],
                 'product_name': Product.query.get(drinkid).name}
@@ -273,8 +273,8 @@ def update_stats():
 
 
 def get_stats():
-    daily = copy.deepcopy(stats.daily_stats)
-    maxim = copy.deepcopy(stats.max_stats)
+    daily = copy.deepcopy(statshandler.daily_stats)
+    maxim = copy.deepcopy(statshandler.max_stats)
 
     for key, val in daily.items():
         if key != "euros":

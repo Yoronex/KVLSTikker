@@ -1,6 +1,6 @@
 {% extends 'bootstrap/base.html' %}
 
-{% set version = "1.5.0.1" %}
+{% set version = "1.5.0.2" %}
 
 {% block title %}
 {% if view_only %}(VIEW ONLY){% endif %}
@@ -153,7 +153,7 @@
                     <div class="col">
                         <script>
                             window.setTimeout(function () {
-                                $(".alert-dismissable").fadeTo(500, 0).slideUp(500, function () {
+                                $(".alert-dismissible").fadeTo(500, 0).slideUp(500, function () {
                                     $(this).remove();
                                 });
                             }, 4000);

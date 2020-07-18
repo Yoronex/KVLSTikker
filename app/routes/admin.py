@@ -4,7 +4,7 @@ from flask_breadcrumbs import register_breadcrumb
 from sqlalchemy import Integer, and_
 
 from app.routes import *
-from app import stats, socket, dbhandler, round_up, round_down, AttrDict
+from app import statshandler, socket, dbhandler, round_up, round_down, AttrDict
 
 
 @app.route('/admin', methods=['GET', 'POST'])
@@ -567,8 +567,8 @@ def admin_treasurer():
         vdata.append((p['id'], p['name'], round_down(p['inventory_value'])))
     # Process the data lists for the graphs on the page
     product_q, product_v = {}, {}
-    product_q['ids'], product_q['value'], product_q['labels'] = stats.topall(None, qdata)
-    product_v['ids'], product_v['value'], product_v['labels'] = stats.topall(None, vdata)
+    product_q['ids'], product_q['value'], product_q['labels'] = statshandler.topall(None, qdata)
+    product_v['ids'], product_v['value'], product_v['labels'] = statshandler.topall(None, vdata)
 
     '''
     Create the category graphs 
@@ -600,8 +600,8 @@ def admin_treasurer():
         vdata.append((0, category, round(v['value'])))
     # Parse the data into readable data for the graphs
     category_q, category_v = {}, {}
-    category_q['ids'], category_q['value'], category_q['labels'] = stats.topall(None, qdata)
-    category_v['ids'], category_v['value'], category_v['labels'] = stats.topall(None, vdata)
+    category_q['ids'], category_q['value'], category_q['labels'] = statshandler.topall(None, qdata)
+    category_v['ids'], category_v['value'], category_v['labels'] = statshandler.topall(None, vdata)
 
     '''
     Query the users table
@@ -681,32 +681,3 @@ def admin_treasurer():
                            category_v=category_v, rendertime=render_time, users=users,
                            total_u_balance=total_u_balance, total_u_average=total_u_average,
                            total_u_per_week=total_u_per_week), 200
-
-
-
-@app.route('/admin/recalcmax')
-def recalculate_max_stats():
-    check_if_local_machine()
-    check_if_not_view_only()
-
-    transactions = Transaction.query.all()
-    begindate = datetime(year=2019, month=7, day=1, hour=12, minute=0, second=0)
-    for t in transactions:
-        begindate2 = stats.get_yesterday_for_today(t.timestamp)
-        if begindate2 != begindate:
-            begindate = begindate2
-            stats.reset_daily_stats()
-        stats.update_daily_stats("euros", t.balchange)
-
-        if t.purchase_id is not None:
-            p = Purchase.query.get(t.purchase_id)
-            if p.round:
-                stats.update_daily_stats("rounds", 1)
-            stats.update_daily_stats_drinker(p.user_id)
-            if p.price > 0:
-                stats.update_daily_stats_product(p.product_id, p.amount)
-            stats.update_daily_stats("purchases", 1)
-    stats.update_daily_stats("products", Product.query.filter(Product.purchaseable == True).count())
-    stats.update_daily_stats("users", User.query.count())
-    socket.update_stats()
-    return redirect(url_for("index"))
