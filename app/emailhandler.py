@@ -80,7 +80,8 @@ def create_debt_emails(users):
         if u.balance < app.config['DEBT_MAXIMUM']:
             result = {'html': render_template('email/debt.html', user=u),
                       'body': render_template('email/debt.txt', user=u),
-                      'recipients': [u.email], 'subject': "Je hebt een te hoge schuld!"}
+                      'recipients': [u.email], 'subject': "Je hebt een te hoge schuld!" if u.balance < 10 else
+                                                          "Je hebt een schuld!"}
             emails.append(result)
 
     return emails
