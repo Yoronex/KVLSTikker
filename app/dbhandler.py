@@ -1050,7 +1050,6 @@ def correct_inventory(json):
                 row_cells[5 + index].text = '-€ %.2f' % -cost
                 # Reset the group object
                 g = None
-            print(take_from_inventory(None, p.id, -diff))
         elif diff > 0:
             new_price = find_newest_product_price(p.id)
             add_inventory(p.id, diff, new_price, "Inventariscorrectie")
@@ -1139,11 +1138,6 @@ def calc_inventory_value(product_id):
 
 def rollback():
     db.session.rollback()
-
-
-def force_edit():
-    users = [1, 3]
-    print(User.query.filter(User.id.in_(users)).all())
 
 
 def is_birthday():

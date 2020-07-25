@@ -49,7 +49,9 @@ def init_bigscreen(msg):
                   'stats': {'daily': stats_daily,
                             'max': stats_max},
                   'snow': EN_SNOW,
-                  'biertje_kwartiertje': {'minutes': dbhandler.biertje_kwartiertje_time}})
+                  'biertje_kwartiertje': {'enabled': len(dbhandler.biertje_kwartiertje_participants) > 0,
+                                          'minutes': dbhandler.biertje_kwartiertje_time},
+                  'drinking_score_percentage': statshandler.get_drinking_score()})
 
 
 @socketio.on('spotify', namespace='/bigscreen')
@@ -63,6 +65,11 @@ def biertje_kwartiertje_purchase():
     update_biertje_kwartiertje()
     drink_id = dbhandler.biertje_kwartiertje_drink
     cart.purchase_from_orders(dbhandler.biertje_kwartiertje_participants, drink_id)
+
+
+@socketio.on('get_drinking_score', namespace='/bigscreen')
+def update_drinking_score():
+    emit('drinking_score', {'percentage': statshandler.get_drinking_score()})
 
 
 def get_spotify_data():

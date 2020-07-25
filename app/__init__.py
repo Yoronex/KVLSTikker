@@ -70,6 +70,13 @@ else:
     EN_SNOW = True
 
 from app import models
+
+
+def get_all_products_from_category(category):
+    products = Product.query.filter(Product.category == category).all()
+    return [p.id for p in products]
+
+
 from app.routes import admin, bigscreen, stats, user, utils
 from app.models import *
 from app import commands

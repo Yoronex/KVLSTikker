@@ -1,5 +1,5 @@
 from sqlalchemy import and_
-from app import app, db, round_down, round_up
+from app import app, db, round_down, round_up, get_all_products_from_category
 from app.models import *
 from app.dbhandler import settings
 from datetime import datetime, timedelta
@@ -163,6 +163,42 @@ def update_daily_stats_purchase(user_id, drink_id, quantity, rondje, price_per_o
     # If it is not a round, we add it to the stats per product
     else:
         update_daily_stats_product(drink_id, quantity)
+
+
+def get_drinking_score():
+    # The "maximum" score.
+    max_score = 150
+
+    # Calculate the begin time, which is two hours ago
+    begin_time = datetime.now() - timedelta(hours=2)
+    # Calculate the amount of alcohol in mL that has been drunk in the last two hours
+    alcohol = db.session.query(func.sum(Purchase.amount * Product.alcohol * Product.volume))\
+        .filter(and_(Purchase.timestamp > begin_time, Purchase.product_id == Product.id, Purchase.round == False))\
+        .first()[0] or 0
+    # The number of people that has a drink in the last two hours
+    drinkers = db.session.query(Purchase.user_id)\
+        .filter(and_(Purchase.timestamp > begin_time, Purchase.round == False))\
+        .group_by(Purchase.user_id).count()
+
+    # How much alcohol one person drank on average
+    alcohol_per_person = alcohol / drinkers if drinkers > 0 else 0
+
+    # All product objects that have the category "shots"
+    shots = get_all_products_from_category('Shots')
+
+    # Get the number of unique shots that have been done in the last two hours
+    nr_of_unique_shots = db.session.query(Purchase.product_id)\
+        .filter(and_(Purchase.timestamp > begin_time, Purchase.round == False, Purchase.product_id.in_(shots)))\
+        .group_by(Purchase.product_id).count()
+
+    # nr_of_total_shots = db.session.query(Purchase.id)\
+    #     .filter(and_(Purchase.timestamp > begin_time, Purchase.round == False, Purchase.product_id.in_(shots))).count()
+
+    # Calculate the percentage: the maximum is 100, so we take the minimum of our calculated percentage and 100.
+    # Then, we multiply the amount of alcohol per person by the multipliers (in this case, only the number of unique
+    # shots). Then, we divide this by the maximum score and multiply by 100.
+    percentage = min(100, (alcohol_per_person * (nr_of_unique_shots * 0.02 + 1)) / max_score * 100)
+    return percentage
 
 
 def get_yesterday_for_today(enddate):
