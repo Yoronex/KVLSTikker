@@ -353,6 +353,8 @@ def adddrink(name, price, category, order, image, hoverimage, recipe, inventory_
     # If no inventory warning is set, we set it to zero by default
     if inventory_warning is None:
         inventory_warning = 0
+    else:
+        inventory_warning = int(inventory_warning)
 
     # Get the filename of both images and check that they have the correct extensions
     s_filename, s_file_extension = os.path.splitext(secure_filename(image.filename))
