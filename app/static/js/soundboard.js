@@ -44,7 +44,10 @@ function keyDown(e){
     }
     audio.currentTime = 0;
     audio.play()
-    key.classList.add('playing')
+
+    if (key !== null) {
+      key.classList.add('playing')
+    }
   }
   function removeTransition(e){
 //    if(e.propertyName !== 'background-color') return; //skip so only fires once

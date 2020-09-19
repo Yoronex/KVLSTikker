@@ -2,6 +2,10 @@
 
 {% block scripts %}
 {{ super() }}
+<script type="text/javascript" src="{{url_for('.static', filename='js/soundboard.js')}}"></script>
+<script>
+    loadArrayFromDict({{ sounds|tojson }})
+</script>
 {% if request.cookies.get('confetti') == "True" %}
 <script type="text/javascript" src="{{url_for('.static', filename='js/confetti.js')}}"></script>
 {% endif %}
@@ -28,6 +32,9 @@
             </div>
         {% endfor %}
         </div>
+    </div>
+    <div id="audio-container"></div>
+
     </div>
 
     <div class="modal fade" id="birthday_notification" data-backdrop="static" data-keyboard="false" tabindex="-1" role="dialog" style="font-family: standardtext; font-size: 16px">

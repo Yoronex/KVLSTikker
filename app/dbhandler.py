@@ -353,6 +353,8 @@ def adddrink(name, price, category, order, image, hoverimage, recipe, inventory_
     # If no inventory warning is set, we set it to zero by default
     if inventory_warning is None:
         inventory_warning = 0
+    else:
+        inventory_warning = int(inventory_warning)
 
     # Get the filename of both images and check that they have the correct extensions
     s_filename, s_file_extension = os.path.splitext(secure_filename(image.filename))
@@ -1033,6 +1035,7 @@ def correct_inventory(json):
 
         # If the difference is less than 0, we have lost some inventory, which costs money
         if diff < 0:
+            take_from_inventory(None, p.id, -diff)
             for g_id in i['groups']:
                 # Get the group object
                 g = Usergroup.query.get(g_id)
@@ -1044,6 +1047,7 @@ def correct_inventory(json):
                                 change=cost, new=g.profit, description="{} {} inventariscorrectie".format(str(diff), p.name))
                 db.session.add(profit)
                 db.session.commit()
+                # Now, take it from inventory
                 # Add it to the row in the table and to the cumulative costs
                 index = all_groups.index(g_id)
                 per_group_costs[index] += cost

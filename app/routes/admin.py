@@ -199,7 +199,7 @@ def admin_drinks_edit(drinkid):
     if form.submit1.data and form.validate_on_submit():
         alert = (dbhandler.editdrink_attr(drinkid, form.name.data, float(form.price.data),
                                           form.category.data, int(form.pos.data) + 1,
-                                          form.purchaseable.data, form.recipe.data, int(form.inventory_warning.data),
+                                          form.purchaseable.data, form.recipe.data, form.inventory_warning.data,
                                           float(form.alcohol.data), int(form.volume.data), form.unit.data))
         flash(alert[0], alert[1])
 
