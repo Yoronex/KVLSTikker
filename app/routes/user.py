@@ -24,8 +24,10 @@ def index():
         resp.set_cookie('confetti', str(True))
         return resp
 
+    sounds = [s.serialize for s in Sound.query.all()]
+
     resp = make_response(render_template('index.html', title='Home', h1="Kies iets uit!", birthdays=birthdays,
-                                         showed_birthdays=showed_birthdays, Product=Product), 200)
+                                         sounds=sounds, showed_birthdays=showed_birthdays, Product=Product), 200)
     resp.set_cookie('birthdays-shown', '')
     return resp
 

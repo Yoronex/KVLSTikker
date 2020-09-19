@@ -129,7 +129,9 @@ def get_slide_data(name):
     elif name == "Quote":
         quotes = Quote.query.filter(Quote.approved == True).all()
         q = quotes[randrange(len(quotes))]
-        return q.value
+        return {'quote': q.value,
+                'author': q.author,
+                'date': q.timestamp.strftime("%d-%m-%Y")}
 
     elif name == "Debt":
         unames = []
