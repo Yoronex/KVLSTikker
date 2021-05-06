@@ -9,7 +9,7 @@ flask_bootstrap4==4.0.2
 flask_migrate==2.2.1
 flask_sqlalchemy==2.3.2
 flask_socketio==4.2.1
-flask_cors==3.0.8
+flask_cors==3.0.9
 spotipy==2.4.4
 wget==3.2
 gevent==1.4.0
