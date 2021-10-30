@@ -167,7 +167,7 @@ def update_daily_stats_purchase(user_id, drink_id, quantity, rondje, price_per_o
 
 def get_drinking_score():
     # The "maximum" score.
-    max_score = 100
+    max_score = 65
 
     # Calculate the begin time, which is two hours ago
     begin_time = datetime.now() - timedelta(hours=2)
