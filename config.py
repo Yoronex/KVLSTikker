@@ -17,7 +17,7 @@ class Config(object):
     SOUNDBOARD_FOLDER = os.path.join(basedir, 'app/static/soundboard')
     VIDEOS_FOLDER = os.path.join(basedir, 'app/static/videos')
     MAX_BACKUPS = 20
-    ALLOWED_EXTENSIONS = {'jpg', 'png', 'bmp', 'gif'}
+    ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'bmp', 'gif'}
     ADMIN_PASSWORD = "knotgang"
     STATS_BEGINDATE = "2019-01-01"
     MAIL_SERVER = 'mail.kvls.nl'

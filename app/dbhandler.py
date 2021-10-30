@@ -854,6 +854,7 @@ def add_inventory(p_id, quantity, price_before_profit, note):
 def fix_neg_inv(old_inv, new_inv):
     inv_use = Inventory_usage.query.filter(Inventory_usage.inventory_id == old_inv.id).all()
     for i in range(0, len(inv_use)):
+        profitgroup = None
         if new_inv.quantity == 0:
             break
         pur = Purchase.query.get(inv_use[i].purchase_id)
@@ -864,11 +865,10 @@ def fix_neg_inv(old_inv, new_inv):
                 profitgroup = Usergroup.query.get(user.profitgroup_id)
             # If the purchase is created in version 1.5.0.0 or newer, we get the profit object as well
             if t.profit_id is not None:
-                profit = Profit.query.get(pur.profit_id)
+                profit = Profit.query.get(t.profit_id)
             else:
                 profit = None
         else:
-            profitgroup = None
             app.logger.info("There is no purchase attached to an inventory usage row of inventory {}".format(old_inv.id))
             raise ValueError
 
@@ -884,7 +884,7 @@ def fix_neg_inv(old_inv, new_inv):
                     profitgroup.profit = profitgroup.profit + change
                 else:
                     # Use the new method otherwise
-                    edit_profit(change)
+                    edit_profit(profit, change)
             new_inv.quantity = 0
             old_inv.quantity = old_inv.quantity + new_inv_use.quantity
             db.session.commit()
@@ -896,7 +896,7 @@ def fix_neg_inv(old_inv, new_inv):
                 if profit is None:
                     profitgroup.profit = profitgroup.profit + change
                 else:
-                    edit_profit(change)
+                    edit_profit(profit, change)
             new_inv.quantity = new_inv.quantity - inv_use[i].quantity
             old_inv.quantity = old_inv.quantity + inv_use[i].quantity
             db.session.commit()

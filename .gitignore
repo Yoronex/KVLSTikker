@@ -206,6 +206,9 @@ app/.cache-roytjuh99
 app/__pycache__/
 app/static/graphs/
 app/static/products/
+app/static/soundboard/
+app/static/videos/
+
 app/templates/testforms.html
 app_testing.db
 migrations/__pycache__/
@@ -238,3 +241,7 @@ migrations_old_2/versions/9925adbe0c25_create_all_tables.py
 app/static/covers/
 covers/
 documents/
+
+spotifycache/
+**.db
+**.log**
