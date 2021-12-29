@@ -10,7 +10,7 @@
                     {% set outer_loop = loop %}
                     <div class="col">
                         <table width="100%" cellpadding="30">
-                            {% for u in g.users.all() %}
+                            {% for u in g.users.filter(User.deleted == false).all() %}
                             {% set underage = is_18min(u) and (drink.recipe_input is not none or drink.alcohol > 0.01) %}
                             <tr>
                                 {% if (loop.index + outer_loop.index) % 2 == 0 %}

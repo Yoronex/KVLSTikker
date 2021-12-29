@@ -36,7 +36,7 @@ def index():
 @register_breadcrumb(app, '.balance', "Saldo's", order=1)
 def balance():
     usergroups = get_usergroups_with_users()
-    return render_template('balance.html', title='Saldo', h1="Saldo's", usergroups=usergroups,
+    return render_template('balance.html', title='Saldo', h1="Saldo's", usergroups=usergroups, User=User,
                            amount_usergroups=len(usergroups)), 200
 
 

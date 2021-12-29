@@ -136,6 +136,12 @@ def apply_filters(query):
         query = query.filter(User.usergroup_id == int(request.args.get('f_user_usergroup')))
     if 'f_user_profitgroup' in request.args and int(request.args.get('f_user_profitgroup')) > 0:
         query = query.filter(User.profitgroup_id == int(request.args.get('f_user_profitgroup')))
+    if 'f_user_deleted' in request.args:
+        t_round = request.args.get('f_user_deleted')
+        if t_round == '1':
+            query = query.filter(User.deleted == True)
+        elif t_round == '0':
+            query = query.filter(User.deleted == False)
 
     if 'f_product_category' in request.args and request.args.get('f_product_category') != 'all':
         query = query.filter(Product.category == request.args.get('f_product_category'))

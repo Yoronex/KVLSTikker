@@ -67,7 +67,10 @@ def admin_users_delete(userid):
     user = User.query.get(userid)
     group = Usergroup.query.get(user.usergroup_id)
     if user.balance == 0.0:
-        message = "gebruiker " + user.name + "(van de groep " + group.name + ") wilt verwijderen? Alle historie gaat hierbij verloren!"
+        if user.deleted:
+            message = "gebruiker " + user.name + "(van de groep " + group.name + ") definitief wilt verwijderen? Alle historie, waaronder transacties, gaat hierbij verloren!"
+        else:
+            message = "gebruiker " + user.name + "(van de groep " + group.name + ") wilt verwijderen?"
         agree_url = url_for("admin_users_delete_exec", userid=userid)
         return_url = url_for("admin_users")
         return render_template("verify.html", title="Bevestigen", message=message, agree_url=agree_url,
@@ -77,17 +80,41 @@ def admin_users_delete(userid):
         return redirect(url_for('admin_users'))
 
 
+@app.route('/admin/users/delete/<int:userid>/undo')
+def admin_users_delete_undo(userid):
+    check_if_local_machine()
+    check_if_not_view_only()
+
+    user = User.query.get(userid)
+    if not user.deleted:
+        flash("Deze gebruiker is niet verwijderd!", "danger")
+    else:
+        alert = (dbhandler.soft_del_user(userid))
+        flash(alert[0], alert[1])
+
+    socket.update_stats()
+
+    return redirect(url_for('admin_users'))
+
+
 @app.route('/admin/users/delete/<int:userid>/exec')
 def admin_users_delete_exec(userid):
     check_if_local_machine()
     check_if_not_view_only()
 
-    if (User.query.get(userid).balance != 0.0):
+    user = User.query.get(userid)
+
+    if user.balance != 0.0:
         flash("Deze gebruiker heeft nog geen saldo van € 0!", "danger")
         return redirect(url_for('admin_users'))
-    # alert = (dbhandler.deluser(userid))
-    # flash(alert[0], alert[1])
-    flash("Wegens enkele ontdekte fouten in Tikker is het verwijderen van gebruikers tijdelijk uitgeschakeld", "danger")
+
+    if not user.deleted:
+        alert = (dbhandler.soft_del_user(userid))
+        flash(alert[0], alert[1])
+    else:
+        # alert = (dbhandler.hard_del_user(userid))
+        # flash(alert[0], alert[1])
+        flash("Wegens enkele ontdekte fouten in Tikker is het verwijderen van gebruikers tijdelijk uitgeschakeld", "danger")
 
     socket.update_stats()
 

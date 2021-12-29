@@ -10,7 +10,7 @@
             <td style="width: {{ 100 / usergroups|length  }}%; vertical-align: top; text-align: center">
                 <b>{{ usergroup.name }}</b><br>
                 <table style="width: 100%">
-                    {% for u in usergroup.users.all() %}
+                    {% for u in usergroup.users.filter(User.deleted == false).all() %}
                     <tr>
                         <td style="width: 50%; text-align: right">{{ u.name }}</td>
                         {% if u.balance < 0 %}

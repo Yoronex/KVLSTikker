@@ -272,6 +272,7 @@ class UserTransactionFilterForm(ExtendedFlaskForm):
 class UsersFilterForm(ExtendedFlaskForm):
     f_user_usergroup = SelectField("Groep")
     f_user_profitgroup = SelectField("Winstgroep")
+    f_user_deleted = SelectField("Verwijderd", choices=(('all', 'Alle'), ('1', 'Ja'), ('0', 'Nee')))
 
     def __init__(self, *args, **kwargs):
         super(UsersFilterForm, self).__init__(*args, **kwargs)

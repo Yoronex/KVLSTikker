@@ -22,10 +22,10 @@ class User(db.Model):
     profitgroup_id = db.Column(db.Integer, db.ForeignKey('usergroup.id'))
     birthday = db.Column(db.DateTime)
     email = db.Column(db.String)
+    deleted = db.Column(db.Boolean, default=False)
 
-    #usergroup = db.relationship('Usergroup', foreign_keys=[usergroup_id])
-    #profitgroup = db.relationship('Usergroup', foreign_keys=[profitgroup_id])
-
+    # usergroup = db.relationship('Usergroup', foreign_keys=[usergroup_id])
+    # profitgroup = db.relationship('Usergroup', foreign_keys=[profitgroup_id])
 
     def __repr__(self):
         return '<User {}>'.format(self.name)

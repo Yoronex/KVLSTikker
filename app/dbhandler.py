@@ -473,7 +473,24 @@ def add_sound(name, key, code, file):
     db.session.commit()
 
 
-def deluser(user_id):
+def soft_del_user(user_id):
+    user = User.query.get(user_id)
+
+    if user.balance != 0:
+        return "Verwijderen van gebruiker {} mislukt: gebruiker heeft nog saldo!".format(user.name), "danger"
+
+    user.deleted = not user.deleted
+    db.session.commit()
+
+    if user.deleted:
+        statshandler.update_daily_stats('users', -1)
+        return "Verwijderen van gebruiker {} gelukt!"
+    if not user.deleted:
+        statshandler.update_daily_stats('users', 1)
+        return "Verwijderen van gebruiker {} ongedaan gemaakt!"
+
+
+def hard_del_user(user_id):
     user = User.query.get(user_id)
     name = user.name
     for t in user.transactions.all():
@@ -489,13 +506,11 @@ def deluser(user_id):
 
     if negative_inventory_found:
         db.session.rollback()
-        return "Verwijderen van gebruiker {} mislukt: er staat nog negatieve inventaris op zijn naam!".format(
+        return "Definitief verwijderen van gebruiker {} mislukt: er staat nog negatieve inventaris op zijn naam!".format(
             name), "danger"
     else:
         db.session.delete(user)
         db.session.commit()
-
-        statshandler.update_daily_stats('users', -1)
 
         return "Gebruiker {} verwijderd".format(name), "success"
 
@@ -733,6 +748,7 @@ def get_inventory_stock_for_product(product_id):
 
 def get_product_stats(product_id):
     result = {}
+    birthday_groups = json.loads(settings['birthday_groups'])
 
     if Recipe.query.filter(Recipe.product_id == product_id).count() == 0:
         p = Product.query.get(product_id)
@@ -770,7 +786,7 @@ def get_product_stats(product_id):
 
     # Get the list of all people that bought a round for this product at least once and order them by total rounds given
     round_givers = db.session.query(User.name, func.count().label('rounds'))\
-        .filter(User.id == Purchase.user_id, Purchase.round == True, Purchase.product_id == product_id)\
+        .filter(User.id == Purchase.user_id, User.usergroup_id.in_(birthday_groups), Purchase.round == True, Purchase.product_id == product_id)\
         .group_by(Purchase.user_id).order_by(func.count().desc()).all()
     # Make sure the result is always a list
     if type(round_givers) != list:
