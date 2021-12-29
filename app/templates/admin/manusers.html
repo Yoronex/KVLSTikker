@@ -19,7 +19,8 @@
                 </thead>
                 <tbody>
                     {% for u in users %}
-                    <tr>
+                    {% if u.deleted is sameas false %}
+                    <tr class="item-available">
                         <td>{{ u.id }}</td>
                         <td>{{ u.name }}</td>
                         <td>{{ Usergroup.query.get(u.usergroup_id) }}</td>
@@ -29,8 +30,20 @@
                         {% else %}
                         <td><span style="color: green;font-weight:bold;">€ {{ '%.2f' % u.balance }}</span></td>
                         {% endif %}
-                        <td><a href="{{ url_for('admin_users_delete', userid=u.id) }}"><span class="fa fa-times fa-lg" style="color:red;"></span></a></td>
+                        <td></td>
+                        <td><a href="{{ url_for('admin_users_delete', userid=u.id) }}" title="Verwijderen"><span class="fa fa-times fa-lg" style="color:red;"></span></a></td>
                     </tr>
+                    {% else %}
+                    <tr class="item-unavailable">
+                        <td>{{ u.id }}</td>
+                        <td>{{ u.name }}</td>
+                        <td>{{ Usergroup.query.get(u.usergroup_id) }}</td>
+                        <td>{{ Usergroup.query.get(u.profitgroup_id) }}</td>
+                        <td>€ {{ '%.2f' % u.balance }}</td>
+                        <td><a href="{{ url_for('admin_users_delete_undo', userid=u.id) }}" title="Gebruiker herstellen"><span class="fa fa-undo fa-md"></span></a></td>
+                        <td><a href="{{ url_for('admin_users_delete', userid=u.id) }}" title="Permanent verwijderen"><span class="fa fa-times fa-lg" style="color:red;"></span></a></td>
+                    </tr>
+                    {% endif %}
                     {% endfor %}
                 </tbody>
             </table>

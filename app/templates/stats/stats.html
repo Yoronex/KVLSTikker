@@ -24,7 +24,7 @@
             </div>
             <div class="col">
                 <table width="100%" cellpadding="30">
-                    {% for u in User.query.all() %}
+                    {% for u in User.query.filter(User.deleted == false).order_by(User.name).all() %}
                     <tr>
                         {% if (loop.index + outer_loop) % 2 != 0 %}
                         <td width="100%"><a class="btn btn-block btn-green" onclick="showLoadingBar()" href="{{ url_for('stats_user_redirect', userid=u.id) }}">{{ u.name }}</a></td>

@@ -9,7 +9,7 @@
                     <tr>
                         <th colspan="2">{{ g.name }}</th>
                     </tr>
-                    {% for u in g.users.all() %}
+                    {% for u in g.users.filter(User.deleted == false).all() %}
                     <tr>
                         <td style="width:50%; text-align: right"><a href="{{ url_for('user', userid=u.id) }}">{{ u.name }}</a></td>
                         {% if u.balance < 0 %}

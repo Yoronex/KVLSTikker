@@ -473,7 +473,24 @@ def add_sound(name, key, code, file):
     db.session.commit()
 
 
-def deluser(user_id):
+def soft_del_user(user_id):
+    user = User.query.get(user_id)
+
+    if user.balance != 0:
+        return "Verwijderen van gebruiker {} mislukt: gebruiker heeft nog saldo!".format(user.name), "danger"
+
+    user.deleted = not user.deleted
+    db.session.commit()
+
+    if user.deleted:
+        statshandler.update_daily_stats('users', -1)
+        return "Verwijderen van gebruiker {} gelukt!"
+    if not user.deleted:
+        statshandler.update_daily_stats('users', 1)
+        return "Verwijderen van gebruiker {} ongedaan gemaakt!"
+
+
+def hard_del_user(user_id):
     user = User.query.get(user_id)
     name = user.name
     for t in user.transactions.all():
@@ -489,13 +506,11 @@ def deluser(user_id):
 
     if negative_inventory_found:
         db.session.rollback()
-        return "Verwijderen van gebruiker {} mislukt: er staat nog negatieve inventaris op zijn naam!".format(
+        return "Definitief verwijderen van gebruiker {} mislukt: er staat nog negatieve inventaris op zijn naam!".format(
             name), "danger"
     else:
         db.session.delete(user)
         db.session.commit()
-
-        statshandler.update_daily_stats('users', -1)
 
         return "Gebruiker {} verwijderd".format(name), "success"
 
