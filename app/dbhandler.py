@@ -748,6 +748,7 @@ def get_inventory_stock_for_product(product_id):
 
 def get_product_stats(product_id):
     result = {}
+    birthday_groups = json.loads(settings['birthday_groups'])
 
     if Recipe.query.filter(Recipe.product_id == product_id).count() == 0:
         p = Product.query.get(product_id)
@@ -785,7 +786,7 @@ def get_product_stats(product_id):
 
     # Get the list of all people that bought a round for this product at least once and order them by total rounds given
     round_givers = db.session.query(User.name, func.count().label('rounds'))\
-        .filter(User.id == Purchase.user_id, Purchase.round == True, Purchase.product_id == product_id)\
+        .filter(User.id == Purchase.user_id, User.usergroup_id.in_(birthday_groups), Purchase.round == True, Purchase.product_id == product_id)\
         .group_by(Purchase.user_id).order_by(func.count().desc()).all()
     # Make sure the result is always a list
     if type(round_givers) != list:
